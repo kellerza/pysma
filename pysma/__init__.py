@@ -7,7 +7,6 @@ Source: http://www.github.com/kellerza/pysma
 import asyncio
 import json
 import logging
-import random
 
 import async_timeout
 
