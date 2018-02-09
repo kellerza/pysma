@@ -35,6 +35,7 @@ class SMA:
         self._ip = ip
         self._aio_session = session
         self._sma_sid = None
+        self._401_error_count = 0
 
     @asyncio.coroutine
     def _fetch_json(self, url, payload, params=None):
@@ -83,6 +84,13 @@ class SMA:
             URL_VALUES.format(self._ip), payload=payload,
             params={'sid': self._sma_sid})
 
+        # On the first 401 error we close the session which will try logging in again
+        if res.get('err') == 401 and self._401_error_count == 0:
+            _LOGGER.warning("401 error detected, closing session to force another login attempt")
+            self.close_session()
+            self._401_error_count += 1
+            return None
+
         try:
             _, res = res['result'].popitem()  # Only use first value
             result = []
@@ -106,4 +114,8 @@ class SMA:
                 _LOGGER.error(err)
                 pass
 
+        # reset 401 error count
+        self._401_error_count = 0
+
         return result
+
