@@ -20,19 +20,22 @@ KEY_CURRENT_CONSUMPTION_W = '6100_00543100'
 KEY_TOTAL_YIELD_KWH = '6400_00260100'
 KEY_TOTAL_CONSUMPTION_KWH = '6400_00543A00'
 
-URL_LOGIN = "http://{}/dyn/login.json"
-URL_LOGOUT = "http://{}/dyn/logout.json"
-URL_VALUES = "http://{}/dyn/getValues.json"
+
+URL_LOGIN = "{}/dyn/login.json"
+URL_LOGOUT = "{}/dyn/logout.json"
+URL_VALUES = "{}/dyn/getValues.json"
 
 
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
-    def __init__(self, session, ip, password, group=GROUP_USER):
+    def __init__(self, session, url, password, group=GROUP_USER):
         """Init SMA connection."""
         self._new_session_data = {
             'right': group, 'pass': password}
-        self._ip = ip
+        self._url = url.rstrip('/')
+        if not url.startswith('http'):
+            self._url = "http://" + self._url
         self._aio_session = session
         self._sma_sid = None
         self._401_error_count = 0
@@ -41,7 +44,7 @@ class SMA:
     def _fetch_json(self, url, payload, params=None):
         """Fetch json data for requests."""
         headers = {'content-type': 'application/json'}
-        with async_timeout.timeout(10):
+        with async_timeout.timeout(3):
             res = yield from self._aio_session.post(
                 url, data=json.dumps(payload), headers=headers, params=params)
             return (yield from res.json())
@@ -49,12 +52,14 @@ class SMA:
     @asyncio.coroutine
     def new_session(self):
         """Establish a new session."""
-        res = yield from self._fetch_json(
-            URL_LOGIN.format(self._ip), self._new_session_data)
         try:
+            res = yield from self._fetch_json(
+                URL_LOGIN.format(self._url), self._new_session_data)
             self._sma_sid = res['result']['sid']
             return True
-        except KeyError as e:
+        except asyncio.TimeoutError:
+            _LOGGER.error("Could not connect to SMA at %s", self._url)
+        except KeyError:
             self._sma_sid = None
             if str(res.get('err', '')) == '503':
                 _LOGGER.error("Max amount of sesions reached")
@@ -69,7 +74,7 @@ class SMA:
         if self._sma_sid is None:
             return
         yield from self._fetch_json(
-            URL_LOGOUT.format(self._ip), {}, params={'sid': self._sma_sid})
+            URL_LOGOUT.format(self._url), {}, params={'sid': self._sma_sid})
         self._sma_sid = None
 
     @asyncio.coroutine
@@ -79,14 +84,18 @@ class SMA:
         if self._sma_sid is None:
             yield from self.new_session()
             if self._sma_sid is None:
-                return
-        res = yield from self._fetch_json(
-            URL_VALUES.format(self._ip), payload=payload,
-            params={'sid': self._sma_sid})
+                return None
+        try:
+            res = yield from self._fetch_json(
+                URL_VALUES.format(self._url), payload=payload,
+                params={'sid': self._sma_sid})
+        except asyncio.TimeoutError:
+            return None
 
-        # On the first 401 error we close the session which will try logging in again
+        # On the first 401 error we close the session which will re-login
         if res.get('err') == 401 and self._401_error_count == 0:
-            _LOGGER.warning("401 error detected, closing session to force another login attempt")
+            _LOGGER.warning("401 error detected, closing session to force " +
+                            "another login attempt")
             self.close_session()
             self._401_error_count += 1
             return None
@@ -112,10 +121,8 @@ class SMA:
                     result[idx] = result[idx][0]
             except (KeyError, TypeError) as err:
                 _LOGGER.error(err)
-                pass
 
         # reset 401 error count
         self._401_error_count = 0
 
         return result
-
