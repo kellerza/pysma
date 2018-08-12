@@ -2,7 +2,7 @@
 """pysma library setup."""
 from setuptools import setup
 
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 URL = 'https://github.com/kellerza/pysma'
 
 setup(
@@ -18,6 +18,7 @@ setup(
     install_requires=[
         'aiohttp>3,<4',
         'async_timeout>3,<4',
+        'attrs>18',
         'jmespath<2',
     ],
     zip_safe=True,

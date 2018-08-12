@@ -20,7 +20,7 @@ USERS = {
 }
 
 JMESPATH_BASE = 'result.*[]."{}"'
-JMESPATH_VAL = '."1"[].val'
+JMESPATH_VAL = '."1"[{}].val'
 
 
 @attr.s(slots=True)
@@ -30,13 +30,20 @@ class Sensor(object):
     key = attr.ib()
     unit = attr.ib()
     factor = attr.ib(default=None)
-    path_val = attr.ib(default=None)
+    path = attr.ib(default=None)
     value = attr.ib(default=None)
 
-    @property
-    def path(self):
-        """Returns the jmespath used to extract the value."""
-        return JMESPATH_BASE.format(self.key) + (self.path_val or JMESPATH_VAL)
+    def __attrs_post_init__(self):
+        """Init path."""
+        idx = 0
+        key = str(self.key)
+        if key[-2] == '_' and key[-1].isdigit():
+            idx = key[-1]
+            key = key[:-2]
+            self.key = key
+
+        self.path = JMESPATH_BASE + (self.path or JMESPATH_VAL)
+        self.path = self.path.format(key, idx)
 
     def extract_value(self, json_body):
         """Extract value from json body."""
@@ -59,7 +66,7 @@ SENSORS = [
     Sensor('daily_yield', '6400_00262200', 'Wh'),
     Sensor('power_supplied', '6100_00464800', 'W'),
     Sensor('power_absorbed', '6100_00464800', 'W'),
-    Sensor('sma_status', '6180_08214800', '', None, '."1"[].val[0].tag'),
+    Sensor('status', '6180_08214800', '', None, '."1"[].val[0].tag'),
 ]
 
 
@@ -151,7 +158,7 @@ class SMA:
     @asyncio.coroutine
     def read(self, sensors):
         """Read a set of keys."""
-        payload = {'destDev': [], 'keys': [s.key for s in sensors]}
+        payload = {'destDev': [], 'keys': list(set([s.key for s in sensors]))}
         if self.sma_sid is None:
             yield from self.new_session()
             if self.sma_sid is None:
