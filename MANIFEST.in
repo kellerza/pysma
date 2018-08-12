@@ -1,0 +1,3 @@
+include LICENSE README.rst
+graft pysma
+recursive-exclude * *.py[co]
