@@ -19,8 +19,9 @@ USERS = {
     'installer': 'istl',
 }
 
-JMESPATH_BASE = 'result.*[]."{}"'
-JMESPATH_VAL = '."1"[{}].val'
+JMESPATH_BASE = 'result.*'
+JMESPATH_VAL_IDX = '"1"[{}].val'
+JMESPATH_VAL = 'val'
 
 
 @attr.s(slots=True)
@@ -32,6 +33,7 @@ class Sensor(object):
     factor = attr.ib(default=None)
     path = attr.ib(default=None)
     value = attr.ib(default=None)
+    key_idx = attr.ib(default=0)
 
     def __attrs_post_init__(self):
         """Init path."""
@@ -40,14 +42,35 @@ class Sensor(object):
         if key[-2] == '_' and key[-1].isdigit():
             idx = key[-1]
             key = key[:-2]
-            self.key = key
-
-        self.path = JMESPATH_BASE + (self.path or JMESPATH_VAL)
-        self.path = self.path.format(key, idx)
+        self.key = key
+        self.key_idx = idx
 
     def extract_value(self, json_body):
         """Extract value from json body."""
-        res = next(iter(jmespath.search(self.path, json_body) or []), None)
+        # Extract
+        res = next(iter(jmespath.search(JMESPATH_BASE, json_body)))
+
+        try:
+            res = res[self.key]
+        except (KeyError, TypeError):
+            _LOGGER.debug("Sensor %s not found in %s", self.key, res)
+            self.value = None
+            return False
+
+        if self.path is None:
+            # Try different methods until we can decode...
+            _paths = [JMESPATH_VAL, JMESPATH_VAL_IDX.format(self.key_idx)]
+            while _paths:
+                _path = _paths.pop()
+                _val = jmespath.search(_path, res)
+                if _val:
+                    _LOGGER.debug("Extracting %s using %s", self.name, _path)
+                    self.path = _path
+                    break
+
+        # Extract new value
+        res = jmespath.search(self.path, res)
+
         if isinstance(res, int) and self.factor:
             res /= self.factor
         try:
