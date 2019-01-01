@@ -84,11 +84,16 @@ SENSORS = [
     Sensor('current_power', '6100_40263F00', 'W'),
     Sensor('total_consumption', '6400_00543A00', 'kWh', 1000),
     Sensor('total_yield', '6400_00260100', 'kWh', 1000),
+    Sensor('daily_yield', '6400_00262200', 'Wh'),
     Sensor('grid_voltage', '6100_00464800', 'V'),
     Sensor('pv_power', '6100_0046C200', 'W'),
     Sensor('daily_yield', '6400_00262200', 'Wh'),
-    Sensor('power_supplied', '6100_00464800', 'W'),
-    Sensor('power_absorbed', '6100_00464800', 'W'),
+
+    Sensor('grid_power_supplied', '6100_40463600', 'W'),
+    Sensor('grid_power_absorbed', '6100_40463700', 'W'),
+    Sensor('grid_total_yield', '6400_00462400', 'kWh', 1000),
+    Sensor('grid_total_absorbed', '6400_00462500', 'kWh', 1000),
+
     Sensor('status', '6180_08214800', '', None, '."1"[].val[0].tag'),
 ]
 
