@@ -98,7 +98,7 @@ SENSORS = [
     Sensor('grid_total_yield', '6400_00462400', 'kWh', 1000),
     Sensor('grid_total_absorbed', '6400_00462500', 'kWh', 1000),
 
-    Sensor('status', '6180_08214800', '', None, '."1"[].val[0].tag'),
+    Sensor('status', '6180_08214800', '', None, '"1"[].val[0].tag'),
 ]
 
 
