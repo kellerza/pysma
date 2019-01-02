@@ -53,7 +53,7 @@ class Sensor(object):
         try:
             res = res[self.key]
         except (KeyError, TypeError):
-            _LOGGER.debug("Sensor %s not found in %s", self.key, res)
+            _LOGGER.warning("Sensor %s not found in %s", self.key, res)
             self.value = None
             return False
 
@@ -69,7 +69,11 @@ class Sensor(object):
                     break
 
         # Extract new value
-        res = jmespath.search(self.path, res)
+        if self.path is None:
+            _LOGGER.debug("Null path %s", res)
+            res = None
+        else:
+            res = jmespath.search(self.path, res)
 
         if isinstance(res, int) and self.factor:
             res /= self.factor

@@ -31,7 +31,6 @@ def sensors():
     yield [
         (402, True, pysma.Sensor('s_402', '6400_00262200', 'W')),
         (3514, True, pysma.Sensor('s_3514', '6400_00260100', 'W', 1000)),
-        # (None, False, pysma.Sensor('s_null', '6100_40263F00', 'W'))
     ]
 
 
@@ -56,3 +55,18 @@ class Test_sensor_class:
             assert sens.path == pysma.JMESPATH_VAL
 
             assert sens.extract_value(SB_2_5) is False
+
+    def test_null(self):
+        sens = pysma.Sensor('s_null', '6100_40263F00', 'W')
+        assert sens.extract_value(
+            {"result": {"_": {"6100_40263F00": {"val": None}}}}) \
+            is False
+        assert sens.value is None
+        assert sens.extract_value(
+            {"result": {"_": {"6100_40263F00": {"1": [{"val": None}]}}}}) \
+            is False
+        assert sens.value is None
+        assert sens.extract_value(
+            {"result": {"_": {}}}) \
+            is False
+        assert sens.value is None
