@@ -172,7 +172,7 @@ class SMA:
 
         if body.get('err'):
             if body.get('err') == 503:
-                _LOGGER.error("Max amount of sesions reached")
+                _LOGGER.error("Max amount of sessions reached")
             else:
                 _LOGGER.error(msg, body.get('err'))
         else:
