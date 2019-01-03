@@ -18,6 +18,14 @@ _LOGGER = logging.getLogger(__name__)
 
 VAR = {}
 
+def print_table(sensors):
+    for sen in sensors:
+        if sen.value is None:
+            print("{:>25}".format(sen.name))
+        else:
+            print("{:>25}{:>15} {}".format(
+                sen.name, str(sen.value), sen.unit))
+
 
 async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
     """Main loop."""
@@ -32,8 +40,10 @@ async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
 
         VAR['running'] = True
         cnt = 5
+        sensors = pysma.Sensors()
         while VAR.get('running'):
-            await VAR['sma'].read(pysma.SENSORS)
+            await VAR['sma'].read(sensors)
+            print_table(sensors)
             cnt -= 1
             if cnt == 0:
                 break

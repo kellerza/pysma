@@ -2,7 +2,7 @@
 """pysma library setup."""
 from setuptools import setup
 
-VERSION = '0.2.2'
+VERSION = '0.3'
 URL = 'https://github.com/kellerza/pysma'
 
 setup(

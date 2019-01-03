@@ -29,8 +29,8 @@ SB_2_5 = loads("""
 def sensors():
     """Fixture to create some sensors."""
     yield [
-        (402, True, pysma.Sensor('s_402', '6400_00262200', 'W')),
-        (3514, True, pysma.Sensor('s_3514', '6400_00260100', 'W', 1000)),
+        (402, True, pysma.Sensor('6400_00262200', 's_402', 'W')),
+        (3514, True, pysma.Sensor('6400_00260100', 's_3514', 'W', 1000)),
     ]
 
 
@@ -57,7 +57,8 @@ class Test_sensor_class:
             assert sens.extract_value(SB_2_5) is False
 
     def test_null(self):
-        sens = pysma.Sensor('s_null', '6100_40263F00', 'W')
+        """Test a null or None result."""
+        sens = pysma.Sensor('6100_40263F00', 's_null', 'W')
         assert sens.extract_value(
             {"result": {"_": {"6100_40263F00": {"val": None}}}}) \
             is False
