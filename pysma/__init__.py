@@ -32,8 +32,8 @@ class Sensor(object):
     unit = attr.ib()
     factor = attr.ib(default=None)
     path = attr.ib(default=None)
-    value = attr.ib(default=None)
-    key_idx = attr.ib(default=0)
+    value = attr.ib(default=None, init=False)
+    key_idx = attr.ib(default=0, repr=False, init=False)
 
     def __attrs_post_init__(self):
         """Init path."""
@@ -91,9 +91,8 @@ class Sensor(object):
 
 class Sensors(object):
     """SMA Sensors."""
-    __s = []
-
     def __init__(self, add_default_sensors=True):
+        self.__s = []
         if add_default_sensors:
             self.add((
                 # AC side - Grid measurements
@@ -157,9 +156,13 @@ class Sensors(object):
         if not isinstance(sensor, Sensor):
             raise TypeError("pysma.Sensor expected")
 
-        if sensor.name in self or sensor.key in self:
-            raise KeyError("Cannot add sensor {} [{}]. Duplicate name/key."
-                           .format(sensor.name, sensor.key))
+        if sensor.name in self:
+            old = self[sensor.name]
+            self.__s.remove(old)
+            _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
+
+        if sensor.key in self:
+            _LOGGER.warning("Duplicate SMA sensor key %s", sensor.key)
 
         self.__s.append(sensor)
 

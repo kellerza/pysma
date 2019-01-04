@@ -1,10 +1,10 @@
 """Test pysma sensors."""
 import logging
 from json import loads
+from unittest.mock import patch
 
 import pytest
 
-# from tests.test_util.aiohttp import mock_aiohttp_client
 import pysma
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,3 +71,36 @@ class Test_sensor_class:
             {"result": {"_": {}}}) \
             is False
         assert sens.value is None
+
+    @patch("pysma._LOGGER.warning")
+    def test_default_no_duplicates(self, mock_warn):
+        """Ensure warning on duplicates."""
+        sen = pysma.Sensors()
+        assert mock_warn.call_count == 0
+        # Add duplicate frequency
+        news = pysma.Sensor('key1', 'frequency', '')
+        sen.add(news)
+        assert mock_warn.call_count == 1
+        assert sen[news.name] == news
+        # Add duplicate freq, key should not be raised
+        sen.add(pysma.Sensor('6100_00465700', 'frequency', ''))
+        assert mock_warn.call_count == 2
+        # Add duplicate freq key only
+        sen.add(pysma.Sensor('6100_00465700', 'f001', ''))
+        assert mock_warn.call_count == 3
+
+    @patch("pysma._LOGGER.warning")
+    def test_default_jmes(self, mock_warn):
+        """Ensure default sensors are ok."""
+        sens = pysma.Sensors()
+        for sen in sens:
+            sen.extract_value(SB_1_5)
+        assert mock_warn.called
+
+
+class Test_sms_connection:
+    def test_init(self):
+        """Initialize & close the SMA transport class."""
+        aiosession = None
+        sma = pysma.SMA(aiosession, '192.168.0.100', 'pass')
+        sma.close_session()
