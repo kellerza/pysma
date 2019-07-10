@@ -45,15 +45,13 @@ class Sensor(object):
         self.key = key
         self.key_idx = idx
 
-    def extract_value(self, json_body):
+    def extract_value(self, result_body):
         """Extract value from json body."""
-        # Extract
-        res = next(iter(jmespath.search(JMESPATH_BASE, json_body)))
-
         try:
-            res = res[self.key]
+            res = result_body[self.key]
         except (KeyError, TypeError):
-            _LOGGER.warning("Sensor %s: Not found in %s", self.key, res)
+            _LOGGER.warning(
+                "Sensor %s: Not found in %s", self.key, result_body)
             res = self.value
             self.value = None
             return self.value != res
@@ -249,9 +247,19 @@ class SMA:
             self.close_session()
             return False
 
-        _LOGGER.debug(json.dumps(body))
+        if not isinstance(body, dict) or 'result' not in body:
+            _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
+            return False
+
+        # Extract the 'result'
+        # This throws away the key...
+        # in future use the key for unique ID in HASS
+        result_body = next(iter(jmespath.search(JMESPATH_BASE, body)))
+
+        _LOGGER.debug(json.dumps(result_body))
         for sen in sensors:
-            if sen.extract_value(body):
+            if sen.extract_value(result_body):
                 _LOGGER.debug("%s\t= %s %s",
                               sen.name, sen.value, sen.unit)
+
         return True
