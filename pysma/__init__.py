@@ -173,7 +173,7 @@ URL_VALUES = "/dyn/getValues.json"
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
-    def __init__(self, session, url, password, group='user'):
+    def __init__(self, session, url, password, group='user', uid=None):
         """Init SMA connection."""
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
@@ -183,6 +183,8 @@ class SMA:
             self._url = "http://" + self._url
         self._aio_session = session
         self.sma_sid = None
+        self.sma_uid = uid
+
 
     @asyncio.coroutine
     def _fetch_json(self, url, payload):
@@ -251,12 +253,16 @@ class SMA:
             _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
             return False
 
-        # Extract the 'result'
-        # This throws away the key...
-        # in future use the key for unique ID in HASS
-        result_body = next(iter(jmespath.search(JMESPATH_BASE, body)))
+        if self.sma_uid is None:
+            # Get the unique ID
+            self.sma_uid = next(body['result'].keys())
 
-        _LOGGER.debug(json.dumps(result_body))
+        result_body = body['result'].pop(self.sma_uid, None)
+
+        if body != {'result': {}}:
+            _LOGGER.warning("Unexpected body %s, extracted %s",
+                            json.dumps(body), json.dumps(result_body))
+
         for sen in sensors:
             if sen.extract_value(result_body):
                 _LOGGER.debug("%s\t= %s %s",
