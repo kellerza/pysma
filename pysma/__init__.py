@@ -255,7 +255,7 @@ class SMA:
 
         if self.sma_uid is None:
             # Get the unique ID
-            self.sma_uid = next(body['result'].keys())
+            self.sma_uid = next(iter(body['result'].keys()))
 
         result_body = body['result'].pop(self.sma_uid, None)
 
