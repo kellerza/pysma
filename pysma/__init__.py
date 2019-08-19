@@ -11,6 +11,7 @@ import logging
 import async_timeout
 import attr
 import jmespath
+from aiohttp import client_exceptions
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -185,7 +186,6 @@ class SMA:
         self.sma_sid = None
         self.sma_uid = uid
 
-
     @asyncio.coroutine
     def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
@@ -200,7 +200,7 @@ class SMA:
                     res = yield from self._aio_session.post(
                         self._url + url, **params)
                     return (yield from res.json()) or {}
-            except asyncio.TimeoutError:
+            except (asyncio.TimeoutError, client_exceptions.ClientError):
                 continue
         return {'err': "Could not connect to SMA at {} (timeout)"
                        .format(self._url)}
@@ -229,8 +229,10 @@ class SMA:
         """Close the session login."""
         if self.sma_sid is None:
             return
-        yield from self._fetch_json(URL_LOGOUT, {})
-        self.sma_sid = None
+        try:
+            yield from self._fetch_json(URL_LOGOUT, {})
+        finally:
+            self.sma_sid = None
 
     @asyncio.coroutine
     def read(self, sensors):
