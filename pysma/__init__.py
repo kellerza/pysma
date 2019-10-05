@@ -106,8 +106,13 @@ class Sensors(object):
                     Sensor("6100_00464800", "voltage_l1", "V", 100),
                     Sensor("6100_00464900", "voltage_l2", "V", 100),
                     Sensor("6100_00464A00", "voltage_l3", "V", 100),
+                    Sensor("6100_40465300", "current_l1", "A", 1000),
+                    Sensor("6100_40465400", "current_l2", "A", 1000),
+                    Sensor("6100_40465500", "current_l3", "A", 1000),
                     # AC side - PV Generation
                     Sensor("6100_0046C200", "pv_power", "W"),
+                    Sensor("6380_40451F00", "pv_voltage", "V", 100),
+                    Sensor("6380_40452100", "pv_current", "A", 1000),
                     Sensor("6400_0046C300", "pv_gen_meter", "kWh", 1000),
                     Sensor("6400_00260100", "total_yield", "kWh", 1000),
                     Sensor("6400_00262200", "daily_yield", "Wh"),
