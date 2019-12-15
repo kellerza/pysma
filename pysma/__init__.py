@@ -266,7 +266,6 @@ class SMA:
 
         if not isinstance(body, dict) or "result" not in body:
             _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
-            yield from self.close_session()
             return False
 
         if self.sma_uid is None:
