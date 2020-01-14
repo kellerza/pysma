@@ -255,12 +255,13 @@ class SMA:
                 return False
         body = yield from self._fetch_json(URL_VALUES, payload=payload)
 
-        # On the first 401 error we close the session which will re-login
-        if body.get("err") == 401:
+        # On the first error we close the session which will re-login
+        err = body.get("err")
+        if err is not None:
             _LOGGER.warning(
-                "401 error detected, closing session to force " "another login attempt"
+                "%s: error detected, closing session to force another login attempt, got: %s", self._url, body
             )
-            self.close_session()
+            yield from self.close_session()
             return False
 
         if not isinstance(body, dict) or "result" not in body:
