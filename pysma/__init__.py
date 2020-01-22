@@ -224,13 +224,14 @@ class SMA:
         if self.sma_sid:
             return True
 
+        err = body.pop("err", None)
         msg = "Could not start session, %s, got {}".format(body)
 
-        if body.get("err"):
-            if body.get("err") == 503:
-                _LOGGER.error("Max amount of sessions reached")
+        if err:
+            if err == 503:
+                _LOGGER.error(msg, "Max amount of sessions reached")
             else:
-                _LOGGER.error(msg, body.get("err"))
+                _LOGGER.error(msg, err)
         else:
             _LOGGER.error(msg, "Session ID expected [result.sid]")
         return False
@@ -259,7 +260,9 @@ class SMA:
         err = body.get("err")
         if err is not None:
             _LOGGER.warning(
-                "%s: error detected, closing session to force another login attempt, got: %s", self._url, body
+                "%s: error detected, closing session to force another login attempt, got: %s",
+                self._url,
+                body,
             )
             yield from self.close_session()
             return False
@@ -270,7 +273,7 @@ class SMA:
 
         if self.sma_uid is None:
             # Get the unique ID
-            self.sma_uid = next(iter(body["result"].keys()))
+            self.sma_uid = next(iter(body["result"].keys()), None)
 
         result_body = body["result"].pop(self.sma_uid, None)
 
@@ -281,8 +284,19 @@ class SMA:
                 json.dumps(result_body),
             )
 
+        notfound = []
         for sen in sensors:
-            if sen.extract_value(result_body):
-                _LOGGER.debug("%s\t= %s %s", sen.name, sen.value, sen.unit)
+            if sen.key in result_body:
+                sen.extract_value(result_body)
+                continue
+
+            notfound.append(f"{sen.name} [{sen.key}]")
+
+        if notfound:
+            _LOGGER.warning(
+                "No values for sensors: %s. Response from inverter: %s",
+                ",".join(notfound),
+                result_body,
+            )
 
         return True
