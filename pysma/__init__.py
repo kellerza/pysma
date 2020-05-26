@@ -191,6 +191,8 @@ class SMA:
         """Init SMA connection."""
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
+        if len(password) > 12:
+            _LOGGER.warn('Password should not exceed 12 characters')
         self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
