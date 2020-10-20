@@ -44,6 +44,10 @@ class Sensor(object):
         self.key = key
         self.key_idx = idx
 
+    def extract_logging(self, result_body):
+        """Extract logs from json body."""
+        self.value = result_body
+
     def extract_value(self, result_body):
         """Extract value from json body."""
         try:
@@ -182,6 +186,7 @@ class Sensors(object):
 URL_LOGIN = "/dyn/login.json"
 URL_LOGOUT = "/dyn/logout.json"
 URL_VALUES = "/dyn/getValues.json"
+URL_LOGGER = "/dyn/getLogger.json"
 
 
 class SMA:
@@ -301,4 +306,50 @@ class SMA:
                 result_body,
             )
 
+        return True
+
+
+    @asyncio.coroutine
+    def  read_logging(self, sensors, start_time, end_time):
+        """Read a logging key and return the results."""
+        if len(sensors) != 1:
+          _LOGGER.warning("logging sensor must be used alone")
+          return False
+
+        payload = { "destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time }
+        if self.sma_sid is None:
+            yield from self.new_session()
+            if self.sma_sid is None:
+                return False
+        body = yield from self._fetch_json(URL_LOGGER, payload=payload)
+
+        # On the first error we close the session which will re-login
+        err = body.get("err")
+        if err is not None:
+            _LOGGER.warning(
+                "%s: error detected, closing session to force another login attempt, got: %s",
+                self._url,
+                body,
+            )
+            yield from self.close_session()
+            return False
+
+        if not isinstance(body, dict) or "result" not in body:
+            _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
+            return False
+
+        if self.sma_uid is None:
+            # Get the unique ID
+            self.sma_uid = next(iter(body["result"].keys()), None)
+
+        result_body = body["result"].pop(self.sma_uid, None)
+        if body != {"result": {}}:
+            _LOGGER.warning(
+                "Unexpected body %s, extracted %s",
+                json.dumps(body),
+                json.dumps(result_body),
+            )
+
+        for sen in sensors:
+          sen.extract_logging(result_body)
         return True
