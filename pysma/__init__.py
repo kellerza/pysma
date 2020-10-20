@@ -44,7 +44,7 @@ class Sensor(object):
         self.key = key
         self.key_idx = idx
 
-    def extract_logging(self, result_body):
+    def extract_logger(self, result_body):
         """Extract logs from json body."""
         self.value = result_body
 
@@ -224,44 +224,12 @@ class SMA:
         return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
 
     @asyncio.coroutine
-    def new_session(self):
-        """Establish a new session."""
-        body = yield from self._fetch_json(URL_LOGIN, self._new_session_data)
-        self.sma_sid = jmespath.search("result.sid", body)
-        if self.sma_sid:
-            return True
-
-        err = body.pop("err", None)
-        msg = "Could not start session, %s, got {}".format(body)
-
-        if err:
-            if err == 503:
-                _LOGGER.error(msg, "Max amount of sessions reached")
-            else:
-                _LOGGER.error(msg, err)
-        else:
-            _LOGGER.error(msg, "Session ID expected [result.sid]")
-        return False
-
-    @asyncio.coroutine
-    def close_session(self):
-        """Close the session login."""
-        if self.sma_sid is None:
-            return
-        try:
-            yield from self._fetch_json(URL_LOGOUT, {})
-        finally:
-            self.sma_sid = None
-
-    @asyncio.coroutine
-    def read(self, sensors):
-        """Read a set of keys."""
-        payload = {"destDev": [], "keys": list(set([s.key for s in sensors]))}
+    def _read_body(self, sensors, url, payload):
         if self.sma_sid is None:
             yield from self.new_session()
             if self.sma_sid is None:
                 return False
-        body = yield from self._fetch_json(URL_VALUES, payload=payload)
+        body = yield from self._fetch_json(url, payload=payload)
 
         # On the first error we close the session which will re-login
         err = body.get("err")
@@ -296,6 +264,9 @@ class SMA:
             if sen.key in result_body:
                 sen.extract_value(result_body)
                 continue
+            elif url == URL_LOGGER:
+                sen.extract_logger(result_body)
+                continue
 
             notfound.append(f"{sen.name} [{sen.key}]")
 
@@ -308,48 +279,48 @@ class SMA:
 
         return True
 
+    @asyncio.coroutine
+    def new_session(self):
+        """Establish a new session."""
+        body = yield from self._fetch_json(URL_LOGIN, self._new_session_data)
+        self.sma_sid = jmespath.search("result.sid", body)
+        if self.sma_sid:
+            return True
+
+        err = body.pop("err", None)
+        msg = "Could not start session, %s, got {}".format(body)
+
+        if err:
+            if err == 503:
+                _LOGGER.error(msg, "Max amount of sessions reached")
+            else:
+                _LOGGER.error(msg, err)
+        else:
+            _LOGGER.error(msg, "Session ID expected [result.sid]")
+        return False
 
     @asyncio.coroutine
-    def  read_logging(self, sensors, start_time, end_time):
+    def close_session(self):
+        """Close the session login."""
+        if self.sma_sid is None:
+            return
+        try:
+            yield from self._fetch_json(URL_LOGOUT, {})
+        finally:
+            self.sma_sid = None
+
+    @asyncio.coroutine
+    def read(self, sensors):
+        """Read a set of keys."""
+        payload = {"destDev": [], "keys": list(set([s.key for s in sensors]))}
+        return self._read_body(sensors, URL_VALUES, payload)
+
+    @asyncio.coroutine
+    def read_logging(self, sensors, start_time, end_time):
         """Read a logging key and return the results."""
         if len(sensors) != 1:
           _LOGGER.warning("logging sensor must be used alone")
           return False
 
         payload = { "destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time }
-        if self.sma_sid is None:
-            yield from self.new_session()
-            if self.sma_sid is None:
-                return False
-        body = yield from self._fetch_json(URL_LOGGER, payload=payload)
-
-        # On the first error we close the session which will re-login
-        err = body.get("err")
-        if err is not None:
-            _LOGGER.warning(
-                "%s: error detected, closing session to force another login attempt, got: %s",
-                self._url,
-                body,
-            )
-            yield from self.close_session()
-            return False
-
-        if not isinstance(body, dict) or "result" not in body:
-            _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
-            return False
-
-        if self.sma_uid is None:
-            # Get the unique ID
-            self.sma_uid = next(iter(body["result"].keys()), None)
-
-        result_body = body["result"].pop(self.sma_uid, None)
-        if body != {"result": {}}:
-            _LOGGER.warning(
-                "Unexpected body %s, extracted %s",
-                json.dumps(body),
-                json.dumps(result_body),
-            )
-
-        for sen in sensors:
-          sen.extract_logging(result_body)
-        return True
+        return self._read_body(sensors, URL_LOGGER, payload)
