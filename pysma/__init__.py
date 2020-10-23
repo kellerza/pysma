@@ -197,7 +197,7 @@ class SMA:
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
         if len(password) > 12:
-            _LOGGER.warn('Password should not exceed 12 characters')
+            _LOGGER.warning('Password should not exceed 12 characters')
         self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
@@ -224,7 +224,7 @@ class SMA:
         return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
 
     @asyncio.coroutine
-    def _read_body(self, sensors, url, payload):
+    def _read_body(self, url, payload):
         if self.sma_sid is None:
             yield from self.new_session()
             if self.sma_sid is None:
@@ -294,11 +294,9 @@ class SMA:
     def read(self, sensors):
         """Read a set of keys."""
         payload = {"destDev": [], "keys": list(set([s.key for s in sensors]))}
-        result_body = yield from self._read_body(sensors, URL_VALUES, payload)
+        result_body = yield from self._read_body(URL_VALUES, payload)
         if not result_body:
-            _LOGGER.warning("No values for logging sensors %s", str(list(set([s.key for s in sensors]))))
             return False
-
 
         notfound = []
         for sen in sensors:
@@ -318,17 +316,11 @@ class SMA:
         return True
 
     @asyncio.coroutine
-    def  read_logging(self, sensors, start_time, end_time):
+    def read_logger(self, sensors, start_time, end_time):
         """Read a logging key and return the results."""
-        if len(sensors) != 1:
-            _LOGGER.warning("logging sensor must be used alone")
-            return False
-
-        payload = { "destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time }
-        result_body = yield from self._read_body(sensors, URL_LOGGER, payload)
-
+        payload = {"destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time}
+        result_body = yield from self._read_body(URL_LOGGER, payload)
         if not result_body:
-            _LOGGER.warning("No values for logging sensor %s", sensors[0].key)
             return False
 
         for sen in sensors:
