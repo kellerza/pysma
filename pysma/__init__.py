@@ -44,6 +44,10 @@ class Sensor(object):
         self.key = key
         self.key_idx = idx
 
+    def extract_logger(self, result_body):
+        """Extract logs from json body."""
+        self.value = result_body
+
     def extract_value(self, result_body):
         """Extract value from json body."""
         try:
@@ -182,6 +186,7 @@ class Sensors(object):
 URL_LOGIN = "/dyn/login.json"
 URL_LOGOUT = "/dyn/logout.json"
 URL_VALUES = "/dyn/getValues.json"
+URL_LOGGER = "/dyn/getLogger.json"
 
 
 class SMA:
@@ -192,7 +197,7 @@ class SMA:
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
         if len(password) > 12:
-            _LOGGER.warn('Password should not exceed 12 characters')
+            _LOGGER.warning('Password should not exceed 12 characters')
         self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
@@ -217,6 +222,43 @@ class SMA:
             except (asyncio.TimeoutError, client_exceptions.ClientError):
                 continue
         return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
+
+    @asyncio.coroutine
+    def _read_body(self, url, payload):
+        if self.sma_sid is None:
+            yield from self.new_session()
+            if self.sma_sid is None:
+                return None
+        body = yield from self._fetch_json(url, payload=payload)
+
+        # On the first error we close the session which will re-login
+        err = body.get("err")
+        if err is not None:
+            _LOGGER.warning(
+                "%s: error detected, closing session to force another login attempt, got: %s",
+                self._url,
+                body,
+            )
+            yield from self.close_session()
+            return None
+
+        if not isinstance(body, dict) or "result" not in body:
+            _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
+            return None
+
+        if self.sma_uid is None:
+            # Get the unique ID
+            self.sma_uid = next(iter(body["result"].keys()), None)
+
+        result_body = body["result"].pop(self.sma_uid, None)
+        if body != {"result": {}}:
+            _LOGGER.warning(
+                "Unexpected body %s, extracted %s",
+                json.dumps(body),
+                json.dumps(result_body),
+            )
+
+        return result_body
 
     @asyncio.coroutine
     def new_session(self):
@@ -252,39 +294,9 @@ class SMA:
     def read(self, sensors):
         """Read a set of keys."""
         payload = {"destDev": [], "keys": list(set([s.key for s in sensors]))}
-        if self.sma_sid is None:
-            yield from self.new_session()
-            if self.sma_sid is None:
-                return False
-        body = yield from self._fetch_json(URL_VALUES, payload=payload)
-
-        # On the first error we close the session which will re-login
-        err = body.get("err")
-        if err is not None:
-            _LOGGER.warning(
-                "%s: error detected, closing session to force another login attempt, got: %s",
-                self._url,
-                body,
-            )
-            yield from self.close_session()
+        result_body = yield from self._read_body(URL_VALUES, payload)
+        if not result_body:
             return False
-
-        if not isinstance(body, dict) or "result" not in body:
-            _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
-            return False
-
-        if self.sma_uid is None:
-            # Get the unique ID
-            self.sma_uid = next(iter(body["result"].keys()), None)
-
-        result_body = body["result"].pop(self.sma_uid, None)
-
-        if body != {"result": {}}:
-            _LOGGER.warning(
-                "Unexpected body %s, extracted %s",
-                json.dumps(body),
-                json.dumps(result_body),
-            )
 
         notfound = []
         for sen in sensors:
@@ -300,5 +312,18 @@ class SMA:
                 ",".join(notfound),
                 result_body,
             )
+
+        return True
+
+    @asyncio.coroutine
+    def read_logger(self, sensors, start_time, end_time):
+        """Read a logging key and return the results."""
+        payload = {"destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time}
+        result_body = yield from self._read_body(URL_LOGGER, payload)
+        if not result_body:
+            return False
+
+        for sen in sensors:
+            sen.extract_logger(result_body)
 
         return True
