@@ -150,7 +150,7 @@ class Sensors():
     def __getitem__(self, key):
         """Get a sensor using either the name or key."""
         for sen in self.__s:
-            if key in (sen.name or sen.key):
+            if sen.name == key or sen.key == key:
                 return sen
         raise KeyError(key)
 
