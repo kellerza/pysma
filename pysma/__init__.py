@@ -23,7 +23,7 @@ JMESPATH_VAL = "val"
 
 
 @attr.s(slots=True)
-class Sensor(object):
+class Sensor():
     """pysma sensor definition."""
 
     key = attr.ib()
@@ -96,7 +96,7 @@ class Sensor(object):
             self.value = res
 
 
-class Sensors(object):
+class Sensors():
     """SMA Sensors."""
 
     def __init__(self, add_default_sensors=True):
@@ -153,12 +153,8 @@ class Sensors(object):
         return len(self.__s)
 
     def __contains__(self, key):
-        """Get a sensor using either the name or key."""
-        try:
-            if self[key]:
-                return True
-        except KeyError:
-            return False
+        """Check if a sensor is defined."""
+        return key in self
 
     def __getitem__(self, key):
         """Get a sensor using either the name or key."""
@@ -203,10 +199,11 @@ class SMA:
 
     def __init__(self, session, url, password, group="user", uid=None):
         """Init SMA connection."""
+        # pylint: disable=too-many-arguments
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
         if len(password) > 12:
-            _LOGGER.warning('Password should not exceed 12 characters')
+            _LOGGER.warning("Password should not exceed 12 characters")
         self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
@@ -215,8 +212,7 @@ class SMA:
         self.sma_sid = None
         self.sma_uid = uid
 
-    @asyncio.coroutine
-    def _fetch_json(self, url, payload):
+    async def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
         params = {
             "data": json.dumps(payload),
@@ -226,19 +222,18 @@ class SMA:
         for _ in range(3):
             try:
                 with async_timeout.timeout(10):
-                    res = yield from self._aio_session.post(self._url + url, **params)
-                    return (yield from res.json()) or {}
+                    res = await self._aio_session.post(self._url + url, **params)
+                    return (await res.json()) or {}
             except (asyncio.TimeoutError, client_exceptions.ClientError):
                 continue
         return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
 
-    @asyncio.coroutine
-    def _read_body(self, url, payload):
+    async def _read_body(self, url, payload):
         if self.sma_sid is None:
-            yield from self.new_session()
+            await self.new_session()
             if self.sma_sid is None:
                 return None
-        body = yield from self._fetch_json(url, payload=payload)
+        body = await self._fetch_json(url, payload=payload)
 
         # On the first error we close the session which will re-login
         err = body.get("err")
@@ -248,7 +243,7 @@ class SMA:
                 self._url,
                 body,
             )
-            yield from self.close_session()
+            await self.close_session()
             return None
 
         if not isinstance(body, dict) or "result" not in body:
@@ -269,10 +264,9 @@ class SMA:
 
         return result_body
 
-    @asyncio.coroutine
-    def new_session(self):
+    async def new_session(self):
         """Establish a new session."""
-        body = yield from self._fetch_json(URL_LOGIN, self._new_session_data)
+        body = await self._fetch_json(URL_LOGIN, self._new_session_data)
         self.sma_sid = jmespath.search("result.sid", body)
         if self.sma_sid:
             return True
@@ -289,21 +283,19 @@ class SMA:
             _LOGGER.error(msg, "Session ID expected [result.sid]")
         return False
 
-    @asyncio.coroutine
-    def close_session(self):
+    async def close_session(self):
         """Close the session login."""
         if self.sma_sid is None:
             return
         try:
-            yield from self._fetch_json(URL_LOGOUT, {})
+            await self._fetch_json(URL_LOGOUT, {})
         finally:
             self.sma_sid = None
 
-    @asyncio.coroutine
-    def read(self, sensors):
+    async def read(self, sensors):
         """Read a set of keys."""
-        payload = {"destDev": [], "keys": list(set([s.key for s in sensors]))}
-        result_body = yield from self._read_body(URL_VALUES, payload)
+        payload = {"destDev": [], "keys": list({s.key for s in sensors})}
+        result_body = await self._read_body(URL_VALUES, payload)
         if not result_body:
             return False
 
@@ -324,11 +316,10 @@ class SMA:
 
         return True
 
-    @asyncio.coroutine
-    def read_logger(self, sensors, start_time, end_time):
+    async def read_logger(self, sensors, start, end):
         """Read a logging key and return the results."""
-        payload = {"destDev": [], "key": int(sensors[0].key), "tStart": start_time, "tEnd": end_time}
-        result_body = yield from self._read_body(URL_LOGGER, payload)
+        payload = {"destDev": [], "key": int(sensors[0].key), "tStart": start, "tEnd": end}
+        result_body = await self._read_body(URL_LOGGER, payload)
         if not result_body:
             return False
 
