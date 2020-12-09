@@ -225,7 +225,7 @@ class SMA:
         }
         for _ in range(3):
             try:
-                with async_timeout.timeout(3):
+                with async_timeout.timeout(10):
                     res = yield from self._aio_session.post(self._url + url, **params)
                     return (yield from res.json()) or {}
             except (asyncio.TimeoutError, client_exceptions.ClientError):
