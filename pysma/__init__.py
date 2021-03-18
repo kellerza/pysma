@@ -153,8 +153,12 @@ class Sensors():
         return len(self.__s)
 
     def __contains__(self, key):
-        """Check if a sensor is defined."""
-        return key in self
+        """Get a sensor using either the name or key."""
+        try:
+            if self[key]:
+                return True
+        except KeyError:
+            return False
 
     def __getitem__(self, key):
         """Get a sensor using either the name or key."""
