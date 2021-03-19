@@ -111,8 +111,8 @@ class Test_sensor_class:
 
 
 class Test_sms_connection:
-    def test_init(self):
+    async def test_init(self):
         """Initialize & close the SMA transport class."""
         aiosession = None
         sma = pysma.SMA(aiosession, "192.168.0.100", "pass")
-        sma.close_session()
+        await sma.close_session()
