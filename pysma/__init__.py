@@ -153,8 +153,12 @@ class Sensors():
         return len(self.__s)
 
     def __contains__(self, key):
-        """Check if a sensor is defined."""
-        return key in self
+        """Get a sensor using either the name or key."""
+        try:
+            if self[key]:
+                return True
+        except KeyError:
+            return False
 
     def __getitem__(self, key):
         """Get a sensor using either the name or key."""
@@ -182,8 +186,10 @@ class Sensors():
             self.__s.remove(old)
             _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
 
-        if sensor.key in self:
-            _LOGGER.warning("Duplicate SMA sensor key %s", sensor.key)
+        if sensor.key in self and self[sensor.key].key_idx is sensor.key_idx:
+            _LOGGER.warning(
+                "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.key_idx
+            )
 
         self.__s.append(sensor)
 
