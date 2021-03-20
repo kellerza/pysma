@@ -23,7 +23,7 @@ JMESPATH_VAL = "val"
 
 
 @attr.s(slots=True)
-class Sensor():
+class Sensor:
     """pysma sensor definition."""
 
     key = attr.ib()
@@ -96,7 +96,7 @@ class Sensor():
             self.value = res
 
 
-class Sensors():
+class Sensors:
     """SMA Sensors."""
 
     def __init__(self, add_default_sensors=True):
@@ -217,6 +217,29 @@ class SMA:
         self._aio_session = session
         self.sma_sid = None
         self.sma_uid = uid
+        self.l10n = {}
+
+        self.device_info_sensors = Sensors(False)
+        self.device_info_sensors.add(Sensor("6800_00A21E00", "serial_number", ""))
+        self.device_info_sensors.add(Sensor("6800_10821E00", "device_name", ""))
+        self.device_info_sensors.add(
+            Sensor(
+                "6800_08822000",
+                "device_type_id",
+                "",
+                None,
+                ('"1"[0].val[0].tag', "val[0].tag"),
+            )
+        )
+        self.device_info_sensors.add(
+            Sensor(
+                "6800_08822B00",
+                "device_manufacturer_id",
+                "",
+                None,
+                ('"1"[0].val[0].tag', "val[0].tag"),
+            )
+        )
 
     async def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
@@ -233,6 +256,11 @@ class SMA:
             except (asyncio.TimeoutError, client_exceptions.ClientError):
                 continue
         return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
+
+    async def _read_l10n(self, lang="en-US"):
+        """Read device language file."""
+        res = await self._aio_session.get(f"{self._url}/data/l10n/{lang}.json")
+        return (await res.json()) or {}
 
     async def _read_body(self, url, payload):
         if self.sma_sid is None:
@@ -272,6 +300,7 @@ class SMA:
 
     async def new_session(self):
         """Establish a new session."""
+        self.l10n = await self._read_l10n()
         body = await self._fetch_json(URL_LOGIN, self._new_session_data)
         self.sma_sid = jmespath.search("result.sid", body)
         if self.sma_sid:
@@ -324,7 +353,12 @@ class SMA:
 
     async def read_logger(self, sensors, start, end):
         """Read a logging key and return the results."""
-        payload = {"destDev": [], "key": int(sensors[0].key), "tStart": start, "tEnd": end}
+        payload = {
+            "destDev": [],
+            "key": int(sensors[0].key),
+            "tStart": start,
+            "tEnd": end,
+        }
         result_body = await self._read_body(URL_LOGGER, payload)
         if not result_body:
             return False
@@ -333,3 +367,31 @@ class SMA:
             sen.extract_logger(result_body)
 
         return True
+
+    async def device_info(self):
+        """Read device info and return the results."""
+        fallback_device_info = {
+            "manufacturer": "SMA",
+            "name": "SMA Device",
+            "type": "",
+            "serial": "9999999999",
+        }
+
+        values = await self.read(self.device_info_sensors)
+        if not values:
+            return False
+
+        device_info = {
+            "serial": self.device_info_sensors["serial_number"].value
+            or fallback_device_info["serial"],
+            "name": self.device_info_sensors["device_name"].value
+            or fallback_device_info["senamerial"],
+            "type": self.l10n.get(str(self.device_info_sensors["device_type_id"].value))
+            or fallback_device_info["type"],
+            "manufacturer": self.l10n.get(
+                str(self.device_info_sensors["device_manufacturer_id"].value)
+            )
+            or fallback_device_info["manufacturer"],
+        }
+
+        return device_info
