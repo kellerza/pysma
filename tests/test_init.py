@@ -1,5 +1,5 @@
 """Test pysma sensors."""
-from homeassistant.loader import async_get_dhcp
+# from homeassistant.loader import async_get_dhcp
 import logging
 import aiohttp
 from json import loads
@@ -9,7 +9,7 @@ import pytest
 
 import pysma
 
-from . import MOCK_L10N, MOCK_DEVICE, mock_aioresponse
+from . import MOCK_L10N, MOCK_DEVICE, mock_aioresponse  # noqa: F401
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ class Test_sensor_class:
 
 class Test_SMA_class:
     @pytest.fixture(autouse=True)
-    def _setup(self, mock_aioresponse):
+    def _setup(self, mock_aioresponse):  # noqa: F811
         self.host = "1.1.1.1"
         self.base_url = f"http://{self.host}"
         mock_aioresponse.get(
@@ -139,7 +139,7 @@ class Test_SMA_class:
         mock_aioresponse.post(f"{self.base_url}/dyn/logout.json?sid=ABCD", payload={})
 
     @patch("pysma._LOGGER.warning")
-    async def test_session(self, mock_warn, mock_aioresponse):
+    async def test_session(self, mock_warn, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -153,19 +153,19 @@ class Test_SMA_class:
 
         assert mock_warn.call_count == 1
 
-    async def test_new_session_invalid_group(self, mock_aioresponse):
+    async def test_new_session_invalid_group(self, mock_aioresponse):  # noqa: F811
         session = aiohttp.ClientSession()
         with pytest.raises(KeyError):
             pysma.SMA(session, self.host, "pass", "invalid-group")
 
-    async def test_new_session_fail(self, mock_aioresponse):
+    async def test_new_session_fail(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(f"{self.base_url}/dyn/login.json", payload={"result": {}})
 
         session = aiohttp.ClientSession()
         sma = pysma.SMA(session, self.host, "pass")
         assert not await sma.new_session()
 
-    async def test_device_info(self, mock_aioresponse):
+    async def test_device_info(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -201,7 +201,7 @@ class Test_SMA_class:
         assert result
         assert result == MOCK_DEVICE
 
-    async def test_device_info_fallback(self, mock_aioresponse):
+    async def test_device_info_fallback(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -228,7 +228,7 @@ class Test_SMA_class:
         assert result["type"] == ""
         assert result["serial"] == "9999999999"
 
-    async def test_device_info_fail(self, mock_aioresponse):
+    async def test_device_info_fail(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
