@@ -201,6 +201,7 @@ URL_LOGGER = "/dyn/getLogger.json"
 URL_DASH_LOGGER = "/dyn/getDashLogger.json"
 URL_DASH_VALUES = "/dyn/getDashValues.json"
 
+
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
