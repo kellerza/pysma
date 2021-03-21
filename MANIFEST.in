@@ -1,3 +1,4 @@
-include LICENSE README.rst
+include LICENSE README.md
 graft pysma
+graft tests
 recursive-exclude * *.py[co]
