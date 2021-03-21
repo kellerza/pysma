@@ -153,7 +153,7 @@ class Sensors:
         return len(self.__s)
 
     def __contains__(self, key):
-        """Get a sensor using either the name or key."""
+        """Check if a sensor is defined."""
         try:
             if self[key]:
                 return True
@@ -198,19 +198,23 @@ URL_LOGIN = "/dyn/login.json"
 URL_LOGOUT = "/dyn/logout.json"
 URL_VALUES = "/dyn/getValues.json"
 URL_LOGGER = "/dyn/getLogger.json"
-
+URL_DASH_LOGGER = "/dyn/getDashLogger.json"
+URL_DASH_VALUES = "/dyn/getDashValues.json"
 
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
-    def __init__(self, session, url, password, group="user", uid=None):
+    def __init__(self, session, url, password=None, group="user", uid=None):
         """Init SMA connection."""
         # pylint: disable=too-many-arguments
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
-        if len(password) > 12:
+        if password is not None and len(password) > 12:
             _LOGGER.warning("Password should not exceed 12 characters")
-        self._new_session_data = {"right": USERS[group], "pass": password}
+        if password is None:
+            self._new_session_data = None
+        else:
+            self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
             self._url = "http://" + self._url
@@ -263,7 +267,7 @@ class SMA:
         return (await res.json()) or {}
 
     async def _read_body(self, url, payload):
-        if self.sma_sid is None:
+        if self.sma_sid is None and self._new_session_data is not None:
             await self.new_session()
             if self.sma_sid is None:
                 return None
@@ -329,8 +333,12 @@ class SMA:
 
     async def read(self, sensors):
         """Read a set of keys."""
-        payload = {"destDev": [], "keys": list({s.key for s in sensors})}
-        result_body = await self._read_body(URL_VALUES, payload)
+        if self._new_session_data is None:
+            payload = {"destDev": [], "keys": []}
+            result_body = await self._read_body(URL_DASH_VALUES, payload)
+        else:
+            payload = {"destDev": [], "keys": list({s.key for s in sensors})}
+            result_body = await self._read_body(URL_VALUES, payload)
         if not result_body:
             return False
 
@@ -351,15 +359,19 @@ class SMA:
 
         return True
 
-    async def read_logger(self, sensors, start, end):
+    async def read_logger(self, sensors=None, start=None, end=None):
         """Read a logging key and return the results."""
-        payload = {
-            "destDev": [],
-            "key": int(sensors[0].key),
-            "tStart": start,
-            "tEnd": end,
-        }
-        result_body = await self._read_body(URL_LOGGER, payload)
+        if self._new_session_data is None:
+            payload = {"destDev": [], "key": []}
+            result_body = await self._read_body(URL_DASH_LOGGER, payload)
+        else:
+            payload = {
+                "destDev": [],
+                "key": int(sensors[0].key),
+                "tStart": start,
+                "tEnd": end,
+            }
+            result_body = await self._read_body(URL_LOGGER, payload)
         if not result_body:
             return False
 
