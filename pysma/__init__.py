@@ -36,7 +36,7 @@ class Sensor:
 
     def __attrs_post_init__(self):
         """Init path."""
-        idx = 0
+        idx = "0"
         key = str(self.key)
         if key[-2] == "_" and key[-1].isdigit():
             idx = key[-1]
@@ -120,10 +120,8 @@ class Sensors:
                     Sensor("6100_0046C200", "pv_power", "W"),
                     Sensor("6380_40251E00_0", "pv_power_a", "W"),
                     Sensor("6380_40251E00_1", "pv_power_b", "W"),
-                    Sensor("6380_40451F00", "pv_voltage", "V", 100),
                     Sensor("6380_40451F00_0", "pv_voltage_a", "V", 100),
                     Sensor("6380_40451F00_1", "pv_voltage_b", "V", 100),
-                    Sensor("6380_40452100", "pv_current", "A", 1000),
                     Sensor("6380_40452100_0", "pv_current_a", "A", 1000),
                     Sensor("6380_40452100_1", "pv_current_b", "A", 1000),
                     Sensor("6400_0046C300", "pv_gen_meter", "kWh", 1000),
