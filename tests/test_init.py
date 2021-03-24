@@ -92,7 +92,7 @@ class Test_sensor_class:
     def test_default_no_duplicates(self, mock_warn):
         """Ensure warning on duplicates."""
         sen = pysma.Sensors()
-        assert len(sen) == 30
+        assert len(sen) == 28
         assert mock_warn.call_count == 0
         # Add duplicate frequency
         news = pysma.Sensor("key1", "frequency", "")
