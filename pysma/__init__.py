@@ -32,7 +32,7 @@ class Sensor:
     factor = attr.ib(default=None)
     path = attr.ib(default=None)
     value = attr.ib(default=None, init=False)
-    key_idx = attr.ib(default=0, repr=False, init=False)
+    key_idx = attr.ib(default="0", repr=False, init=False)
 
     def __attrs_post_init__(self):
         """Init path."""
