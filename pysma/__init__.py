@@ -184,7 +184,7 @@ class Sensors:
             self.__s.remove(old)
             _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
 
-        if sensor.key in self and self[sensor.key].key_idx is sensor.key_idx:
+        if sensor.key in self and self[sensor.key].key_idx == sensor.key_idx:
             _LOGGER.warning(
                 "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.key_idx
             )
