@@ -21,6 +21,18 @@ JMESPATH_BASE = "result.*"
 JMESPATH_VAL_IDX = '"1"[{}].val'
 JMESPATH_VAL = "val"
 
+LEGACY_MAP = {
+    "pv_power": {"old_key": "6100_0046C200", "new_sensor": "pv_power_a"},
+    "pv_voltage": {
+        "old_key": "6380_40451F00",
+        "new_sensor": "pv_power_a",
+    },
+    "pv_current": {
+        "old_key": "6380_40452100",
+        "new_sensor": "pv_current_a",
+    },
+}
+
 
 @attr.s(slots=True)
 class Sensor:
