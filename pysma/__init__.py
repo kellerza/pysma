@@ -44,6 +44,7 @@ class Sensor:
     factor = attr.ib(default=None)
     path = attr.ib(default=None)
     enabled = attr.ib(default=True)
+    l10n_translate = attr.ib(default=False)
     value = attr.ib(default=None, init=False)
     key_idx = attr.ib(default="0", repr=False, init=False)
 
@@ -61,7 +62,7 @@ class Sensor:
         """Extract logs from json body."""
         self.value = result_body
 
-    def extract_value(self, result_body):
+    def extract_value(self, result_body, l10n={}):
         """Extract value from json body."""
         try:
             res = result_body[self.key]
@@ -103,6 +104,13 @@ class Sensor:
 
         if isinstance(res, (int, float)) and self.factor:
             res /= self.factor
+
+        if self.l10n_translate:
+            res = l10n.get(
+                str(res),
+                res,
+            )
+
         try:
             return res != self.value
         finally:
@@ -157,6 +165,7 @@ class Sensors:
                         "",
                         None,
                         ('"1"[0].val[0].tag', "val[0].tag"),
+                        l10n_translate=True,
                     ),
                 )
             )
@@ -243,19 +252,21 @@ class SMA:
         self.device_info_sensors.add(
             Sensor(
                 "6800_08822000",
-                "device_type_id",
+                "device_type",
                 "",
                 None,
                 ('"1"[0].val[0].tag', "val[0].tag"),
+                l10n_translate=True,
             )
         )
         self.device_info_sensors.add(
             Sensor(
                 "6800_08822B00",
-                "device_manufacturer_id",
+                "device_manufacturer",
                 "",
                 None,
                 ('"1"[0].val[0].tag', "val[0].tag"),
+                l10n_translate=True,
             )
         )
 
@@ -363,7 +374,7 @@ class SMA:
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body)
+                    sen.extract_value(result_body, self.l10n)
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -416,11 +427,9 @@ class SMA:
             or fallback_device_info["serial"],
             "name": self.device_info_sensors["device_name"].value
             or fallback_device_info["senamerial"],
-            "type": self.l10n.get(str(self.device_info_sensors["device_type_id"].value))
+            "type": self.device_info_sensors["device_type"].value
             or fallback_device_info["type"],
-            "manufacturer": self.l10n.get(
-                str(self.device_info_sensors["device_manufacturer_id"].value)
-            )
+            "manufacturer": self.device_info_sensors["device_manufacturer"].value
             or fallback_device_info["manufacturer"],
         }
 
