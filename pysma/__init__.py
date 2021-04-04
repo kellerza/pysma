@@ -43,6 +43,7 @@ class Sensor:
     unit = attr.ib()
     factor = attr.ib(default=None)
     path = attr.ib(default=None)
+    enabled = attr.ib(default=True)
     value = attr.ib(default=None, init=False)
     key_idx = attr.ib(default="0", repr=False, init=False)
 
@@ -350,18 +351,22 @@ class SMA:
             payload = {"destDev": [], "keys": []}
             result_body = await self._read_body(URL_DASH_VALUES, payload)
         else:
-            payload = {"destDev": [], "keys": list({s.key for s in sensors})}
+            payload = {
+                "destDev": [],
+                "keys": list({s.key for s in sensors if s.enabled}),
+            }
             result_body = await self._read_body(URL_VALUES, payload)
         if not result_body:
             return False
 
         notfound = []
         for sen in sensors:
-            if sen.key in result_body:
-                sen.extract_value(result_body)
-                continue
+            if sen.enabled:
+                if sen.key in result_body:
+                    sen.extract_value(result_body)
+                    continue
 
-            notfound.append(f"{sen.name} [{sen.key}]")
+                notfound.append(f"{sen.name} [{sen.key}]")
 
         if notfound:
             _LOGGER.warning(
