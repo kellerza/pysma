@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 USERS = {"user": "usr", "installer": "istl"}
 
 JMESPATH_BASE = "result.*"
-JMESPATH_VAL_IDX = '"1"[{}].val'
+JMESPATH_VAL_IDX = '"{}"[{}].val'
 JMESPATH_VAL = "val"
 
 LEGACY_MAP = {
@@ -62,7 +62,7 @@ class Sensor:
         """Extract logs from json body."""
         self.value = result_body
 
-    def extract_value(self, result_body, l10n={}):
+    def extract_value(self, result_body, l10n={}, devclass="1"):
         """Extract value from json body."""
         try:
             res = result_body[self.key]
@@ -77,7 +77,10 @@ class Sensor:
             _paths = (
                 list(self.path)
                 if isinstance(self.path, (list, tuple))
-                else [JMESPATH_VAL, JMESPATH_VAL_IDX.format(self.key_idx)]
+                else [
+                    JMESPATH_VAL,
+                    JMESPATH_VAL_IDX.format(devclass, self.key_idx),
+                ]
             )
 
             while _paths:
@@ -245,6 +248,7 @@ class SMA:
         self.sma_sid = None
         self.sma_uid = uid
         self.l10n = {}
+        self.devclass = None
 
         self.device_info_sensors = Sensors(False)
         self.device_info_sensors.add(Sensor("6800_00A21E00", "serial_number", ""))
@@ -371,10 +375,11 @@ class SMA:
             return False
 
         notfound = []
+        devclass = await self.get_devclass(result_body)
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body, self.l10n)
+                    sen.extract_value(result_body, self.l10n, devclass)
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -426,7 +431,7 @@ class SMA:
             "serial": self.device_info_sensors["serial_number"].value
             or fallback_device_info["serial"],
             "name": self.device_info_sensors["device_name"].value
-            or fallback_device_info["senamerial"],
+            or fallback_device_info["name"],
             "type": self.device_info_sensors["device_type"].value
             or fallback_device_info["type"],
             "manufacturer": self.device_info_sensors["device_manufacturer"].value
@@ -434,3 +439,14 @@ class SMA:
         }
 
         return device_info
+
+    async def get_devclass(self, result_body):
+        if not self.devclass:
+            sensor_value = list(result_body.values())[0]
+            devclass_keys = list(sensor_value.keys())
+            if len(devclass_keys) > 1:
+                raise KeyError("More than 1 device class key is not supported")
+
+            self.devclass = devclass_keys[0]
+
+        return self.devclass
