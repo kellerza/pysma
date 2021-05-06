@@ -157,6 +157,9 @@ class Sensors:
                     Sensor("6400_00462500", "grid_total_absorbed", "kWh", 1000),
                     # Consumption = Energy from the PV system and grid
                     Sensor("6100_00543100", "current_consumption", "W"),
+                    Sensor("6100_0046EB00", "grid_active_power_consumed_l1", "W"),
+                    Sensor("6100_0046EC00", "grid_active_power_consumed_l2", "W"),
+                    Sensor("6100_0046ED00", "grid_active_power_consumed_l3", "W"),
                     Sensor("6400_00543A00", "total_consumption", "kWh", 1000),
                     # General
                     Sensor(
