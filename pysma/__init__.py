@@ -442,8 +442,13 @@ class SMA:
 
     async def get_devclass(self, result_body):
         if not self.devclass:
-            sensor_value = list(result_body.values())[0]
-            devclass_keys = list(sensor_value.keys())
+            sensor_values = list(result_body.values())
+            if len(sensor_values) == 0:
+                return None
+
+            devclass_keys = list(sensor_values[0].keys())
+            if len(devclass_keys) == 0:
+                return None
             if len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
 
