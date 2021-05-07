@@ -375,7 +375,7 @@ class SMA:
             return False
 
         notfound = []
-        devclass = await self.get_devclass(result_body)
+        devclass = self.get_devclass(result_body)
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
@@ -440,7 +440,7 @@ class SMA:
 
         return device_info
 
-    async def get_devclass(self, result_body):
+    def get_devclass(self, result_body):
         if not self.devclass:
             sensor_values = list(result_body.values())
             if len(sensor_values) == 0:
