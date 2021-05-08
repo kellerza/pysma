@@ -155,12 +155,6 @@ SENSOR_GRID_TOTAL_ABSORBED = {
     SUNIT: "kWh",
     SFACTOR: 1000,
 }
-# Consumption = Energy from the PV system and grid
-SENSOR_CURRENT_CONSUMPTION = {
-    SKEY: "6100_00543100",
-    SNAME: "current_consumption",
-    SUNIT: "W",
-}
 SENSOR_GRID_ACTIVE_POWER_CONSUMED_L1 = {
     SKEY: "6100_0046EB00",
     SNAME: "grid_active_power_consumed_l1",
@@ -175,12 +169,6 @@ SENSOR_GRID_ACTIVE_POWER_CONSUMED_L3 = {
     SKEY: "6100_0046ED00",
     SNAME: "grid_active_power_consumed_l3",
     SUNIT: "W",
-}
-SENSOR_TOTAL_CONSUMPTION = {
-    SKEY: "6400_00543A00",
-    SNAME: "total_consumption",
-    SUNIT: "kWh",
-    SFACTOR: 1000,
 }
 # Battery related sensors
 SENSOR_BATTERY_SOC = ["6100_00295A00_0", "battery_soc", "%"]
@@ -292,8 +280,6 @@ SENSOR_MAP = {
         SENSOR_GRID_POWER_ABSORBED,
         SENSOR_GRID_TOTAL_YIELD,
         SENSOR_GRID_TOTAL_ABSORBED,
-        SENSOR_CURRENT_CONSUMPTION,
-        SENSOR_TOTAL_CONSUMPTION,
         SENSOR_STATUS,
     ],
     ENERGY_METER_VIA_INVERTER: [
