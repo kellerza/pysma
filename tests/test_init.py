@@ -56,7 +56,7 @@ class Test_sensor_class:
             assert sens.path is None
             assert sens.extract_value(SB_1_5) is change
             assert sens.value == val
-            assert sens.path == pysma.JMESPATH_VAL_IDX.format(sens.key_idx)
+            assert sens.path == pysma.JMESPATH_VAL_IDX.format("1", sens.key_idx)
 
             assert sens.extract_value(SB_1_5) is False
 
@@ -242,3 +242,27 @@ class Test_SMA_class:
         assert await sma.new_session()
         result = await sma.device_info()
         assert not result
+
+    async def test_devclass_more_than_one(self, mock_aioresponse):
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
+            payload={
+                "result": {
+                    "0199-xxxxx385": {
+                        "6800_12345678": {
+                            "1": [{"val": "value1"}],
+                            "7": [{"val": "value2"}],
+                        },
+                    }
+                }
+            },
+        )
+
+        session = aiohttp.ClientSession()
+        sma = pysma.SMA(session, self.host, "pass")
+        assert await sma.new_session()
+        with pytest.raises(KeyError):
+            await sma.device_info()
