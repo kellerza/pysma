@@ -91,7 +91,7 @@ class Test_sensor_class:
     @patch("pysma._LOGGER.warning")
     def test_default_no_duplicates(self, mock_warn):
         """Ensure warning on duplicates."""
-        sen = pysma.Sensors()
+        sen = pysma.Sensors(pysma.const.SENSOR_MAP[pysma.const.DEVCLASS_INVERTER])
         assert len(sen) > 25
         assert len(sen) < 50
         assert mock_warn.call_count == 0
@@ -122,7 +122,7 @@ class Test_sensor_class:
     @patch("pysma._LOGGER.warning")
     def test_default_jmes(self, mock_warn):
         """Ensure default sensors are ok."""
-        sens = pysma.Sensors()
+        sens = pysma.Sensors(pysma.const.SENSOR_MAP[pysma.const.DEVCLASS_INVERTER])
         for sen in sens:
             sen.extract_value(SB_1_5)
         assert mock_warn.called
