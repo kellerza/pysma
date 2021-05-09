@@ -16,9 +16,11 @@ from aiohttp import client_exceptions
 from .const import (
     DEVCLASS_INVERTER,
     DEVICE_INFO,
+    ENERGY_METER_VIA_INVERTER,
     FALLBACK_DEVICE_INFO,
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
+    SENSOR_ENERGY_METER,
     SENSOR_MAP,
     SENSOR_STATUS,
     URL_DASH_LOGGER,
@@ -390,4 +392,24 @@ class SMA:
     async def get_sensors(self):
         # Fallback to DEVCLASS_INVERTER if devclass returns None
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
-        return Sensors(SENSOR_MAP.get(devclass))
+
+        _LOGGER.debug("Loading sensors for device class %s", devclass)
+        device_sensors = SENSOR_MAP.get(devclass)
+
+        if devclass == DEVCLASS_INVERTER:
+            em_sensor = Sensor(**SENSOR_ENERGY_METER)
+            values = await self.read(Sensors(em_sensor))
+            if values and em_sensor.value:
+                _LOGGER.debug(
+                    "Energy Meter with serial %s detected. Adding extra sensors.",
+                    em_sensor.value,
+                )
+                device_sensors.extend(
+                    [
+                        sensor
+                        for sensor in SENSOR_MAP[ENERGY_METER_VIA_INVERTER]
+                        if sensor not in device_sensors
+                    ]
+                )
+
+        return Sensors(device_sensors)

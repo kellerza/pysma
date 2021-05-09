@@ -245,12 +245,15 @@ SENSOR_DEVICE_TYPE = {
     SPATH: JMESPATHS_TAG,
     SL10N: True,
 }
-
 SENSOR_DEVICE_MANUFACTURER = {
     SKEY: "6800_08822B00",
     SNAME: "device_manufacturer",
     SPATH: JMESPATHS_TAG,
     SL10N: True,
+}
+SENSOR_ENERGY_METER = {
+    SKEY: "6800_008AA300",
+    SNAME: "energy_meter",
 }
 
 SENSOR_MAP = {
