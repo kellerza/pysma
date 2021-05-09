@@ -27,12 +27,12 @@ def print_table(sensors):
             print("{:>25}{:>15} {}".format(sen.name, str(sen.value), sen.unit))
 
 
-async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
+async def main_loop(loop, password, user, url):  # pylint: disable=invalid-name
     """Main loop."""
     async with aiohttp.ClientSession(
         loop=loop, connector=aiohttp.TCPConnector(ssl=False)
     ) as session:
-        VAR["sma"] = pysma.SMA(session, ip, password=password, group=user)
+        VAR["sma"] = pysma.SMA(session, url, password=password, group=user)
         await VAR["sma"].new_session()
         if VAR["sma"].sma_sid is None:
             _LOGGER.info("No session ID")
@@ -67,9 +67,13 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description="Test the SMA webconnect library.")
-    parser.add_argument("ip", type=str, help="IP address of the Webconnect module")
-    parser.add_argument("user", help="installer/user")
-    parser.add_argument("password", help="Installer password")
+    parser.add_argument(
+        "url",
+        type=str,
+        help="Web address of the Webconnect module (http://ip-address or https://ip-address)",
+    )
+    parser.add_argument("user", choices=["user", "installer"], help="Login username")
+    parser.add_argument("password", help="Login password")
 
     args = parser.parse_args()
 
@@ -83,7 +87,7 @@ def main():
     # loop.add_signal_handler(signal.SIGINT, shutdown)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
     loop.run_until_complete(
-        main_loop(loop, user=args.user, password=args.password, ip=args.ip)
+        main_loop(loop, user=args.user, password=args.password, url=args.url)
     )
 
 
