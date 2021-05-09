@@ -14,11 +14,13 @@ import jmespath
 from aiohttp import client_exceptions
 
 from .const import (
+    DEVCLASS_INVERTER,
     DEVICE_INFO,
     FALLBACK_DEVICE_INFO,
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
     SENSOR_MAP,
+    SENSOR_STATUS,
     URL_DASH_LOGGER,
     URL_DASH_VALUES,
     URL_LOGGER,
@@ -303,7 +305,7 @@ class SMA:
             return False
 
         notfound = []
-        devclass = self.get_devclass(result_body)
+        devclass = await self.get_devclass(result_body)
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
@@ -361,8 +363,15 @@ class SMA:
 
         return device_info
 
-    def get_devclass(self, result_body):
-        if not self.devclass:
+    async def get_devclass(self, result_body=None):
+        if self.devclass:
+            return self.devclass
+
+        if not result_body:
+            # Read the STATUS_SENSOR.
+            # self.read will call get_devclass and update self.devclass
+            await self.read(Sensors(SENSOR_STATUS))
+        else:
             sensor_values = list(result_body.values())
             if len(sensor_values) == 0:
                 return None
@@ -374,9 +383,11 @@ class SMA:
                 raise KeyError("More than 1 device class key is not supported")
 
             self.devclass = devclass_keys[0]
+            _LOGGER.debug("Found device class %s", self.devclass)
 
         return self.devclass
 
-    # TODO: add check if devclass is set and retreive it somehow if not...
     async def get_sensors(self):
-        return Sensors(SENSOR_MAP[self.devclass])
+        # Fallback to DEVCLASS_INVERTER if devclass returns None
+        devclass = await self.get_devclass() or DEVCLASS_INVERTER
+        return Sensors(SENSOR_MAP.get(devclass))
