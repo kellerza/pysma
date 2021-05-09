@@ -40,18 +40,26 @@ async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
 
         _LOGGER.info("NEW SID: %s", VAR["sma"].sma_sid)
 
-        VAR["running"] = True
-        cnt = 5
-        sensors = pysma.Sensors(pysma.const.SENSOR_MAP[pysma.const.DEVCLASS_INVERTER])
-        while VAR.get("running"):
-            await VAR["sma"].read(sensors)
-            print_table(sensors)
-            cnt -= 1
-            if cnt == 0:
-                break
-            await asyncio.sleep(2)
+        # We should not get any exceptions, but if we do we will close the session.
+        try:
+            VAR["running"] = True
+            cnt = 5
+            sensors = await VAR["sma"].get_sensors()
+            device_info = await VAR["sma"].device_info()
 
-        await VAR["sma"].close_session()
+            for name, value in device_info.items():
+                print("{:>15}{:>25}".format(name, value))
+
+            while VAR.get("running"):
+                await VAR["sma"].read(sensors)
+                print_table(sensors)
+                cnt -= 1
+                if cnt == 0:
+                    break
+                await asyncio.sleep(2)
+        finally:
+            _LOGGER.info("Closing Session...")
+            await VAR["sma"].close_session()
 
 
 def main():
