@@ -29,8 +29,9 @@ def print_table(sensors):
 
 async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
     """Main loop."""
-    async with aiohttp.ClientSession(loop=loop,
-                                     connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
+    async with aiohttp.ClientSession(
+        loop=loop, connector=aiohttp.TCPConnector(verify_ssl=False)
+    ) as session:
         VAR["sma"] = pysma.SMA(session, ip, password=password, group=user)
         await VAR["sma"].new_session()
         if VAR["sma"].sma_sid is None:
@@ -41,7 +42,7 @@ async def main_loop(loop, password, user, ip):  # pylint: disable=invalid-name
 
         VAR["running"] = True
         cnt = 5
-        sensors = pysma.Sensors()
+        sensors = pysma.Sensors(pysma.const.SENSOR_MAP[pysma.const.DEVCLASS_INVERTER])
         while VAR.get("running"):
             await VAR["sma"].read(sensors)
             print_table(sensors)
