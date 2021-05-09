@@ -20,9 +20,13 @@ from .const import (
     FALLBACK_DEVICE_INFO,
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
+    OPTIMIZERS_VIA_INVERTER,
     SENSOR_ENERGY_METER,
     SENSOR_MAP,
+    SENSOR_OPTIMIZER_SERIAL,
     SENSOR_STATUS,
+    SKEY,
+    SNAME,
     URL_DASH_LOGGER,
     URL_DASH_VALUES,
     URL_LOGGER,
@@ -54,9 +58,10 @@ class Sensor:
         """Init path."""
         idx = "0"
         key = str(self.key)
-        if key[-2] == "_" and key[-1].isdigit():
-            idx = key[-1]
-            key = key[:-2]
+        skey = key.split("_")
+        if len(skey) > 2 and skey[2].isdigit():
+            idx = skey[2]
+            key = f"{skey[0]}_{skey[1]}"
         self.key = key
         self.key_idx = idx
 
@@ -399,9 +404,20 @@ class SMA:
         device_sensors = SENSOR_MAP.get(devclass)
 
         if devclass == DEVCLASS_INVERTER:
+            payload = {
+                "destDev": [],
+                "keys": [
+                    SENSOR_ENERGY_METER[SKEY],
+                    SENSOR_OPTIMIZER_SERIAL[SKEY],
+                ],
+            }
+            result_body = await self._read_body(URL_VALUES, payload)
+
+            # Detect and add Energy Meter sensors
             em_sensor = Sensor(**SENSOR_ENERGY_METER)
-            values = await self.read(Sensors(em_sensor))
-            if values and em_sensor.value:
+            em_sensor.extract_value(result_body)
+
+            if em_sensor.value:
                 _LOGGER.debug(
                     "Energy Meter with serial %s detected. Adding extra sensors.",
                     em_sensor.value,
@@ -413,5 +429,23 @@ class SMA:
                         if sensor not in device_sensors
                     ]
                 )
+
+            # Detect and add Optimizer Sensors
+            optimizers = result_body.get(SENSOR_OPTIMIZER_SERIAL[SKEY])
+            if optimizers:
+                serials = optimizers.get(DEVCLASS_INVERTER)
+
+                for idx, serial in enumerate(serials or []):
+                    if serial["val"]:
+                        _LOGGER.debug(
+                            "Optimizer %s with serial %s detected. Adding extra sensors.",
+                            idx,
+                            serial,
+                        )
+                        for sensor in SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]:
+                            new_sensor = sensor.copy()
+                            new_sensor[SKEY] = f"{sensor[SKEY]}_{idx}"
+                            new_sensor[SNAME] = f"{sensor[SNAME]}_{idx}"
+                            device_sensors.append(new_sensor)
 
         return Sensors(device_sensors)
