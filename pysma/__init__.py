@@ -35,6 +35,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=R0902
 @attr.s(slots=True)
 class Sensor:
     """pysma sensor definition."""
@@ -63,7 +64,7 @@ class Sensor:
         """Extract logs from json body."""
         self.value = result_body
 
-    def extract_value(self, result_body, l10n={}, devclass="1"):
+    def extract_value(self, result_body, l10n=None, devclass="1"):
         """Extract value from json body."""
         try:
             res = result_body[self.key]
@@ -76,9 +77,7 @@ class Sensor:
         if not isinstance(self.path, str):
             # Try different methods until we can decode...
             _paths = (
-                list(
-                    sens_path.format(devclass, self.key_idx) for sens_path in self.path
-                )
+                [sens_path.format(devclass, self.key_idx) for sens_path in self.path]
                 if isinstance(self.path, (list, tuple))
                 else [
                     JMESPATH_VAL,
@@ -111,7 +110,7 @@ class Sensor:
         if isinstance(res, (int, float)) and self.factor:
             res /= self.factor
 
-        if self.l10n_translate:
+        if self.l10n_translate and isinstance(l10n, dict):
             res = l10n.get(
                 str(res),
                 res,
@@ -136,6 +135,7 @@ class Sensors:
         """Length."""
         return len(self.__s)
 
+    # pylint: disable=R1710
     def __contains__(self, key):
         """Check if a sensor is defined."""
         try:
@@ -147,7 +147,7 @@ class Sensors:
     def __getitem__(self, key):
         """Get a sensor using either the name or key."""
         for sen in self.__s:
-            if sen.name == key or sen.key == key:
+            if key in (sen.name, sen.key):
                 return sen
         raise KeyError(key)
 
@@ -366,6 +366,7 @@ class SMA:
         return device_info
 
     async def get_devclass(self, result_body=None):
+        """Get the device class."""
         if self.devclass:
             return self.devclass
 
@@ -390,6 +391,7 @@ class SMA:
         return self.devclass
 
     async def get_sensors(self):
+        """Get the sensors based on the device class."""
         # Fallback to DEVCLASS_INVERTER if devclass returns None
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 

@@ -1,6 +1,6 @@
 """Tests for pysma."""
-from aioresponses import aioresponses
 import pytest
+from aioresponses import aioresponses
 
 MOCK_DEVICE = {
     "manufacturer": "SMA",

@@ -1,3 +1,4 @@
+"""Constants for SMA WebConnect library for Python. """
 URL_LOGIN = "/dyn/login.json"
 URL_LOGOUT = "/dyn/logout.json"
 URL_VALUES = "/dyn/getValues.json"

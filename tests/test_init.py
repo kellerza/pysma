@@ -1,15 +1,15 @@
 """Test pysma sensors."""
 # from homeassistant.loader import async_get_dhcp
 import logging
-import aiohttp
 from json import loads
 from unittest.mock import patch
 
+import aiohttp
 import pytest
 
 import pysma
 
-from . import MOCK_L10N, MOCK_DEVICE, mock_aioresponse  # noqa: F401
+from . import MOCK_DEVICE, MOCK_L10N, mock_aioresponse  # noqa: F401
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class Test_sensor_class:
     def test_default_no_duplicates(self, mock_warn):
         """Ensure warning on duplicates."""
         sen = pysma.Sensors(pysma.const.SENSOR_MAP[pysma.const.DEVCLASS_INVERTER])
-        assert len(sen) > 25
+        assert len(sen) > 20
         assert len(sen) < 50
         assert mock_warn.call_count == 0
         # Add duplicate frequency
@@ -243,7 +243,7 @@ class Test_SMA_class:
         result = await sma.device_info()
         assert not result
 
-    async def test_devclass_more_than_one(self, mock_aioresponse):
+    async def test_devclass_more_than_one(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
