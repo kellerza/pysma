@@ -8,8 +8,12 @@ URL_DASH_VALUES = "/dyn/getDashValues.json"
 USERS = {"user": "usr", "installer": "istl"}
 
 JMESPATH_BASE = "result.*"
-JMESPATH_VAL_IDX = '"{}"[{}].val'
+
 JMESPATH_VAL = "val"
+JMESPATH_VAL_TAG = JMESPATH_VAL + "[0].tag"
+JMESPATH_VAL_IDX = '"{}"[{}].val'
+JMESPATH_VAL_IDX_TAG = JMESPATH_VAL_IDX + "[0].tag"
+JMESPATHS_TAG = (JMESPATH_VAL_IDX_TAG, JMESPATH_VAL_TAG)
 
 LEGACY_MAP = {
     "pv_power": {"old_key": "6100_0046C200", "new_sensor": "pv_power_a"},
@@ -230,7 +234,7 @@ SENSOR_BATTERY_CURRENT_C = {
 SENSOR_STATUS = {
     SKEY: "6180_08214800",
     SNAME: "status",
-    SPATH: ('"1"[0].val[0].tag', "val[0].tag"),
+    SPATH: JMESPATHS_TAG,
     SL10N: True,
 }
 SENSOR_SERIAL_NUMBER = {SKEY: "6800_00A21E00", SNAME: "serial_number"}
@@ -238,14 +242,14 @@ SENSOR_DEVICE_NAME = {SKEY: "6800_10821E00", SNAME: "device_name"}
 SENSOR_DEVICE_TYPE = {
     SKEY: "6800_08822000",
     SNAME: "device_type",
-    SPATH: ('"1"[0].val[0].tag', "val[0].tag"),
+    SPATH: JMESPATHS_TAG,
     SL10N: True,
 }
 
 SENSOR_DEVICE_MANUFACTURER = {
     SKEY: "6800_08822B00",
     SNAME: "device_manufacturer",
-    SPATH: ('"1"[0].val[0].tag', "val[0].tag"),
+    SPATH: JMESPATHS_TAG,
     SL10N: True,
 }
 

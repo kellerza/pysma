@@ -72,7 +72,9 @@ class Sensor:
         if not isinstance(self.path, str):
             # Try different methods until we can decode...
             _paths = (
-                list(self.path)
+                list(
+                    sens_path.format(devclass, self.key_idx) for sens_path in self.path
+                )
                 if isinstance(self.path, (list, tuple))
                 else [
                     JMESPATH_VAL,
