@@ -187,6 +187,12 @@ SENSOR_METERING_POWER_ABSORBED = {
     SNAME: "metering_power_absorbed",
     SUNIT: "W",
 }
+SENSOR_METERING_FREQUENCY = {
+    SKEY: "6100_00468100",
+    SNAME: "metering_frequency",
+    SUNIT: "Hz",
+    SFACTOR: 100,
+}
 SENSOR_METERING_TOTAL_YIELD = {
     SKEY: "6400_00462400",
     SNAME: "metering_total_yield",
@@ -467,18 +473,18 @@ SENSOR_MAP = {
         SENSOR_STATUS,
     ],
     DEVCLASS_ENERGY_METER: [
+        SENSOR_STATUS,
         SENSOR_GRID_POWER,
-        SENSOR_POWER_L1,
-        SENSOR_POWER_L2,
-        SENSOR_POWER_L3,
         SENSOR_FREQUENCY,
-        SENSOR_VOLTAGE_L1,
-        SENSOR_VOLTAGE_L2,
-        SENSOR_VOLTAGE_L3,
         SENSOR_CURRENT_L1,
         SENSOR_CURRENT_L2,
         SENSOR_CURRENT_L3,
-        SENSOR_STATUS,
+        SENSOR_VOLTAGE_L1,
+        SENSOR_VOLTAGE_L2,
+        SENSOR_VOLTAGE_L3,
+        SENSOR_POWER_L1,
+        SENSOR_POWER_L2,
+        SENSOR_POWER_L3,
     ],
     DEVICE_INFO: [
         SENSOR_SERIAL_NUMBER,
