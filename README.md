@@ -1,7 +1,7 @@
 pysma library
 =============
 
-[![image](https://circleci.com/gh/kellerza/pysma.svg?style=svg)](https://circleci.com/gh/kellerza/pysma)
+[![Workflow Status](https://github.com/kellerza/pysma/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/kellerza/pysma/actions)
 [![Codecov](https://codecov.io/gh/kellerza/pysma/branch/master/graph/badge.svg)](https://codecov.io/gh/kellerza/pysma)
 
 SMA Webconnect library for Python 3. The library was originally created
