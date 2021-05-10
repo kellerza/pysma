@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """pysma library setup."""
 from pathlib import Path
+
 from setuptools import setup
 
 VERSION = "0.4.3"
