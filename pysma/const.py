@@ -56,6 +56,20 @@ SENSOR_STATUS = {
     SPATH: JMESPATHS_TAG,
     SL10N: True,
 }
+SENSOR_OPERATING_STATUS_GENERAL = {
+    SKEY: "6180_08412800",
+    SNAME: "operating_status_general",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+
+# Status - Operation - Inverter
+SENSOR_INVERTER_CONDITION = {
+    SKEY: "6180_08414C00",
+    SNAME: "inverter_condition",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
 
 # DC side - DC measurements
 SENSOR_PV_POWER_A = {
@@ -125,6 +139,12 @@ SENSOR_CURRENT_L3 = {
     SUNIT: "A",
     SFACTOR: 1000,
 }
+SENSOR_CURRENT_TOTAL = {
+    SKEY: "6100_00664F00",
+    SNAME: "current_total",
+    SUNIT: "A",
+    SFACTOR: 1000,
+}
 
 # AC Side - Grid measurements - Phase voltage
 SENSOR_VOLTAGE_L1 = {
@@ -174,6 +194,18 @@ SENSOR_DAILY_YIELD = {
     SKEY: "6400_00262200",
     SNAME: "daily_yield",
     SUNIT: "Wh",
+}
+SENSOR_TOTAL_OPERATING_TIME = {
+    SKEY: "6400_00462E00",
+    SNAME: "total_operating_time",
+    SUNIT: "h",
+    SFACTOR: 3600,
+}
+SENSOR_TOTAL_FEEDIN_TIME = {
+    SKEY: "6400_00462F00",
+    SNAME: "total_feedin_time",
+    SUNIT: "h",
+    SFACTOR: 3600,
 }
 
 # AC Side - Measured values - Grid measurements
@@ -319,29 +351,6 @@ SENSOR_OPTIMIZER_TEMP = {
 
 
 # Battery related sensors
-SENSOR_BATTERY_SOC = [
-    "6100_00295A00_0",
-    "battery_soc",
-    "%",
-]
-SENSOR_BATTERY_TEMP_A = {
-    SKEY: "6100_40495B00_0",
-    SNAME: "battery_temp_a",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
-SENSOR_BATTERY_TEMP_B = {
-    SKEY: "6100_40495B00_1",
-    SNAME: "battery_temp_b",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
-SENSOR_BATTERY_TEMP_C = {
-    SKEY: "6100_40495B00_2",
-    SNAME: "battery_temp_c",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
 SENSOR_BATTERY_VOLTAGE_A = {
     SKEY: "6100_00495C00_0",
     SNAME: "battery_voltage_a",
@@ -357,6 +366,24 @@ SENSOR_BATTERY_VOLTAGE_B = {
 SENSOR_BATTERY_VOLTAGE_C = {
     SKEY: "6100_00495C00_2",
     SNAME: "battery_voltage_c",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+SENSOR_BATTERY_CHARGING_VOLTAGE_A = {
+    SKEY: "6102_00493500_0",
+    SNAME: "battery_charging_voltage_a",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+SENSOR_BATTERY_CHARGING_VOLTAGE_B = {
+    SKEY: "6102_00493500_1",
+    SNAME: "battery_charging_voltage_b",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+SENSOR_BATTERY_CHARGING_VOLTAGE_C = {
+    SKEY: "6102_00493500_2",
+    SNAME: "battery_charging_voltage_c",
     SUNIT: "V",
     SFACTOR: 100,
 }
@@ -377,6 +404,310 @@ SENSOR_BATTERY_CURRENT_C = {
     SNAME: "battery_current_c",
     SUNIT: "A",
     SFACTOR: 1000,
+}
+SENSOR_BATTERY_POWER_CHARGE_TOTAL = {
+    SKEY: "6100_00496900",
+    SNAME: "battery_power_charge_total",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_CHARGE_A = {
+    SKEY: "6100_00499300_0",
+    SNAME: "battery_power_charge_a",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_CHARGE_B = {
+    SKEY: "6100_00499300_1",
+    SNAME: "battery_power_charge_b",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_CHARGE_C = {
+    SKEY: "6100_00499300_2",
+    SNAME: "battery_power_charge_c",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_TOTAL = {
+    SKEY: "6100_00496A00",
+    SNAME: "battery_power_discharge_total",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_A = {
+    SKEY: "6100_00499400_0",
+    SNAME: "battery_power_discharge_a",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_B = {
+    SKEY: "6100_00499400_1",
+    SNAME: "battery_power_discharge_b",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_C = {
+    SKEY: "6100_00499400_2",
+    SNAME: "battery_power_discharge_c",
+    SUNIT: "W",
+}
+SENSOR_GRID_REACTIVE_POWER = {
+    SKEY: "6100_40265F00",
+    SNAME: "grid_reactive_power",
+    SUNIT: "var",
+}
+SENSOR_GRID_REACTIVE_POWER_L1 = {
+    SKEY: "6100_40666000",
+    SNAME: "grid_reactive_power_l1",
+    SUNIT: "var",
+}
+SENSOR_GRID_REACTIVE_POWER_L2 = {
+    SKEY: "6100_40666100",
+    SNAME: "grid_reactive_power_l2",
+    SUNIT: "var",
+}
+SENSOR_GRID_REACTIVE_POWER_L3 = {
+    SKEY: "6100_40666200",
+    SNAME: "grid_reactive_power_l3",
+    SUNIT: "var",
+}
+SENSOR_GRID_APPARENT_POWER = {
+    SKEY: "6100_40666700",
+    SNAME: "grid_apparent_power",
+    SUNIT: "VA",
+}
+SENSOR_GRID_APPARENT_POWER_L1 = {
+    SKEY: "6100_40666800",
+    SNAME: "grid_apparent_power_l1",
+    SUNIT: "VA",
+}
+SENSOR_GRID_APPARENT_POWER_L2 = {
+    SKEY: "6100_40666900",
+    SNAME: "grid_apparent_power_l2",
+    SUNIT: "VA",
+}
+SENSOR_GRID_APPARENT_POWER_L3 = {
+    SKEY: "6100_40666A00",
+    SNAME: "grid_apparent_power_l3",
+    SUNIT: "VA",
+}
+SENSOR_GRID_POWER_FACTOR = {
+    SKEY: "6100_00665900",
+    SNAME: "grid_power_factor",
+    SUNIT: "",
+    SFACTOR: 1000,
+}
+SENSOR_GRID_POWER_FACTOR_EXCITATION = {
+    SKEY: "6180_08465A00",
+    SNAME: "grid_power_factor_excitation",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CHARGE_TOTAL = {
+    SKEY: "6400_00496700",
+    SNAME: "battery_charge_total",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_CHARGE_A = {
+    SKEY: "6400_00499500_0",
+    SNAME: "battery_charge_a",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_CHARGE_B = {
+    SKEY: "6400_00499500_1",
+    SNAME: "battery_charge_b",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_CHARGE_C = {
+    SKEY: "6400_00499500_2",
+    SNAME: "battery_charge_c",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_DISCHARGE_TOTAL = {
+    SKEY: "6400_00496800",
+    SNAME: "battery_discharge_total",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_DISCHARGE_A = {
+    SKEY: "6400_00499600_0",
+    SNAME: "battery_discharge_a",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_DISCHARGE_B = {
+    SKEY: "6400_00499600_1",
+    SNAME: "battery_discharge_b",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_DISCHARGE_C = {
+    SKEY: "6400_00499600_2",
+    SNAME: "battery_discharge_c",
+    SUNIT: "kWh",
+    SFACTOR: 1000,
+}
+SENSOR_BATTERY_SOC_TOTAL = {
+    SKEY: "6100_00295A00",
+    SNAME: "battery_soc_total",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_A = {
+    SKEY: "6100_00498F00_0",
+    SNAME: "battery_soc_a",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_B = {
+    SKEY: "6100_00498F00_1",
+    SNAME: "battery_soc_b",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_C = {
+    SKEY: "6100_00498F00_2",
+    SNAME: "battery_soc_c",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_TOTAL = {
+    SKEY: "6100_00696E00",
+    SNAME: "battery_capacity_total",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_A = {
+    SKEY: "6100_00499100_0",
+    SNAME: "battery_capacity_a",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_B = {
+    SKEY: "6100_00499100_1",
+    SNAME: "battery_capacity_b",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_C = {
+    SKEY: "6100_00499100_2",
+    SNAME: "battery_capacity_c",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_TEMP_A = {
+    SKEY: "6100_40495B00_0",
+    SNAME: "battery_temp_a",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_BATTERY_TEMP_B = {
+    SKEY: "6100_40495B00_1",
+    SNAME: "battery_temp_b",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_BATTERY_TEMP_C = {
+    SKEY: "6100_40495B00_2",
+    SNAME: "battery_temp_c",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_INSULATION_RESISTANCE = {
+    SKEY: "6102_00254F00",
+    SNAME: "insulation_resistance",
+    SUNIT: "kOhm",
+    SFACTOR: 1000,
+}
+SENSOR_INSULATION_RESIDUAL_CURRENT = {
+    SKEY: "6102_40254E00",
+    SNAME: "insulation_residual_current",
+    SUNIT: "mA",
+}
+SENSOR_GRID_CONNECTIONS = {
+    SKEY: "6402_00666F00",
+    SNAME: "grid_connections",
+    SUNIT: "",
+}
+SENSOR_GRID_RELAY_STATUS = {
+    SKEY: "6180_08416400",
+    SNAME: "grid_relay_status",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_A = {
+    SKEY: "6180_08414D00_0",
+    SNAME: "battery_condition_a",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_B = {
+    SKEY: "6180_08414D00_1",
+    SNAME: "battery_condition_b",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_C = {
+    SKEY: "6180_08414D00_2",
+    SNAME: "battery_condition_c",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_TEMP_A = {
+    SKEY: "6180_08414E00_0",
+    SNAME: "battery_condition_temp_a",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_TEMP_B = {
+    SKEY: "6180_08414E00_1",
+    SNAME: "battery_condition_temp_b",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_CONDITION_TEMP_C = {
+    SKEY: "6180_08414E00_2",
+    SNAME: "battery_condition_temp_c",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_BMS_A = {
+    SKEY: "6182_08497F00_0",
+    SNAME: "battery_status_bms_a",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_BMS_B = {
+    SKEY: "6182_08497F00_1",
+    SNAME: "battery_status_bms_b",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_BMS_C = {
+    SKEY: "6182_08497F00_2",
+    SNAME: "battery_status_bms_c",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_OPERATING_MODE = {
+    SKEY: "6180_08495E00",
+    SNAME: "battery_status_operating_mode",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_GRID_CONNECTION_STATUS = {
+    SKEY: "6180_0846A700",
+    SNAME: "grid_connection_status",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_STATUS_FIRMWARE_UPDATE = {
+    SKEY: "6180_08412900",
+    SNAME: "status_firmware_update",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_SYSTEM_INIT = {
+    SKEY: "6800_08811F00",
+    SNAME: "battery_status_system_init",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+SENSOR_BATTERY_STATUS_CHARGE_CONTROL_COMM = {
+    SKEY: "6182_08495600",
+    SNAME: "battery_status_charge_control_comm",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
 }
 
 
@@ -401,6 +732,13 @@ SENSOR_DEVICE_MANUFACTURER = {
     SNAME: "device_manufacturer",
     SPATH: JMESPATHS_TAG,
     SL10N: True,
+}
+
+# Device - Inverter
+SENSOR_INVERTER_POWER_LIMIT = {
+    SKEY: "6800_00832A00",
+    SNAME: "inverter_power_limit",
+    SUNIT: "W",
 }
 
 # System communication - Meter on Speedwire
@@ -459,17 +797,82 @@ SENSOR_MAP = {
         SENSOR_METERING_ACTIVE_POWER_CONSUMED_L3,
     ],
     DEVCLASS_BATTERY: [
-        SENSOR_BATTERY_SOC,
-        SENSOR_BATTERY_TEMP_A,
-        SENSOR_BATTERY_TEMP_B,
-        SENSOR_BATTERY_TEMP_C,
         SENSOR_BATTERY_VOLTAGE_A,
         SENSOR_BATTERY_VOLTAGE_B,
         SENSOR_BATTERY_VOLTAGE_C,
+        SENSOR_BATTERY_CHARGING_VOLTAGE_A,
+        SENSOR_BATTERY_CHARGING_VOLTAGE_B,
+        SENSOR_BATTERY_CHARGING_VOLTAGE_C,
         SENSOR_BATTERY_CURRENT_A,
         SENSOR_BATTERY_CURRENT_B,
         SENSOR_BATTERY_CURRENT_C,
+        SENSOR_INVERTER_POWER_LIMIT,
+        SENSOR_BATTERY_POWER_CHARGE_TOTAL,
+        SENSOR_BATTERY_POWER_CHARGE_A,
+        SENSOR_BATTERY_POWER_CHARGE_B,
+        SENSOR_BATTERY_POWER_CHARGE_C,
+        SENSOR_BATTERY_POWER_DISCHARGE_TOTAL,
+        SENSOR_BATTERY_POWER_DISCHARGE_A,
+        SENSOR_BATTERY_POWER_DISCHARGE_B,
+        SENSOR_BATTERY_POWER_DISCHARGE_C,
+        SENSOR_GRID_REACTIVE_POWER,
+        SENSOR_GRID_REACTIVE_POWER_L1,
+        SENSOR_GRID_REACTIVE_POWER_L2,
+        SENSOR_GRID_REACTIVE_POWER_L3,
+        SENSOR_GRID_APPARENT_POWER,
+        SENSOR_GRID_APPARENT_POWER_L1,
+        SENSOR_GRID_APPARENT_POWER_L2,
+        SENSOR_GRID_APPARENT_POWER_L3,
+        SENSOR_GRID_POWER_FACTOR,
+        SENSOR_GRID_POWER_FACTOR_EXCITATION,
+        SENSOR_BATTERY_CHARGE_TOTAL,
+        SENSOR_BATTERY_CHARGE_A,
+        SENSOR_BATTERY_CHARGE_B,
+        SENSOR_BATTERY_CHARGE_C,
+        SENSOR_BATTERY_DISCHARGE_TOTAL,
+        SENSOR_BATTERY_DISCHARGE_A,
+        SENSOR_BATTERY_DISCHARGE_B,
+        SENSOR_BATTERY_DISCHARGE_C,
+        SENSOR_BATTERY_SOC_TOTAL,
+        SENSOR_BATTERY_SOC_A,
+        SENSOR_BATTERY_SOC_B,
+        SENSOR_BATTERY_SOC_C,
+        SENSOR_BATTERY_CAPACITY_TOTAL,
+        SENSOR_BATTERY_CAPACITY_A,
+        SENSOR_BATTERY_CAPACITY_B,
+        SENSOR_BATTERY_CAPACITY_C,
+        SENSOR_BATTERY_TEMP_A,
+        SENSOR_BATTERY_TEMP_B,
+        SENSOR_BATTERY_TEMP_C,
+        SENSOR_INSULATION_RESISTANCE,
+        SENSOR_INSULATION_RESIDUAL_CURRENT,
+        SENSOR_GRID_CONNECTIONS,
+        SENSOR_INVERTER_CONDITION,
+        SENSOR_BATTERY_CONDITION_A,
+        SENSOR_BATTERY_CONDITION_B,
+        SENSOR_BATTERY_CONDITION_C,
+        SENSOR_BATTERY_CONDITION_TEMP_A,
+        SENSOR_BATTERY_CONDITION_TEMP_B,
+        SENSOR_BATTERY_CONDITION_TEMP_C,
+        SENSOR_OPERATING_STATUS_GENERAL,
+        SENSOR_BATTERY_STATUS_BMS_A,
+        SENSOR_BATTERY_STATUS_BMS_B,
+        SENSOR_BATTERY_STATUS_BMS_C,
+        SENSOR_BATTERY_STATUS_OPERATING_MODE,
+        SENSOR_GRID_RELAY_STATUS,
+        SENSOR_GRID_CONNECTION_STATUS,
+        SENSOR_STATUS_FIRMWARE_UPDATE,
+        SENSOR_BATTERY_STATUS_SYSTEM_INIT,
+        SENSOR_BATTERY_STATUS_CHARGE_CONTROL_COMM,
         SENSOR_GRID_POWER,
+        SENSOR_VOLTAGE_L1,
+        SENSOR_VOLTAGE_L2,
+        SENSOR_VOLTAGE_L3,
+        SENSOR_CURRENT_L1,
+        SENSOR_CURRENT_L2,
+        SENSOR_CURRENT_L3,
+        SENSOR_CURRENT_TOTAL,
+        SENSOR_FREQUENCY,
         SENSOR_STATUS,
     ],
     DEVCLASS_ENERGY_METER: [
