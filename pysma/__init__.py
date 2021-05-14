@@ -388,7 +388,7 @@ class SMA:
                 notfound.append(f"{sen.name} [{sen.key}]")
 
         if notfound:
-            _LOGGER.warning(
+            _LOGGER.info(
                 "No values for sensors: %s. Response from inverter: %s",
                 ",".join(notfound),
                 result_body,
