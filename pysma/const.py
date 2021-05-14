@@ -35,9 +35,9 @@ FALLBACK_DEVICE_INFO = {
     "serial": "9999999999",
 }
 
-DEVCLASS_INVERTER = "1" # Solar Inverter
-DEVCLASS_BATTERY = "7" # Battery Inverter
-DEVCLASS_ENERGY_METER = "65" # Electricity meter
+DEVCLASS_INVERTER = "1"   # Solar Inverter
+DEVCLASS_BATTERY = "7"   # Battery Inverter
+DEVCLASS_ENERGY_METER = "65"   # Electricity meter
 OPTIMIZERS_VIA_INVERTER = "253"
 ENERGY_METER_VIA_INVERTER = "254"
 DEVICE_INFO = "255"
