@@ -139,12 +139,20 @@ SENSOR_PV_CURRENT_B = {
     SFACTOR: 1000,
 }
 
-# AC Side - Grid measurements - (active) power
+# AC Side - Grid measurements
 SENSOR_GRID_POWER = {
     SKEY: "6100_40263F00",
     SNAME: "grid_power",
     SUNIT: "W",
 }
+SENSOR_FREQUENCY = {
+    SKEY: "6100_00465700",
+    SNAME: "frequency",
+    SUNIT: "Hz",
+    SFACTOR: 100,
+}
+
+# AC Side - Grid measurements - Active power
 SENSOR_POWER_L1 = {
     SKEY: "6100_40464000",
     SNAME: "power_l1",
