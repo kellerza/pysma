@@ -224,13 +224,6 @@ SENSOR_GRID_POWER_FACTOR_EXCITATION = {
 }
 
 # AC Side - Grid measurements - frequency
-SENSOR_FREQUENCY = {
-    SKEY: "6100_00465700",
-    SNAME: "frequency",
-    SUNIT: "Hz",
-    SFACTOR: 100,
-}
-
 # AC Side - Grid measurements - current
 SENSOR_CURRENT_L1 = {
     SKEY: "6100_40465300",
