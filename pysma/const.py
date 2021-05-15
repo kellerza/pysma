@@ -139,6 +139,13 @@ SENSOR_PV_CURRENT_B = {
     SFACTOR: 1000,
 }
 
+# DC Side - Insulation monitoring
+SENSOR_INSULATION_RESIDUAL_CURRENT = {
+    SKEY: "6102_40254E00",
+    SNAME: "insulation_residual_current",
+    SUNIT: "mA",
+}
+
 # AC Side - Grid measurements
 SENSOR_GRID_POWER = {
     SKEY: "6100_40263F00",
@@ -429,7 +436,27 @@ SENSOR_OPTIMIZER_TEMP = {
 }
 
 
-# Battery (inverter) related sensors
+# Battery (inverter) - Battery (general parameters)
+SENSOR_BATTERY_SOC_TOTAL = {
+    SKEY: "6100_00295A00",
+    SNAME: "battery_soc_total",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_A = {
+    SKEY: "6100_00498F00_0",
+    SNAME: "battery_soc_a",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_B = {
+    SKEY: "6100_00498F00_1",
+    SNAME: "battery_soc_b",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_SOC_C = {
+    SKEY: "6100_00498F00_2",
+    SNAME: "battery_soc_c",
+    SUNIT: "%",
+}
 SENSOR_BATTERY_VOLTAGE_A = {
     SKEY: "6100_00495C00_0",
     SNAME: "battery_voltage_a",
@@ -445,24 +472,6 @@ SENSOR_BATTERY_VOLTAGE_B = {
 SENSOR_BATTERY_VOLTAGE_C = {
     SKEY: "6100_00495C00_2",
     SNAME: "battery_voltage_c",
-    SUNIT: "V",
-    SFACTOR: 100,
-}
-SENSOR_BATTERY_CHARGING_VOLTAGE_A = {
-    SKEY: "6102_00493500_0",
-    SNAME: "battery_charging_voltage_a",
-    SUNIT: "V",
-    SFACTOR: 100,
-}
-SENSOR_BATTERY_CHARGING_VOLTAGE_B = {
-    SKEY: "6102_00493500_1",
-    SNAME: "battery_charging_voltage_b",
-    SUNIT: "V",
-    SFACTOR: 100,
-}
-SENSOR_BATTERY_CHARGING_VOLTAGE_C = {
-    SKEY: "6102_00493500_2",
-    SNAME: "battery_charging_voltage_c",
     SUNIT: "V",
     SFACTOR: 100,
 }
@@ -484,6 +493,74 @@ SENSOR_BATTERY_CURRENT_C = {
     SUNIT: "A",
     SFACTOR: 1000,
 }
+SENSOR_BATTERY_TEMP_A = {
+    SKEY: "6100_40495B00_0",
+    SNAME: "battery_temp_a",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_BATTERY_TEMP_B = {
+    SKEY: "6100_40495B00_1",
+    SNAME: "battery_temp_b",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_BATTERY_TEMP_C = {
+    SKEY: "6100_40495B00_2",
+    SNAME: "battery_temp_c",
+    SUNIT: "C",
+    SFACTOR: 10,
+}
+SENSOR_BATTERY_STATUS_OPERATING_MODE = {
+    SKEY: "6180_08495E00",
+    SNAME: "battery_status_operating_mode",
+    SPATH: JMESPATHS_TAG,
+    SL10N: True,
+}
+
+# Battery (inverter) - Diagnosis
+SENSOR_BATTERY_CAPACITY_TOTAL = {
+    SKEY: "6100_00696E00",
+    SNAME: "battery_capacity_total",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_A = {
+    SKEY: "6100_00499100_0",
+    SNAME: "battery_capacity_a",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_B = {
+    SKEY: "6100_00499100_1",
+    SNAME: "battery_capacity_b",
+    SUNIT: "%",
+}
+SENSOR_BATTERY_CAPACITY_C = {
+    SKEY: "6100_00499100_2",
+    SNAME: "battery_capacity_c",
+    SUNIT: "%",
+}
+
+# Battery (inverter) - Charge (voltage)
+SENSOR_BATTERY_CHARGING_VOLTAGE_A = {
+    SKEY: "6102_00493500_0",
+    SNAME: "battery_charging_voltage_a",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+SENSOR_BATTERY_CHARGING_VOLTAGE_B = {
+    SKEY: "6102_00493500_1",
+    SNAME: "battery_charging_voltage_b",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+SENSOR_BATTERY_CHARGING_VOLTAGE_C = {
+    SKEY: "6102_00493500_2",
+    SNAME: "battery_charging_voltage_c",
+    SUNIT: "V",
+    SFACTOR: 100,
+}
+
+# Battery (inverter) - Battery charge (power & energy)
 SENSOR_BATTERY_POWER_CHARGE_TOTAL = {
     SKEY: "6100_00496900",
     SNAME: "battery_power_charge_total",
@@ -502,26 +579,6 @@ SENSOR_BATTERY_POWER_CHARGE_B = {
 SENSOR_BATTERY_POWER_CHARGE_C = {
     SKEY: "6100_00499300_2",
     SNAME: "battery_power_charge_c",
-    SUNIT: "W",
-}
-SENSOR_BATTERY_POWER_DISCHARGE_TOTAL = {
-    SKEY: "6100_00496A00",
-    SNAME: "battery_power_discharge_total",
-    SUNIT: "W",
-}
-SENSOR_BATTERY_POWER_DISCHARGE_A = {
-    SKEY: "6100_00499400_0",
-    SNAME: "battery_power_discharge_a",
-    SUNIT: "W",
-}
-SENSOR_BATTERY_POWER_DISCHARGE_B = {
-    SKEY: "6100_00499400_1",
-    SNAME: "battery_power_discharge_b",
-    SUNIT: "W",
-}
-SENSOR_BATTERY_POWER_DISCHARGE_C = {
-    SKEY: "6100_00499400_2",
-    SNAME: "battery_power_discharge_c",
     SUNIT: "W",
 }
 SENSOR_BATTERY_CHARGE_TOTAL = {
@@ -548,6 +605,28 @@ SENSOR_BATTERY_CHARGE_C = {
     SUNIT: "kWh",
     SFACTOR: 1000,
 }
+
+# Battery (inverter) - Battery discharge (power & energy)
+SENSOR_BATTERY_POWER_DISCHARGE_TOTAL = {
+    SKEY: "6100_00496A00",
+    SNAME: "battery_power_discharge_total",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_A = {
+    SKEY: "6100_00499400_0",
+    SNAME: "battery_power_discharge_a",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_B = {
+    SKEY: "6100_00499400_1",
+    SNAME: "battery_power_discharge_b",
+    SUNIT: "W",
+}
+SENSOR_BATTERY_POWER_DISCHARGE_C = {
+    SKEY: "6100_00499400_2",
+    SNAME: "battery_power_discharge_c",
+    SUNIT: "W",
+}
 SENSOR_BATTERY_DISCHARGE_TOTAL = {
     SKEY: "6400_00496800",
     SNAME: "battery_discharge_total",
@@ -572,76 +651,6 @@ SENSOR_BATTERY_DISCHARGE_C = {
     SUNIT: "kWh",
     SFACTOR: 1000,
 }
-SENSOR_BATTERY_SOC_TOTAL = {
-    SKEY: "6100_00295A00",
-    SNAME: "battery_soc_total",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_SOC_A = {
-    SKEY: "6100_00498F00_0",
-    SNAME: "battery_soc_a",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_SOC_B = {
-    SKEY: "6100_00498F00_1",
-    SNAME: "battery_soc_b",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_SOC_C = {
-    SKEY: "6100_00498F00_2",
-    SNAME: "battery_soc_c",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_CAPACITY_TOTAL = {
-    SKEY: "6100_00696E00",
-    SNAME: "battery_capacity_total",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_CAPACITY_A = {
-    SKEY: "6100_00499100_0",
-    SNAME: "battery_capacity_a",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_CAPACITY_B = {
-    SKEY: "6100_00499100_1",
-    SNAME: "battery_capacity_b",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_CAPACITY_C = {
-    SKEY: "6100_00499100_2",
-    SNAME: "battery_capacity_c",
-    SUNIT: "%",
-}
-SENSOR_BATTERY_TEMP_A = {
-    SKEY: "6100_40495B00_0",
-    SNAME: "battery_temp_a",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
-SENSOR_BATTERY_TEMP_B = {
-    SKEY: "6100_40495B00_1",
-    SNAME: "battery_temp_b",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
-SENSOR_BATTERY_TEMP_C = {
-    SKEY: "6100_40495B00_2",
-    SNAME: "battery_temp_c",
-    SUNIT: "C",
-    SFACTOR: 10,
-}
-SENSOR_BATTERY_STATUS_OPERATING_MODE = {
-    SKEY: "6180_08495E00",
-    SNAME: "battery_status_operating_mode",
-    SPATH: JMESPATHS_TAG,
-    SL10N: True,
-}
-SENSOR_INSULATION_RESIDUAL_CURRENT = {
-    SKEY: "6102_40254E00",
-    SNAME: "insulation_residual_current",
-    SUNIT: "mA",
-}
-
 
 # Device Parameters
 # Type Label - Type Label
