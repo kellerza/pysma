@@ -169,7 +169,7 @@ SENSOR_POWER_L3 = {
     SUNIT: "W",
 }
 
-# AC Side - Grid measurements - reactive power, apparent power and power factor
+# AC Side - Grid measurements - Reactive power
 SENSOR_GRID_REACTIVE_POWER = {
     SKEY: "6100_40265F00",
     SNAME: "grid_reactive_power",
@@ -190,6 +190,8 @@ SENSOR_GRID_REACTIVE_POWER_L3 = {
     SNAME: "grid_reactive_power_l3",
     SUNIT: "var",
 }
+
+# AC Side - Grid measurements - Apparent power
 SENSOR_GRID_APPARENT_POWER = {
     SKEY: "6100_40666700",
     SNAME: "grid_apparent_power",
@@ -210,6 +212,9 @@ SENSOR_GRID_APPARENT_POWER_L3 = {
     SNAME: "grid_apparent_power_l3",
     SUNIT: "VA",
 }
+
+
+# AC Side - Grid measurements - Power factor
 SENSOR_GRID_POWER_FACTOR = {
     SKEY: "6100_00665900",
     SNAME: "grid_power_factor",
@@ -223,8 +228,7 @@ SENSOR_GRID_POWER_FACTOR_EXCITATION = {
     SL10N: True,
 }
 
-# AC Side - Grid measurements - frequency
-# AC Side - Grid measurements - current
+# AC Side - Grid measurements - Phase Current
 SENSOR_CURRENT_L1 = {
     SKEY: "6100_40465300",
     SNAME: "current_l1",
@@ -250,7 +254,7 @@ SENSOR_CURRENT_TOTAL = {
     SFACTOR: 1000,
 }
 
-# AC Side - Grid measurements - phase voltage
+# AC Side - Grid measurements - Phase voltage
 SENSOR_VOLTAGE_L1 = {
     SKEY: "6100_00464800",
     SNAME: "voltage_l1",
