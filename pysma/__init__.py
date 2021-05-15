@@ -375,20 +375,19 @@ class SMA:
         if self.devclass:
             return self.devclass
 
-        if not result_body:
+        if not result_body or not isinstance(result_body, dict):
             # Read the STATUS_SENSOR.
             # self.read will call get_devclass and update self.devclass
             await self.read(Sensors(SENSOR_STATUS))
         else:
             sensor_values = list(result_body.values())
-            if len(sensor_values) == 0:
-                return None
-
             devclass_keys = list(sensor_values[0].keys())
             if len(devclass_keys) == 0:
                 return None
             if len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
+            if devclass_keys[0] == "val":
+                return None
 
             self.devclass = devclass_keys[0]
             _LOGGER.debug("Found device class %s", self.devclass)
@@ -401,7 +400,7 @@ class SMA:
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 
         _LOGGER.debug("Loading sensors for device class %s", devclass)
-        device_sensors = SENSOR_MAP.get(devclass)
+        device_sensors = list(SENSOR_MAP.get(devclass))
 
         if devclass == DEVCLASS_INVERTER:
             payload = {
@@ -413,39 +412,40 @@ class SMA:
             }
             result_body = await self._read_body(URL_VALUES, payload)
 
-            # Detect and add Energy Meter sensors
-            em_sensor = Sensor(**SENSOR_ENERGY_METER)
-            em_sensor.extract_value(result_body)
+            if result_body:
+                # Detect and add Energy Meter sensors
+                em_sensor = Sensor(**SENSOR_ENERGY_METER)
+                em_sensor.extract_value(result_body)
 
-            if em_sensor.value:
-                _LOGGER.debug(
-                    "Energy Meter with serial %s detected. Adding extra sensors.",
-                    em_sensor.value,
-                )
-                device_sensors.extend(
-                    [
-                        sensor
-                        for sensor in SENSOR_MAP[ENERGY_METER_VIA_INVERTER]
-                        if sensor not in device_sensors
-                    ]
-                )
+                if em_sensor.value:
+                    _LOGGER.debug(
+                        "Energy Meter with serial %s detected. Adding extra sensors.",
+                        em_sensor.value,
+                    )
+                    device_sensors.extend(
+                        [
+                            sensor
+                            for sensor in SENSOR_MAP[ENERGY_METER_VIA_INVERTER]
+                            if sensor not in device_sensors
+                        ]
+                    )
 
-            # Detect and add Optimizer Sensors
-            optimizers = result_body.get(SENSOR_OPTIMIZER_SERIAL[SKEY])
-            if optimizers:
-                serials = optimizers.get(DEVCLASS_INVERTER)
+                # Detect and add Optimizer Sensors
+                optimizers = result_body.get(SENSOR_OPTIMIZER_SERIAL[SKEY])
+                if optimizers:
+                    serials = optimizers.get(DEVCLASS_INVERTER)
 
-                for idx, serial in enumerate(serials or []):
-                    if serial["val"]:
-                        _LOGGER.debug(
-                            "Optimizer %s with serial %s detected. Adding extra sensors.",
-                            idx,
-                            serial,
-                        )
-                        for sensor in SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]:
-                            new_sensor = sensor.copy()
-                            new_sensor[SKEY] = f"{sensor[SKEY]}_{idx}"
-                            new_sensor[SNAME] = f"{sensor[SNAME]}_{idx}"
-                            device_sensors.append(new_sensor)
+                    for idx, serial in enumerate(serials or []):
+                        if serial["val"]:
+                            _LOGGER.debug(
+                                "Optimizer %s with serial %s detected. Adding extra sensors.",
+                                idx,
+                                serial,
+                            )
+                            for sensor in SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]:
+                                new_sensor = sensor.copy()
+                                new_sensor[SKEY] = f"{sensor[SKEY]}_{idx}"
+                                new_sensor[SNAME] = f"{sensor[SNAME]}_{idx}"
+                                device_sensors.append(new_sensor)
 
         return Sensors(device_sensors)
