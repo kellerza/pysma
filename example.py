@@ -27,7 +27,7 @@ def print_table(sensors):
             print("{:>25}{:>15} {}".format(sen.name, str(sen.value), sen.unit))
 
 
-async def main_loop(loop, password, user, url):  # pylint: disable=invalid-name
+async def main_loop(loop, password, user, url):
     """Main loop."""
     async with aiohttp.ClientSession(
         loop=loop, connector=aiohttp.TCPConnector(ssl=False)
