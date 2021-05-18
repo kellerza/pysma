@@ -1,5 +1,7 @@
-from dataclasses import dataclass
-from typing import Union
+"""Sensors for SMA WebConnect library for Python. """
+import logging
+
+import attr
 
 from .const import (
     DEVCLASS_BATTERY,
@@ -11,274 +13,283 @@ from .const import (
     OPTIMIZERS_VIA_INVERTER,
 )
 
+_LOGGER = logging.getLogger(__name__)
 
-@dataclass
+
+# pylint: disable=R0902,R0903
+@attr.s(slots=True)
 class Sensor:
-    name: str
-    key: str
-    idx: str = "0"
-    unit: str = ""
-    factor: int = None
-    path: Union[str, list, tuple] = None
-    enabled: bool = True
-    l10n_translate: bool = False
-    value: Union[str, int] = None
+    """pysma sensor definition."""
+
+    key = attr.ib()
+    name = attr.ib()
+    unit = attr.ib(default="")
+    factor = attr.ib(default=None)
+    path = attr.ib(default=None)
+    enabled = attr.ib(default=True)
+    l10n_translate = attr.ib(default=False)
+    value = attr.ib(default=None, init=False)
+    key_idx = attr.ib(default="0", repr=False, init=False)
+
+    def __attrs_post_init__(self):
+        """Init path."""
+        key = str(self.key)
+        skey = key.split("_")
+        if len(skey) > 2 and skey[2].isdigit():
+            self.key = f"{skey[0]}_{skey[1]}"
+            self.key_idx = skey[2]
 
 
 # Status - Operation
-status = Sensor("status", "6180_08214800", path=JMESPATHS_TAG, l10n=True)
+status = Sensor("6180_08214800", "status", path=JMESPATHS_TAG, l10n_translate=True)
 operating_status_general = Sensor(
-    "operating_status_general", "6180_08412800", path=JMESPATHS_TAG, l10n=True
+    "6180_08412800", "operating_status_general", path=JMESPATHS_TAG, l10n_translate=True
 )
 
 # Status - Operation - Inverter
 inverter_condition = Sensor(
-    "inverter_condition", "6180_08414C00", path=JMESPATHS_TAG, l10n=True
+    "6180_08414C00", "inverter_condition", path=JMESPATHS_TAG, l10n_translate=True
 )
 inverter_system_init = Sensor(
-    "inverter_system_init", "6800_08811F00", path=JMESPATHS_TAG, l10n=True
+    "6800_08811F00", "inverter_system_init", path=JMESPATHS_TAG, l10n_translate=True
 )
 grid_connection_status = Sensor(
-    "grid_connection_status", "6180_0846A700", path=JMESPATHS_TAG, l10n=True
+    "6180_0846A700", "grid_connection_status", path=JMESPATHS_TAG, l10n_translate=True
 )
 grid_relay_status = Sensor(
-    "grid_relay_status", "6180_08416400", path=JMESPATHS_TAG, l10n=True
+    "6180_08416400", "grid_relay_status", path=JMESPATHS_TAG, l10n_translate=True
 )
 
 # Inverter operating time
 total_operating_time = Sensor(
-    "total_operating_time", "6400_00462E00", unit="h", factor=3600
+    "6400_00462E00", "total_operating_time", unit="h", factor=3600
 )
-total_feedin_time = Sensor("total_feedin_time", "6400_00462F00", unit="h", factor=3600)
+total_feedin_time = Sensor("6400_00462F00", "total_feedin_time", unit="h", factor=3600)
 
 # DC side - DC measurements PV
-pv_power_a = Sensor("pv_power_a", "6380_40251E00", idx="0", unit="W")
-pv_power_b = Sensor("pv_power_b", "6380_40251E00", idx="1", unit="W")
-pv_voltage_a = Sensor("pv_voltage_a", "6380_40451F00", idx="0", unit="V", factor=100)
-pv_voltage_b = Sensor("pv_voltage_b", "6380_40451F00", idx="1", unit="V", factor=100)
-pv_current_a = Sensor("pv_current_a", "6380_40452100", idx="0", unit="A", factor=1000)
-pv_current_b = Sensor("pv_current_b", "6380_40452100", idx="1", unit="A", factor=1000)
+pv_power_a = Sensor("6380_40251E00_0", "pv_power_a", unit="W")
+pv_power_b = Sensor("6380_40251E00_1", "pv_power_b", unit="W")
+pv_voltage_a = Sensor("6380_40451F00_0", "pv_voltage_a", unit="V", factor=100)
+pv_voltage_b = Sensor("6380_40451F00_1", "pv_voltage_b", unit="V", factor=100)
+pv_current_a = Sensor("6380_40452100_0", "pv_current_a", unit="A", factor=1000)
+pv_current_b = Sensor("6380_40452100_1", "pv_current_b", unit="A", factor=1000)
 
 # DC Side - Insulation monitoring
 insulation_residual_current = Sensor(
-    "insulation_residual_current", "6102_40254E00", unit="mA"
+    "6102_40254E00", "insulation_residual_current", unit="mA"
 )
 
 # AC Side - Grid measurements
-grid_power = Sensor("grid_power", "6100_40263F00", unit="W")
-frequency = Sensor("frequency", "6100_00465700", unit="Hz", factor=100)
+grid_power = Sensor("6100_40263F00", "grid_power", unit="W")
+frequency = Sensor("6100_00465700", "frequency", unit="Hz", factor=100)
 
 # AC Side - Grid measurements - Active power
-power_l1 = Sensor("power_l1", "6100_40464000", unit="W")
-power_l2 = Sensor("power_l2", "6100_40464100", unit="W")
-power_l3 = Sensor("power_l3", "6100_40464200", unit="W")
+power_l1 = Sensor("6100_40464000", "power_l1", unit="W")
+power_l2 = Sensor("6100_40464100", "power_l2", unit="W")
+power_l3 = Sensor("6100_40464200", "power_l3", unit="W")
 
 # AC Side - Grid measurements - Reactive power
-grid_reactive_power = Sensor("grid_reactive_power", "6100_40265F00", unit="var")
-grid_reactive_power_l1 = Sensor("grid_reactive_power_l1", "6100_40666000", unit="var")
-grid_reactive_power_l2 = Sensor("grid_reactive_power_l2", "6100_40666100", unit="var")
-grid_reactive_power_l3 = Sensor("grid_reactive_power_l3", "6100_40666200", unit="var")
+grid_reactive_power = Sensor("6100_40265F00", "grid_reactive_power", unit="var")
+grid_reactive_power_l1 = Sensor("6100_40666000", "grid_reactive_power_l1", unit="var")
+grid_reactive_power_l2 = Sensor("6100_40666100", "grid_reactive_power_l2", unit="var")
+grid_reactive_power_l3 = Sensor("6100_40666200", "grid_reactive_power_l3", unit="var")
 
 # AC Side - Grid measurements - Apparent power
-grid_apparent_power = Sensor("grid_apparent_power", "6100_40666700", unit="VA")
-grid_apparent_power_l1 = Sensor("grid_apparent_power_l1", "6100_40666800", unit="VA")
-grid_apparent_power_l2 = Sensor("grid_apparent_power_l2", "6100_40666900", unit="VA")
-grid_apparent_power_l3 = Sensor("grid_apparent_power_l3", "6100_40666A00", unit="VA")
+grid_apparent_power = Sensor("6100_40666700", "grid_apparent_power", unit="VA")
+grid_apparent_power_l1 = Sensor("6100_40666800", "grid_apparent_power_l1", unit="VA")
+grid_apparent_power_l2 = Sensor("6100_40666900", "grid_apparent_power_l2", unit="VA")
+grid_apparent_power_l3 = Sensor("6100_40666A00", "grid_apparent_power_l3", unit="VA")
 
 
 # AC Side - Grid measurements - Power factor
-grid_power_factor = Sensor("grid_power_factor", "6100_00665900", unit="", factor=1000)
+grid_power_factor = Sensor("6100_00665900", "grid_power_factor", unit="", factor=1000)
 grid_power_factor_excitation = Sensor(
-    "grid_power_factor_excitation", "6180_08465A00", path=JMESPATHS_TAG, l10n=True
+    "grid_power_factor_excitation",
+    "6180_08465A00",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
 )
 
 # AC Side - Grid measurements - Phase Current
-current_l1 = Sensor("current_l1", "6100_40465300", unit="A", factor=1000)
-current_l2 = Sensor("current_l2", "6100_40465400", unit="A", factor=1000)
-current_l3 = Sensor("current_l3", "6100_40465500", unit="A", factor=1000)
-current_total = Sensor("current_total", "6100_00664F00", unit="A", factor=1000)
+current_l1 = Sensor("6100_40465300", "current_l1", unit="A", factor=1000)
+current_l2 = Sensor("6100_40465400", "current_l2", unit="A", factor=1000)
+current_l3 = Sensor("6100_40465500", "current_l3", unit="A", factor=1000)
+current_total = Sensor("6100_00664F00", "current_total", unit="A", factor=1000)
 
 # AC Side - Grid measurements - Phase voltage
-voltage_l1 = Sensor("voltage_l1", "6100_00464800", unit="V", factor=100)
-voltage_l2 = Sensor("voltage_l2", "6100_00464900", unit="V", factor=100)
-voltage_l3 = Sensor("voltage_l3", "6100_00464A00", unit="V", factor=100)
+voltage_l1 = Sensor("6100_00464800", "voltage_l1", unit="V", factor=100)
+voltage_l2 = Sensor("6100_00464900", "voltage_l2", unit="V", factor=100)
+voltage_l3 = Sensor("6100_00464A00", "voltage_l3", unit="V", factor=100)
 
 # AC Side - Measured values - energy
-total_yield = Sensor("total_yield", "6400_00260100", unit="kWh", factor=1000)
-daily_yield = Sensor("daily_yield", "6400_00262200", unit="Wh")
+total_yield = Sensor("6400_00260100", "total_yield", unit="kWh", factor=1000)
+daily_yield = Sensor("6400_00262200", "daily_yield", unit="Wh")
 
 # AC Side - Measured values - Grid measurements
-metering_power_supplied = Sensor("metering_power_supplied", "6100_40463600", unit="W")
-metering_power_absorbed = Sensor("metering_power_absorbed", "6100_40463700", unit="W")
+metering_power_supplied = Sensor("6100_40463600", "metering_power_supplied", unit="W")
+metering_power_absorbed = Sensor("6100_40463700", "metering_power_absorbed", unit="W")
 metering_frequency = Sensor(
-    "metering_frequency", "6100_00468100", unit="Hz", factor=100
+    "6100_00468100", "metering_frequency", unit="Hz", factor=100
 )
 metering_total_yield = Sensor(
-    "metering_total_yield", "6400_00462400", unit="kWh", factor=1000
+    "6400_00462400", "metering_total_yield", unit="kWh", factor=1000
 )
 metering_total_absorbed = Sensor(
-    "metering_total_absorbed", "6400_00462500", unit="kWh", factor=1000
+    "6400_00462500", "metering_total_absorbed", unit="kWh", factor=1000
 )
 
 # AC Side - Measured values - Phase currents
 metering_current_l1 = Sensor(
-    "metering_current_l1", "6100_40466500", unit="A", factor=1000
+    "6100_40466500", "metering_current_l1", unit="A", factor=1000
 )
 metering_current_l2 = Sensor(
-    "metering_current_l2", "6100_40466600", unit="A", factor=1000
+    "6100_40466600", "metering_current_l2", unit="A", factor=1000
 )
 metering_current_l3 = Sensor(
-    "metering_current_l3", "6100_40466B00", unit="A", factor=1000
+    "6100_40466B00", "metering_current_l3", unit="A", factor=1000
 )
 
 # AC Side - Measured values - Phase voltage
 metering_voltage_l1 = Sensor(
-    "metering_voltage_l1", "6100_0046E500", unit="V", factor=100
+    "6100_0046E500", "metering_voltage_l1", unit="V", factor=100
 )
 metering_voltage_l2 = Sensor(
-    "metering_voltage_l2", "6100_0046E600", unit="V", factor=100
+    "6100_0046E600", "metering_voltage_l2", unit="V", factor=100
 )
 metering_voltage_l3 = Sensor(
-    "metering_voltage_l3", "6100_0046E700", unit="V", factor=100
+    "6100_0046E700", "metering_voltage_l3", unit="V", factor=100
 )
 
 # AC Side - Electricity meter - Measured values - Active power feed-in
-metering_active_power_l1 = Sensor("metering_active_power_l1", "6100_0046E800", unit="W")
-metering_active_power_l2 = Sensor("metering_active_power_l2", "6100_0046E900", unit="W")
-metering_active_power_l3 = Sensor("metering_active_power_l3", "6100_0046EA00", unit="W")
+metering_active_power_l1 = Sensor("6100_0046E800", "metering_active_power_l1", unit="W")
+metering_active_power_l2 = Sensor("6100_0046E900", "metering_active_power_l2", unit="W")
+metering_active_power_l3 = Sensor("6100_0046EA00", "metering_active_power_l3", unit="W")
 
 # AC Side - Electricity meter - Measured values - Active power drawn
 metering_active_power_consumed_l1 = Sensor(
-    "metering_active_power_consumed_l1", "6100_0046EB00", unit="W"
+    "6100_0046EB00", "metering_active_power_consumed_l1", unit="W"
 )
 metering_active_power_consumed_l2 = Sensor(
-    "metering_active_power_consumed_l2", "6100_0046EC00", unit="W"
+    "6100_0046EC00", "metering_active_power_consumed_l2", unit="W"
 )
 metering_active_power_consumed_l3 = Sensor(
-    "metering_active_power_consumed_l3", "6100_0046ED00", unit="W"
+    "6100_0046ED00", "metering_active_power_consumed_l3", unit="W"
 )
 
 # AC Side - PV generation
-pv_gen_meter = Sensor("pv_gen_meter", "6400_0046C300", unit="kWh", factor=1000)
+pv_gen_meter = Sensor("6400_0046C300", "pv_gen_meter", unit="kWh", factor=1000)
 
 # PV Inverter Optimizers
 optimizer_serial = Sensor("optimizer_serial", "6800_10852600")
-optimizer_power = Sensor("optimizer_power", "6100_40652A00", unit="W")
-optimizer_current = Sensor("optimizer_current", "6100_40652900", unit="A", factor=1000)
-optimizer_voltage = Sensor("optimizer_voltage", "6100_40652800", unit="V", factor=100)
-optimizer_temp = Sensor("optimizer_temp", "6100_40652B00", unit="C", factor=10)
+optimizer_power = Sensor("6100_40652A00", "optimizer_power", unit="W")
+optimizer_current = Sensor("6100_40652900", "optimizer_current", unit="A", factor=1000)
+optimizer_voltage = Sensor("6100_40652800", "optimizer_voltage", unit="V", factor=100)
+optimizer_temp = Sensor("6100_40652B00", "optimizer_temp", unit="C", factor=10)
 
 
 # Battery (inverter) - Battery (general parameters)
-battery_soc_total = Sensor("battery_soc_total", "6100_00295A00", unit="%")
-battery_soc_a = Sensor("battery_soc_a", "6100_00498F00", idx="0", unit="%")
-battery_soc_b = Sensor("battery_soc_b", "6100_00498F00", idx="1", unit="%")
-battery_soc_c = Sensor("battery_soc_c", "6100_00498F00", idx="2", unit="%")
-battery_voltage_a = Sensor(
-    "battery_voltage_a", "6100_00495C00", idx="0", unit="V", factor=100
-)
-battery_voltage_b = Sensor(
-    "battery_voltage_b", "6100_00495C00", idx="1", unit="V", factor=100
-)
-battery_voltage_c = Sensor(
-    "battery_voltage_c", "6100_00495C00", idx="2", unit="V", factor=100
-)
+battery_soc_total = Sensor("6100_00295A00", "battery_soc_total", unit="%")
+battery_soc_a = Sensor("6100_00498F00_0", "battery_soc_a", unit="%")
+battery_soc_b = Sensor("6100_00498F00_1", "battery_soc_b", unit="%")
+battery_soc_c = Sensor("6100_00498F00_2", "battery_soc_c", unit="%")
+battery_voltage_a = Sensor("6100_00495C00_0", "battery_voltage_a", unit="V", factor=100)
+battery_voltage_b = Sensor("6100_00495C00_1", "battery_voltage_b", unit="V", factor=100)
+battery_voltage_c = Sensor("6100_00495C00_2", "battery_voltage_c", unit="V", factor=100)
 battery_current_a = Sensor(
-    "battery_current_a", "6100_40495D00", idx="0", unit="A", factor=1000
+    "6100_40495D00_0", "battery_current_a", unit="A", factor=1000
 )
 battery_current_b = Sensor(
-    "battery_current_b", "6100_40495D00", idx="1", unit="A", factor=1000
+    "6100_40495D00_1", "battery_current_b", unit="A", factor=1000
 )
 battery_current_c = Sensor(
-    "battery_current_c", "6100_40495D00", idx="2", unit="A", factor=1000
+    "6100_40495D00_2", "battery_current_c", unit="A", factor=1000
 )
-battery_temp_a = Sensor("battery_temp_a", "6100_40495B00", idx="0", unit="C", factor=10)
-battery_temp_b = Sensor("battery_temp_b", "6100_40495B00", idx="1", unit="C", factor=10)
-battery_temp_c = Sensor("battery_temp_c", "6100_40495B00", idx="2", unit="C", factor=10)
+battery_temp_a = Sensor("6100_40495B00_0", "battery_temp_a", unit="C", factor=10)
+battery_temp_b = Sensor("6100_40495B00_1", "battery_temp_b", unit="C", factor=10)
+battery_temp_c = Sensor("6100_40495B00_2", "battery_temp_c", unit="C", factor=10)
 battery_status_operating_mode = Sensor(
-    "battery_status_operating_mode", "6180_08495E00", path=JMESPATHS_TAG, l10n=True
+    "battery_status_operating_mode",
+    "6180_08495E00",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
 )
 
 # Battery (inverter) - Diagnosis
-battery_capacity_total = Sensor("battery_capacity_total", "6100_00696E00", unit="%")
-battery_capacity_a = Sensor("battery_capacity_a", "6100_00499100", idx="0", unit="%")
-battery_capacity_b = Sensor("battery_capacity_b", "6100_00499100", idx="1", unit="%")
-battery_capacity_c = Sensor("battery_capacity_c", "6100_00499100", idx="2", unit="%")
+battery_capacity_total = Sensor("6100_00696E00", "battery_capacity_total", unit="%")
+battery_capacity_a = Sensor("6100_00499100_0", "battery_capacity_a", unit="%")
+battery_capacity_b = Sensor("6100_00499100_1", "battery_capacity_b", unit="%")
+battery_capacity_c = Sensor("6100_00499100_2", "battery_capacity_c", unit="%")
 
 # Battery (inverter) - Charge (voltage)
 battery_charging_voltage_a = Sensor(
-    "battery_charging_voltage_a", "6102_00493500", idx="0", unit="V", factor=100
+    "6102_00493500_0", "battery_charging_voltage_a", unit="V", factor=100
 )
 battery_charging_voltage_b = Sensor(
-    "battery_charging_voltage_b", "6102_00493500", idx="1", unit="V", factor=100
+    "6102_00493500_1", "battery_charging_voltage_b", unit="V", factor=100
 )
 battery_charging_voltage_c = Sensor(
-    "battery_charging_voltage_c", "6102_00493500", idx="2", unit="V", factor=100
+    "6102_00493500_2", "battery_charging_voltage_c", unit="V", factor=100
 )
 
 # Battery (inverter) - Battery charge (power & energy)
 battery_power_charge_total = Sensor(
-    "battery_power_charge_total", "6100_00496900", unit="W"
+    "6100_00496900", "battery_power_charge_total", unit="W"
 )
-battery_power_charge_a = Sensor(
-    "battery_power_charge_a", "6100_00499300", idx="0", unit="W"
-)
-battery_power_charge_b = Sensor(
-    "battery_power_charge_b", "6100_00499300", idx="1", unit="W"
-)
-battery_power_charge_c = Sensor(
-    "battery_power_charge_c", "6100_00499300", idx="2", unit="W"
-)
+battery_power_charge_a = Sensor("6100_00499300_0", "battery_power_charge_a", unit="W")
+battery_power_charge_b = Sensor("6100_00499300_1", "battery_power_charge_b", unit="W")
+battery_power_charge_c = Sensor("6100_00499300_2", "battery_power_charge_c", unit="W")
 battery_charge_total = Sensor(
-    "battery_charge_total", "6400_00496700", unit="kWh", factor=1000
+    "6400_00496700", "battery_charge_total", unit="kWh", factor=1000
 )
 battery_charge_a = Sensor(
-    "battery_charge_a", "6400_00499500", idx="0", unit="kWh", factor=1000
+    "6400_00499500_0", "battery_charge_a", unit="kWh", factor=1000
 )
 battery_charge_b = Sensor(
-    "battery_charge_b", "6400_00499500", idx="1", unit="kWh", factor=1000
+    "6400_00499500_1", "battery_charge_b", unit="kWh", factor=1000
 )
 battery_charge_c = Sensor(
-    "battery_charge_c", "6400_00499500", idx="2", unit="kWh", factor=1000
+    "6400_00499500_2", "battery_charge_c", unit="kWh", factor=1000
 )
 
 # Battery (inverter) - Battery discharge (power & energy)
 battery_power_discharge_total = Sensor(
-    "battery_power_discharge_total", "6100_00496A00", unit="W"
+    "6100_00496A00", "battery_power_discharge_total", unit="W"
 )
 battery_power_discharge_a = Sensor(
-    "battery_power_discharge_a", "6100_00499400", idx="0", unit="W"
+    "6100_00499400_0", "battery_power_discharge_a", unit="W"
 )
 battery_power_discharge_b = Sensor(
-    "battery_power_discharge_b", "6100_00499400", idx="1", unit="W"
+    "6100_00499400_1", "battery_power_discharge_b", unit="W"
 )
 battery_power_discharge_c = Sensor(
-    "battery_power_discharge_c", "6100_00499400", idx="2", unit="W"
+    "6100_00499400_2", "battery_power_discharge_c", unit="W"
 )
 battery_discharge_total = Sensor(
-    "battery_discharge_total", "6400_00496800", unit="kWh", factor=1000
+    "6400_00496800", "battery_discharge_total", unit="kWh", factor=1000
 )
 battery_discharge_a = Sensor(
-    "battery_discharge_a", "6400_00499600", idx="0", unit="kWh", factor=1000
+    "6400_00499600_0", "battery_discharge_a", unit="kWh", factor=1000
 )
 battery_discharge_b = Sensor(
-    "battery_discharge_b", "6400_00499600", idx="1", unit="kWh", factor=1000
+    "6400_00499600_1", "battery_discharge_b", unit="kWh", factor=1000
 )
 battery_discharge_c = Sensor(
-    "battery_discharge_c", "6400_00499600", idx="2", unit="kWh", factor=1000
+    "6400_00499600_2", "battery_discharge_c", unit="kWh", factor=1000
 )
 
 # Device Parameters
 # Type Label - Type Label
 serial_number = Sensor("serial_number", "6800_00A21E00")
 device_name = Sensor("device_name", "6800_10821E00")
-device_type = Sensor("device_type", "6800_08822000", path=JMESPATHS_TAG, l10n=True)
+device_type = Sensor(
+    "6800_08822000", "device_type", path=JMESPATHS_TAG, l10n_translate=True
+)
 device_manufacturer = Sensor(
-    "device_manufacturer", "6800_08822B00", path=JMESPATHS_TAG, l10n=True
+    "6800_08822B00", "device_manufacturer", path=JMESPATHS_TAG, l10n_translate=True
 )
 
 # Device - Inverter
-inverter_power_limit = Sensor("inverter_power_limit", "6800_00832A00", unit="W")
+inverter_power_limit = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
 
 # System communication - Meter on Speedwire
 energy_meter = Sensor("energy_meter", "6800_008AA300")
@@ -419,3 +430,59 @@ sensor_map = {
         device_manufacturer,
     ],
 }
+
+
+class Sensors:
+    """SMA Sensors."""
+
+    def __init__(self, sensors=None):
+        self.__s = []
+
+        if sensors:
+            self.add(sensors)
+
+    def __len__(self):
+        """Length."""
+        return len(self.__s)
+
+    # pylint: disable=R1710
+    def __contains__(self, key):
+        """Check if a sensor is defined."""
+        try:
+            if self[key]:
+                return True
+        except KeyError:
+            return False
+
+    def __getitem__(self, key):
+        """Get a sensor using either the name or key."""
+        for sen in self.__s:
+            if key in (sen.name, sen.key):
+                return sen
+        raise KeyError(key)
+
+    def __iter__(self):
+        """Iterator."""
+        return self.__s.__iter__()
+
+    def add(self, sensor):
+        """Add a sensor, warning if it exists."""
+        if isinstance(sensor, (list, tuple)):
+            for sss in sensor:
+                self.add(sss)
+            return
+
+        if not isinstance(sensor, Sensor):
+            raise TypeError("pysma.sensors.Sensor expected")
+
+        if sensor.name in self:
+            old = self[sensor.name]
+            self.__s.remove(old)
+            _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
+
+        if sensor.key in self and self[sensor.key].key_idx == sensor.key_idx:
+            _LOGGER.warning(
+                "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.idx
+            )
+
+        self.__s.append(sensor)
