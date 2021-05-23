@@ -19,14 +19,11 @@ class Sensor(definitions.SensorDefinition):
 
     def __attrs_post_init__(self):
         """Init path."""
-        idx = "0"
         key = str(self.key)
         skey = key.split("_")
         if len(skey) > 2 and skey[2].isdigit():
-            idx = skey[2]
-            key = f"{skey[0]}_{skey[1]}"
-        self.key = key
-        self.key_idx = idx
+            self.key = f"{skey[0]}_{skey[1]}"
+            self.key_idx = skey[2]
 
     def extract_logger(self, result_body):
         """Extract logs from json body."""
@@ -130,7 +127,7 @@ class Sensors:
                 self.add(sss)
             return
 
-        if type(sensor) is definitions.SensorDefinition:
+        if type(sensor) is definitions.SensorDefinition:  # pylint: disable=C0123
             self.add(sensor.create_sensor())
             return
 
