@@ -1,5 +1,4 @@
-import attr
-
+"""Sensor definitions for SMA WebConnect library for Python. """
 from .const import (
     DEVCLASS_BATTERY,
     DEVCLASS_ENERGY_METER,
@@ -9,33 +8,7 @@ from .const import (
     JMESPATHS_TAG,
     OPTIMIZERS_VIA_INVERTER,
 )
-
-
-@attr.s(slots=True)
-class SensorDefinition:
-    """pysma sensor definition."""
-
-    key = attr.ib()
-    name = attr.ib()
-    unit = attr.ib(default="")
-    factor = attr.ib(default=None)
-    path = attr.ib(default=None)
-    enabled = attr.ib(default=True)
-    l10n_translate = attr.ib(default=False)
-
-    def create_sensor(self):
-        from .sensor import Sensor
-
-        return Sensor(
-            key=self.key,
-            name=self.name,
-            unit=self.unit,
-            factor=self.factor,
-            path=self.path,
-            enabled=self.enabled,
-            l10n_translate=self.l10n_translate,
-        )
-
+from .sensor import SensorDefinition
 
 # Status - Operation
 status = SensorDefinition(

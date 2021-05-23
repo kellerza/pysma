@@ -1,17 +1,41 @@
+"""Sensor classes for SMA WebConnect library for Python. """
 import logging
 
 import attr
 import jmespath
 
-from . import definitions
 from .const import JMESPATH_VAL, JMESPATH_VAL_IDX
 
 _LOGGER = logging.getLogger(__name__)
 
 
-# pylint: disable=R0902
 @attr.s(slots=True)
-class Sensor(definitions.SensorDefinition):
+class SensorDefinition:  # pylint: disable=too-few-public-methods
+    """pysma sensor definition."""
+
+    key = attr.ib()
+    name = attr.ib()
+    unit = attr.ib(default="")
+    factor = attr.ib(default=None)
+    path = attr.ib(default=None)
+    enabled = attr.ib(default=True)
+    l10n_translate = attr.ib(default=False)
+
+    def create_sensor(self):
+        """Create a Sensor from this SensorDefinition."""
+        return Sensor(
+            key=self.key,
+            name=self.name,
+            unit=self.unit,
+            factor=self.factor,
+            path=self.path,
+            enabled=self.enabled,
+            l10n_translate=self.l10n_translate,
+        )
+
+
+@attr.s(slots=True)
+class Sensor(SensorDefinition):
     """pysma sensor."""
 
     value = attr.ib(default=None, init=False)
@@ -127,7 +151,9 @@ class Sensors:
                 self.add(sss)
             return
 
-        if type(sensor) is definitions.SensorDefinition:  # pylint: disable=C0123
+        # pylint: disable=unidiomatic-typecheck
+        # We do not want to match Sensor here.
+        if type(sensor) is SensorDefinition:
             self.add(sensor.create_sensor())
             return
 

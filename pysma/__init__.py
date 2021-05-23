@@ -35,6 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, session, url, password=None, group="user", uid=None):
         """Init SMA connection."""
         # pylint: disable=too-many-arguments
