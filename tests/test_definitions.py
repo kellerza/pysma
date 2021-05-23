@@ -1,18 +1,18 @@
 """Test pysma const file."""
 
-import pysma.const
+import pysma.definitions
 
 
 def test_duplicate_sensors():
     """Test if defined sensors have unique key and name"""
-    variables = vars(pysma.const)
+    variables = vars(pysma.definitions)
     found_keys = []
     found_names = []
-    for key, value in variables.items():
-        if key.startswith("SENSOR_") and key != "SENSOR_MAP":
-            found_key = value["key"]
-            found_name = value["name"]
-            if len(value["key"].split("_")) == 2:
+    for value in variables.values():
+        if isinstance(value, pysma.definitions.SensorDefinition):
+            found_key = value.key
+            found_name = value.name
+            if len(value.key.split("_")) == 2:
                 found_key = found_key + "_0"
 
             assert found_key not in found_keys
@@ -24,6 +24,6 @@ def test_duplicate_sensors():
 
 def test_sensor_map():
     """Test if all map entries only contain unique items"""
-    for sensor_map in pysma.const.SENSOR_MAP.values():
-        unique_items = list({s["key"]: s for s in sensor_map}.values())
+    for sensor_map in pysma.definitions.sensor_map.values():
+        unique_items = list({s.key: s for s in sensor_map}.values())
         assert unique_items == sensor_map

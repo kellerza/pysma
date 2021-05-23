@@ -14,8 +14,8 @@ from pysma.const import (
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
     OPTIMIZERS_VIA_INVERTER,
-    SENSOR_MAP,
 )
+from pysma.definitions import sensor_map
 
 from . import MOCK_DEVICE, MOCK_L10N, mock_aioresponse  # noqa: F401
 
@@ -99,7 +99,7 @@ class Test_sensor_class:
     @patch("pysma._LOGGER.warning")
     def test_default_no_duplicates(self, mock_warn):
         """Ensure warning on duplicates."""
-        sen = pysma.Sensors(SENSOR_MAP[DEVCLASS_INVERTER])
+        sen = pysma.Sensors(sensor_map[DEVCLASS_INVERTER])
         assert len(sen) > 20
         assert len(sen) < 50
         assert mock_warn.call_count == 0
@@ -130,7 +130,7 @@ class Test_sensor_class:
     @patch("pysma._LOGGER.warning")
     def test_default_jmes(self, mock_warn):
         """Ensure default sensors are ok."""
-        sens = pysma.Sensors(SENSOR_MAP[DEVCLASS_INVERTER])
+        sens = pysma.Sensors(sensor_map[DEVCLASS_INVERTER])
         for sen in sens:
             sen.extract_value(SB_1_5)
         assert mock_warn.called
@@ -391,7 +391,7 @@ class Test_SMA_class:
         session = aiohttp.ClientSession()
         sma = pysma.SMA(session, self.host, "pass")
         assert len(await sma.get_sensors()) == (
-            len(SENSOR_MAP[DEVCLASS_INVERTER])
-            + len(SENSOR_MAP[ENERGY_METER_VIA_INVERTER])
-            + (len(SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]) * 2)
+            len(sensor_map[DEVCLASS_INVERTER])
+            + len(sensor_map[ENERGY_METER_VIA_INVERTER])
+            + (len(sensor_map[OPTIMIZERS_VIA_INVERTER]) * 2)
         )

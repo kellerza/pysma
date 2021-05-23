@@ -13,6 +13,7 @@ import attr
 import jmespath
 from aiohttp import client_exceptions
 
+from . import definitions
 from .const import (
     DEVCLASS_INVERTER,
     DEVICE_INFO,
@@ -21,12 +22,6 @@ from .const import (
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
     OPTIMIZERS_VIA_INVERTER,
-    SENSOR_ENERGY_METER,
-    SENSOR_MAP,
-    SENSOR_OPTIMIZER_SERIAL,
-    SENSOR_STATUS,
-    SKEY,
-    SNAME,
     URL_DASH_LOGGER,
     URL_DASH_VALUES,
     URL_LOGGER,
@@ -162,13 +157,13 @@ class Sensors:
 
     def add(self, sensor):
         """Add a sensor, warning if it exists."""
-        if isinstance(sensor, (list, tuple)):
+        if isinstance(sensor, list):
             for sss in sensor:
                 self.add(sss)
             return
 
-        if isinstance(sensor, dict):
-            self.add(Sensor(**sensor))
+        if isinstance(sensor, definitions.SensorDefinition):
+            self.add(Sensor(**sensor._asdict()))
             return
 
         if not isinstance(sensor, Sensor):
@@ -209,7 +204,7 @@ class SMA:
         self.sma_uid = uid
         self.l10n = {}
         self.devclass = None
-        self.device_info_sensors = Sensors(SENSOR_MAP[DEVICE_INFO])
+        self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
     async def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
@@ -378,7 +373,7 @@ class SMA:
         if not result_body or not isinstance(result_body, dict):
             # Read the STATUS_SENSOR.
             # self.read will call get_devclass and update self.devclass
-            await self.read(Sensors(SENSOR_STATUS))
+            await self.read(Sensors(definitions.status))
         else:
             sensor_values = list(result_body.values())
             devclass_keys = list(sensor_values[0].keys())
@@ -400,21 +395,21 @@ class SMA:
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 
         _LOGGER.debug("Loading sensors for device class %s", devclass)
-        device_sensors = list(SENSOR_MAP.get(devclass))
+        device_sensors = list(definitions.sensor_map.get(devclass))
 
         if devclass == DEVCLASS_INVERTER:
+            em_sensor = Sensor(**definitions.energy_meter._asdict())
             payload = {
                 "destDev": [],
                 "keys": [
-                    SENSOR_ENERGY_METER[SKEY],
-                    SENSOR_OPTIMIZER_SERIAL[SKEY],
+                    em_sensor.key,
+                    definitions.optimizer_serial.key,
                 ],
             }
             result_body = await self._read_body(URL_VALUES, payload)
 
             if result_body:
                 # Detect and add Energy Meter sensors
-                em_sensor = Sensor(**SENSOR_ENERGY_METER)
                 em_sensor.extract_value(result_body)
 
                 if em_sensor.value:
@@ -425,13 +420,15 @@ class SMA:
                     device_sensors.extend(
                         [
                             sensor
-                            for sensor in SENSOR_MAP[ENERGY_METER_VIA_INVERTER]
+                            for sensor in definitions.sensor_map[
+                                ENERGY_METER_VIA_INVERTER
+                            ]
                             if sensor not in device_sensors
                         ]
                     )
 
                 # Detect and add Optimizer Sensors
-                optimizers = result_body.get(SENSOR_OPTIMIZER_SERIAL[SKEY])
+                optimizers = result_body.get(definitions.optimizer_serial.key)
                 if optimizers:
                     serials = optimizers.get(DEVCLASS_INVERTER)
 
@@ -442,10 +439,12 @@ class SMA:
                                 idx,
                                 serial,
                             )
-                            for sensor in SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]:
-                                new_sensor = sensor.copy()
-                                new_sensor[SKEY] = f"{sensor[SKEY]}_{idx}"
-                                new_sensor[SNAME] = f"{sensor[SNAME]}_{idx}"
+                            for sensor in definitions.sensor_map[
+                                OPTIMIZERS_VIA_INVERTER
+                            ]:
+                                new_sensor = Sensor(**sensor._asdict())
+                                new_sensor.key_idx = idx
+                                new_sensor.name = f"{sensor.name}_{idx}"
                                 device_sensors.append(new_sensor)
 
         return Sensors(device_sensors)
