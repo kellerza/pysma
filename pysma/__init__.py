@@ -9,10 +9,10 @@ import json
 import logging
 
 import async_timeout
+import attr
 import jmespath
 from aiohttp import client_exceptions
 
-from . import sensors
 from .const import (
     DEVCLASS_INVERTER,
     DEVICE_INFO,
@@ -21,6 +21,12 @@ from .const import (
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
     OPTIMIZERS_VIA_INVERTER,
+    SENSOR_ENERGY_METER,
+    SENSOR_MAP,
+    SENSOR_OPTIMIZER_SERIAL,
+    SENSOR_STATUS,
+    SKEY,
+    SNAME,
     URL_DASH_LOGGER,
     URL_DASH_VALUES,
     URL_LOGGER,
@@ -34,6 +40,153 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # pylint: disable=R0902
+@attr.s(slots=True)
+class Sensor:
+    """pysma sensor definition."""
+
+    key = attr.ib()
+    name = attr.ib()
+    unit = attr.ib(default="")
+    factor = attr.ib(default=None)
+    path = attr.ib(default=None)
+    enabled = attr.ib(default=True)
+    l10n_translate = attr.ib(default=False)
+    value = attr.ib(default=None, init=False)
+    key_idx = attr.ib(default="0", repr=False, init=False)
+
+    def __attrs_post_init__(self):
+        """Init path."""
+        idx = "0"
+        key = str(self.key)
+        skey = key.split("_")
+        if len(skey) > 2 and skey[2].isdigit():
+            idx = skey[2]
+            key = f"{skey[0]}_{skey[1]}"
+        self.key = key
+        self.key_idx = idx
+
+    def extract_logger(self, result_body):
+        """Extract logs from json body."""
+        self.value = result_body
+
+    def extract_value(self, result_body, l10n=None, devclass="1"):
+        """Extract value from json body."""
+        try:
+            res = result_body[self.key]
+        except (KeyError, TypeError):
+            _LOGGER.warning("Sensor %s: Not found in %s", self.key, result_body)
+            res = self.value
+            self.value = None
+            return self.value != res
+
+        if not isinstance(self.path, str):
+            # Try different methods until we can decode...
+            _paths = (
+                [sens_path.format(devclass, self.key_idx) for sens_path in self.path]
+                if isinstance(self.path, (list, tuple))
+                else [
+                    JMESPATH_VAL,
+                    JMESPATH_VAL_IDX.format(devclass, self.key_idx),
+                ]
+            )
+
+            while _paths:
+                _path = _paths.pop()
+                _val = jmespath.search(_path, res)
+                if _val is not None:
+                    _LOGGER.debug(
+                        "Sensor %s: Will be decoded with %s from %s",
+                        self.name,
+                        _path,
+                        res,
+                    )
+                    self.path = _path
+                    break
+
+        # Extract new value
+        if isinstance(self.path, str):
+            res = jmespath.search(self.path, res)
+        else:
+            _LOGGER.debug(
+                "Sensor %s: No successful value decoded yet: %s", self.name, res
+            )
+            res = None
+
+        if isinstance(res, (int, float)) and self.factor:
+            res /= self.factor
+
+        if self.l10n_translate and isinstance(l10n, dict):
+            res = l10n.get(
+                str(res),
+                res,
+            )
+
+        try:
+            return res != self.value
+        finally:
+            self.value = res
+
+
+class Sensors:
+    """SMA Sensors."""
+
+    def __init__(self, sensors=None):
+        self.__s = []
+
+        if sensors:
+            self.add(sensors)
+
+    def __len__(self):
+        """Length."""
+        return len(self.__s)
+
+    # pylint: disable=R1710
+    def __contains__(self, key):
+        """Check if a sensor is defined."""
+        try:
+            if self[key]:
+                return True
+        except KeyError:
+            return False
+
+    def __getitem__(self, key):
+        """Get a sensor using either the name or key."""
+        for sen in self.__s:
+            if key in (sen.name, sen.key):
+                return sen
+        raise KeyError(key)
+
+    def __iter__(self):
+        """Iterator."""
+        return self.__s.__iter__()
+
+    def add(self, sensor):
+        """Add a sensor, warning if it exists."""
+        if isinstance(sensor, (list, tuple)):
+            for sss in sensor:
+                self.add(sss)
+            return
+
+        if isinstance(sensor, dict):
+            self.add(Sensor(**sensor))
+            return
+
+        if not isinstance(sensor, Sensor):
+            raise TypeError("pysma.Sensor expected")
+
+        if sensor.name in self:
+            old = self[sensor.name]
+            self.__s.remove(old)
+            _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
+
+        if sensor.key in self and self[sensor.key].key_idx == sensor.key_idx:
+            _LOGGER.warning(
+                "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.key_idx
+            )
+
+        self.__s.append(sensor)
+
+
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
@@ -56,7 +209,7 @@ class SMA:
         self.sma_uid = uid
         self.l10n = {}
         self.devclass = None
-        self.device_info_sensors = sensors.Sensors(sensors.sensor_map[DEVICE_INFO])
+        self.device_info_sensors = Sensors(SENSOR_MAP[DEVICE_INFO])
 
     async def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
@@ -115,66 +268,6 @@ class SMA:
 
         return result_body
 
-    def _extract_value(self, sensor, result_body, devclass="1"):
-        """Extract value from json body."""
-        try:
-            res = result_body[sensor.key]
-        except (KeyError, TypeError):
-            _LOGGER.warning("Sensor %s: Not found in %s", sensor.key, result_body)
-            res = sensor.value
-            sensor.value = None
-            return sensor.value != res
-
-        if not isinstance(sensor.path, str):
-            # Try different methods until we can decode...
-            _paths = (
-                [
-                    sens_path.format(devclass, sensor.key_idx)
-                    for sens_path in sensor.path
-                ]
-                if isinstance(sensor.path, (list, tuple))
-                else [
-                    JMESPATH_VAL,
-                    JMESPATH_VAL_IDX.format(devclass, sensor.key_idx),
-                ]
-            )
-
-            while _paths:
-                _path = _paths.pop()
-                _val = jmespath.search(_path, res)
-                if _val is not None:
-                    _LOGGER.debug(
-                        "Sensor %s: Will be decoded with %s from %s",
-                        sensor.name,
-                        _path,
-                        res,
-                    )
-                    sensor.path = _path
-                    break
-
-        # Extract new value
-        if isinstance(sensor.path, str):
-            res = jmespath.search(sensor.path, res)
-        else:
-            _LOGGER.debug(
-                "Sensor %s: No successful value decoded yet: %s", sensor.name, res
-            )
-            res = None
-
-        if isinstance(res, (int, float)) and sensor.factor:
-            res /= sensor.factor
-
-        if sensor.l10n_translate and isinstance(self.l10n, dict):
-            res = self.l10n.get(
-                str(res),
-                res,
-            )
-
-        try:
-            return res != sensor.value
-        finally:
-            sensor.value = res
-
     async def new_session(self):
         """Establish a new session."""
         self.l10n = await self._read_l10n()
@@ -204,7 +297,7 @@ class SMA:
         finally:
             self.sma_sid = None
 
-    async def read(self, sens):
+    async def read(self, sensors):
         """Read a set of keys."""
         if self._new_session_data is None:
             payload = {"destDev": [], "keys": []}
@@ -212,7 +305,7 @@ class SMA:
         else:
             payload = {
                 "destDev": [],
-                "keys": list({s.key for s in sens if s.enabled}),
+                "keys": list({s.key for s in sensors if s.enabled}),
             }
             result_body = await self._read_body(URL_VALUES, payload)
         if not result_body:
@@ -220,10 +313,10 @@ class SMA:
 
         notfound = []
         devclass = await self.get_devclass(result_body)
-        for sen in sens:
+        for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    self._extract_value(sen, result_body, devclass)
+                    sen.extract_value(result_body, self.l10n, devclass)
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -237,7 +330,7 @@ class SMA:
 
         return True
 
-    async def read_logger(self, sens=None, start=None, end=None):
+    async def read_logger(self, sensors=None, start=None, end=None):
         """Read a logging key and return the results."""
         if self._new_session_data is None:
             payload = {"destDev": [], "key": []}
@@ -245,7 +338,7 @@ class SMA:
         else:
             payload = {
                 "destDev": [],
-                "key": int(sens[0].key),
+                "key": int(sensors[0].key),
                 "tStart": start,
                 "tEnd": end,
             }
@@ -253,8 +346,8 @@ class SMA:
         if not result_body:
             return False
 
-        for sen in sens:
-            sen.value = result_body
+        for sen in sensors:
+            sen.extract_logger(result_body)
 
         return True
 
@@ -285,7 +378,7 @@ class SMA:
         if not result_body or not isinstance(result_body, dict):
             # Read the STATUS_SENSOR.
             # self.read will call get_devclass and update self.devclass
-            await self.read(sensors.Sensors(sensors.status))
+            await self.read(Sensors(SENSOR_STATUS))
         else:
             sensor_values = list(result_body.values())
             devclass_keys = list(sensor_values[0].keys())
@@ -307,37 +400,38 @@ class SMA:
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 
         _LOGGER.debug("Loading sensors for device class %s", devclass)
-        device_sensors = sensors.sensor_map.get(devclass)
+        device_sensors = list(SENSOR_MAP.get(devclass))
 
         if devclass == DEVCLASS_INVERTER:
             payload = {
                 "destDev": [],
                 "keys": [
-                    sensors.energy_meter.key,
-                    sensors.optimizer_serial.key,
+                    SENSOR_ENERGY_METER[SKEY],
+                    SENSOR_OPTIMIZER_SERIAL[SKEY],
                 ],
             }
             result_body = await self._read_body(URL_VALUES, payload)
 
             if result_body:
                 # Detect and add Energy Meter sensors
-                self._extract_value(sensors.energy_meter, result_body, devclass)
+                em_sensor = Sensor(**SENSOR_ENERGY_METER)
+                em_sensor.extract_value(result_body)
 
-                if sensors.energy_meter.value:
+                if em_sensor.value:
                     _LOGGER.debug(
                         "Energy Meter with serial %s detected. Adding extra sensors.",
-                        sensors.energy_meter.value,
+                        em_sensor.value,
                     )
                     device_sensors.extend(
                         [
                             sensor
-                            for sensor in sensors.sensor_map[ENERGY_METER_VIA_INVERTER]
+                            for sensor in SENSOR_MAP[ENERGY_METER_VIA_INVERTER]
                             if sensor not in device_sensors
                         ]
                     )
 
                 # Detect and add Optimizer Sensors
-                optimizers = result_body.get(sensors.optimizer_serial.key)
+                optimizers = result_body.get(SENSOR_OPTIMIZER_SERIAL[SKEY])
                 if optimizers:
                     serials = optimizers.get(DEVCLASS_INVERTER)
 
@@ -348,10 +442,10 @@ class SMA:
                                 idx,
                                 serial,
                             )
-                            for sensor in sensors.sensor_map[OPTIMIZERS_VIA_INVERTER]:
+                            for sensor in SENSOR_MAP[OPTIMIZERS_VIA_INVERTER]:
                                 new_sensor = sensor.copy()
-                                new_sensor.key = f"{sensor.key}_{idx}"
-                                new_sensor.name = f"{sensor.name}_{idx}"
-                                device_sensors.add(new_sensor)
+                                new_sensor[SKEY] = f"{sensor[SKEY]}_{idx}"
+                                new_sensor[SNAME] = f"{sensor[SNAME]}_{idx}"
+                                device_sensors.append(new_sensor)
 
-        return sensors.Sensors(device_sensors)
+        return Sensors(device_sensors)
