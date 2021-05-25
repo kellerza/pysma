@@ -10,7 +10,7 @@ import json
 import logging
 
 import async_timeout
-import jmespath
+import jmespath  # type: ignore
 from aiohttp import client_exceptions
 
 from . import definitions

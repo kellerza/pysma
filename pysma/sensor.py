@@ -3,7 +3,7 @@ import copy
 import logging
 
 import attr
-import jmespath
+import jmespath  # type: ignore
 
 from .const import JMESPATH_VAL, JMESPATH_VAL_IDX
 
