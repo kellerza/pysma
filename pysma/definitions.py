@@ -30,12 +30,6 @@ grid_relay_status = Sensor(
     "6180_08416400", "grid_relay_status", path=JMESPATHS_TAG, l10n_translate=True
 )
 
-# Inverter operating time
-total_operating_time = Sensor(
-    "6400_00462E00", "total_operating_time", unit="h", factor=3600
-)
-total_feedin_time = Sensor("6400_00462F00", "total_feedin_time", unit="h", factor=3600)
-
 # DC side - DC measurements PV
 pv_power_a = Sensor("6380_40251E00_0", "pv_power_a", unit="W")
 pv_power_b = Sensor("6380_40251E00_1", "pv_power_b", unit="W")
@@ -298,6 +292,7 @@ sensor_map = {
     ENERGY_METER_VIA_INVERTER: [
         metering_power_supplied,
         metering_power_absorbed,
+        metering_frequency,
         metering_total_yield,
         metering_total_absorbed,
         metering_current_l1,

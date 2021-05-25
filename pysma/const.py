@@ -8,8 +8,6 @@ URL_DASH_VALUES = "/dyn/getDashValues.json"
 
 USERS = {"user": "usr", "installer": "istl"}
 
-JMESPATH_BASE = "result.*"
-
 JMESPATH_VAL = "val"
 JMESPATH_VAL_TAG = JMESPATH_VAL + "[0].tag"
 JMESPATH_VAL_IDX = '"{}"[{}].val'

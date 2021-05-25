@@ -361,7 +361,7 @@ class Test_SMA_class:
         sma.devclass = "test"
         assert await sma.get_devclass() == "test"
 
-    async def test_get_sensors(self, mock_aioresponse, caplog):  # noqa: F811
+    async def test_get_sensors(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
