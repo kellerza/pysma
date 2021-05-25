@@ -129,7 +129,7 @@ class Sensors:
 
     def add(self, sensor):
         """Add a sensor, warning if it exists."""
-        if isinstance(sensor, list):
+        if isinstance(sensor, (list, tuple)):
             for sss in sensor:
                 self.add(sss)
             return
