@@ -1,4 +1,4 @@
-"""Sensor definitions for SMA WebConnect library for Python. """
+"""Sensor definitions for SMA WebConnect library for Python."""
 from .const import (
     DEVCLASS_BATTERY,
     DEVCLASS_ENERGY_METER,

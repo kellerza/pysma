@@ -20,6 +20,7 @@ VAR = {}
 
 
 def print_table(sensors):
+    """Print sensors formatted as table."""
     for sen in sensors:
         if sen.value is None:
             print("{:>25}".format(sen.name))
@@ -28,7 +29,7 @@ def print_table(sensors):
 
 
 async def main_loop(loop, password, user, url):
-    """Main loop."""
+    """Run main loop."""
     async with aiohttp.ClientSession(
         loop=loop, connector=aiohttp.TCPConnector(ssl=False)
     ) as session:
@@ -63,7 +64,7 @@ async def main_loop(loop, password, user, url):
 
 
 def main():
-    """Main example."""
+    """Run example."""
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description="Test the SMA webconnect library.")

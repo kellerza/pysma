@@ -1,4 +1,4 @@
-"""Sensor classes for SMA WebConnect library for Python. """
+"""Sensor classes for SMA WebConnect library for Python."""
 import copy
 import logging
 
@@ -33,11 +33,21 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
             self.key_idx = skey[2]
 
     def extract_logger(self, result_body):
-        """Extract logs from json body."""
+        """Extract logs from json body.
+
+        Args:
+            result_body: json body retrieved from device
+        """
         self.value = result_body
 
     def extract_value(self, result_body, l10n=None, devclass="1"):
-        """Extract value from json body."""
+        """Extract value from json body.
+
+        Args:
+            result_body: json body retrieved from device
+            l10n: Dictionary to translate tags to strings
+            devclass: The device class of the device used to extract the value
+        """
         try:
             res = result_body[self.key]
         except (KeyError, TypeError):
@@ -98,6 +108,11 @@ class Sensors:
     """SMA Sensors."""
 
     def __init__(self, sensors=None):
+        """Init Sensors.
+
+        Args:
+            sensors: One or a list of sensors to add on init
+        """
         self.__s = []
 
         if sensors:
@@ -117,18 +132,26 @@ class Sensors:
             return False
 
     def __getitem__(self, key):
-        """Get a sensor using either the name or key."""
+        """Get a sensor.
+
+        Args:
+            key: Either the name or key of the Sensor
+        """
         for sen in self.__s:
             if key in (sen.name, sen.key):
                 return sen
         raise KeyError(key)
 
     def __iter__(self):
-        """Iterator."""
+        """Iterate Sensor objects."""
         return self.__s.__iter__()
 
     def add(self, sensor):
-        """Add a sensor, warning if it exists."""
+        """Add a sensor, warning if it exists.
+
+        Args:
+            sensor: One or a list of sensors to add
+        """
         if isinstance(sensor, (list, tuple)):
             for sss in sensor:
                 self.add(sss)
