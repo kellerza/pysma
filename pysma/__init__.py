@@ -5,6 +5,7 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 Source: http://www.github.com/kellerza/pysma
 """
 import asyncio
+import copy
 import json
 import logging
 
@@ -250,7 +251,7 @@ class SMA:
         device_sensors = list(definitions.sensor_map.get(devclass))
 
         if devclass == DEVCLASS_INVERTER:
-            em_sensor = definitions.energy_meter.create_sensor()
+            em_sensor = copy.copy(definitions.energy_meter)
             payload = {
                 "destDev": [],
                 "keys": [
@@ -294,7 +295,7 @@ class SMA:
                             for sensor_definition in definitions.sensor_map[
                                 OPTIMIZERS_VIA_INVERTER
                             ]:
-                                new_sensor = sensor_definition.create_sensor()
+                                new_sensor = copy.copy(sensor_definition)
                                 new_sensor.key_idx = idx
                                 new_sensor.name = f"{sensor_definition.name}_{idx}"
                                 device_sensors.append(new_sensor)

@@ -1,4 +1,5 @@
 """Sensor classes for SMA WebConnect library for Python. """
+import copy
 import logging
 
 import attr
@@ -10,8 +11,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(slots=True)
-class SensorDefinition:  # pylint: disable=too-few-public-methods
-    """pysma sensor definition."""
+class Sensor:  # pylint: disable=too-many-instance-attributes
+    """pysma sensor."""
 
     key = attr.ib()
     name = attr.ib()
@@ -20,24 +21,6 @@ class SensorDefinition:  # pylint: disable=too-few-public-methods
     path = attr.ib(default=None)
     enabled = attr.ib(default=True)
     l10n_translate = attr.ib(default=False)
-
-    def create_sensor(self):
-        """Create a Sensor from this SensorDefinition."""
-        return Sensor(
-            key=self.key,
-            name=self.name,
-            unit=self.unit,
-            factor=self.factor,
-            path=self.path,
-            enabled=self.enabled,
-            l10n_translate=self.l10n_translate,
-        )
-
-
-@attr.s(slots=True)
-class Sensor(SensorDefinition):
-    """pysma sensor."""
-
     value = attr.ib(default=None, init=False)
     key_idx = attr.ib(default="0", repr=False, init=False)
 
@@ -151,13 +134,9 @@ class Sensors:
                 self.add(sss)
             return
 
-        # pylint: disable=unidiomatic-typecheck
-        # We do not want to match Sensor here.
-        if type(sensor) is SensorDefinition:
-            self.add(sensor.create_sensor())
-            return
-
-        if not isinstance(sensor, Sensor):
+        if isinstance(sensor, Sensor):
+            sensor = copy.copy(sensor)
+        else:
             raise TypeError("pysma.Sensor expected")
 
         if sensor.name in self:
