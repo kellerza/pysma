@@ -7,7 +7,7 @@ from unittest.mock import patch
 import aiohttp
 import pytest
 
-import pysma
+from pysma import SMA
 from pysma.const import (
     DEVCLASS_INVERTER,
     ENERGY_METER_VIA_INVERTER,
@@ -155,7 +155,7 @@ class Test_SMA_class:
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "extralongpassword")
+        sma = SMA(session, self.host, "extralongpassword")
         assert await sma.new_session()
 
         assert mock_warn.call_count == 1
@@ -167,13 +167,13 @@ class Test_SMA_class:
     async def test_new_session_invalid_group(self, mock_aioresponse):  # noqa: F811
         session = aiohttp.ClientSession()
         with pytest.raises(KeyError):
-            pysma.SMA(session, self.host, "pass", "invalid-group")
+            SMA(session, self.host, "pass", "invalid-group")
 
     async def test_new_session_fail(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(f"{self.base_url}/dyn/login.json", payload={"result": {}})
 
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         assert not await sma.new_session()
 
     async def test_device_info(self, mock_aioresponse):  # noqa: F811
@@ -207,7 +207,7 @@ class Test_SMA_class:
             },
         )
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         result = await sma.device_info()
         assert result
         assert result == MOCK_DEVICE
@@ -230,7 +230,7 @@ class Test_SMA_class:
             },
         )
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         assert await sma.new_session()
         result = await sma.device_info()
         assert result
@@ -248,7 +248,7 @@ class Test_SMA_class:
             payload={},
         )
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         assert await sma.new_session()
         result = await sma.device_info()
         assert not result
@@ -264,7 +264,7 @@ class Test_SMA_class:
         )
 
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         assert await sma.get_devclass() is None
 
         mock_aioresponse.post(
@@ -390,7 +390,7 @@ class Test_SMA_class:
         )
 
         session = aiohttp.ClientSession()
-        sma = pysma.SMA(session, self.host, "pass")
+        sma = SMA(session, self.host, "pass")
         assert len(await sma.get_sensors()) == (
             len(sensor_map[DEVCLASS_INVERTER])
             + len(sensor_map[ENERGY_METER_VIA_INVERTER])

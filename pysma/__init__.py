@@ -154,7 +154,6 @@ class SMA:
                 "destDev": [],
                 "keys": list({s.key for s in sensors if s.enabled}),
             }
-            print(payload)
             result_body = await self._read_body(URL_VALUES, payload)
         if not result_body:
             return False
