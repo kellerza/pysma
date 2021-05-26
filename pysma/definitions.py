@@ -251,6 +251,7 @@ device_type = Sensor(
 device_manufacturer = Sensor(
     "6800_08822B00", "device_manufacturer", path=JMESPATHS_TAG, l10n_translate=True
 )
+device_sw_version = Sensor("6800_00823400", "device_sw_version")
 
 # Device - Inverter
 inverter_power_limit = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
@@ -393,5 +394,6 @@ sensor_map = {
         device_name,
         device_type,
         device_manufacturer,
+        device_sw_version,
     ],
 }

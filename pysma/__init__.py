@@ -13,6 +13,8 @@ import async_timeout
 import jmespath  # type: ignore
 from aiohttp import client_exceptions
 
+from pysma.helpers import version_int_to_string
+
 from . import definitions
 from .const import (
     DEVCLASS_INVERTER,
@@ -213,6 +215,9 @@ class SMA:
             or FALLBACK_DEVICE_INFO["type"],
             "manufacturer": self.device_info_sensors["device_manufacturer"].value
             or FALLBACK_DEVICE_INFO["manufacturer"],
+            "sw_version": version_int_to_string(
+                self.device_info_sensors["device_sw_version"].value
+            ),
         }
 
         return device_info
