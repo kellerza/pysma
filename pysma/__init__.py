@@ -5,234 +5,38 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 Source: http://www.github.com/kellerza/pysma
 """
 import asyncio
+import copy
 import json
 import logging
 
 import async_timeout
-import attr
-import jmespath
+import jmespath  # type: ignore
 from aiohttp import client_exceptions
 
+from . import definitions
+from .const import (
+    DEVCLASS_INVERTER,
+    DEVICE_INFO,
+    ENERGY_METER_VIA_INVERTER,
+    FALLBACK_DEVICE_INFO,
+    OPTIMIZERS_VIA_INVERTER,
+    URL_DASH_LOGGER,
+    URL_DASH_VALUES,
+    URL_LOGGER,
+    URL_LOGIN,
+    URL_LOGOUT,
+    URL_VALUES,
+    USERS,
+)
+from .sensor import Sensors
+
 _LOGGER = logging.getLogger(__name__)
-
-USERS = {"user": "usr", "installer": "istl"}
-
-JMESPATH_BASE = "result.*"
-JMESPATH_VAL_IDX = '"{}"[{}].val'
-JMESPATH_VAL = "val"
-
-LEGACY_MAP = {
-    "pv_power": {"old_key": "6100_0046C200", "new_sensor": "pv_power_a"},
-    "pv_voltage": {
-        "old_key": "6380_40451F00",
-        "new_sensor": "pv_power_a",
-    },
-    "pv_current": {
-        "old_key": "6380_40452100",
-        "new_sensor": "pv_current_a",
-    },
-}
-
-
-@attr.s(slots=True)
-class Sensor:
-    """pysma sensor definition."""
-
-    key = attr.ib()
-    name = attr.ib()
-    unit = attr.ib()
-    factor = attr.ib(default=None)
-    path = attr.ib(default=None)
-    enabled = attr.ib(default=True)
-    l10n_translate = attr.ib(default=False)
-    value = attr.ib(default=None, init=False)
-    key_idx = attr.ib(default="0", repr=False, init=False)
-
-    def __attrs_post_init__(self):
-        """Init path."""
-        idx = "0"
-        key = str(self.key)
-        if key[-2] == "_" and key[-1].isdigit():
-            idx = key[-1]
-            key = key[:-2]
-        self.key = key
-        self.key_idx = idx
-
-    def extract_logger(self, result_body):
-        """Extract logs from json body."""
-        self.value = result_body
-
-    def extract_value(self, result_body, l10n={}, devclass="1"):
-        """Extract value from json body."""
-        try:
-            res = result_body[self.key]
-        except (KeyError, TypeError):
-            _LOGGER.warning("Sensor %s: Not found in %s", self.key, result_body)
-            res = self.value
-            self.value = None
-            return self.value != res
-
-        if not isinstance(self.path, str):
-            # Try different methods until we can decode...
-            _paths = (
-                list(self.path)
-                if isinstance(self.path, (list, tuple))
-                else [
-                    JMESPATH_VAL,
-                    JMESPATH_VAL_IDX.format(devclass, self.key_idx),
-                ]
-            )
-
-            while _paths:
-                _path = _paths.pop()
-                _val = jmespath.search(_path, res)
-                if _val is not None:
-                    _LOGGER.debug(
-                        "Sensor %s: Will be decoded with %s from %s",
-                        self.name,
-                        _path,
-                        res,
-                    )
-                    self.path = _path
-                    break
-
-        # Extract new value
-        if isinstance(self.path, str):
-            res = jmespath.search(self.path, res)
-        else:
-            _LOGGER.debug(
-                "Sensor %s: No successful value decoded yet: %s", self.name, res
-            )
-            res = None
-
-        if isinstance(res, (int, float)) and self.factor:
-            res /= self.factor
-
-        if self.l10n_translate:
-            res = l10n.get(
-                str(res),
-                res,
-            )
-
-        try:
-            return res != self.value
-        finally:
-            self.value = res
-
-
-class Sensors:
-    """SMA Sensors."""
-
-    def __init__(self, add_default_sensors=True):
-        self.__s = []
-        if add_default_sensors:
-            self.add(
-                (
-                    # AC side - Grid measurements
-                    #   grid_power = power_l1 + power_l2 + power_l3
-                    Sensor("6100_40263F00", "grid_power", "W"),
-                    Sensor("6100_40464000", "power_l1", "W"),
-                    Sensor("6100_40464100", "power_l2", "W"),
-                    Sensor("6100_40464200", "power_l3", "W"),
-                    Sensor("6100_00465700", "frequency", "Hz", 100),
-                    Sensor("6100_00464800", "voltage_l1", "V", 100),
-                    Sensor("6100_00464900", "voltage_l2", "V", 100),
-                    Sensor("6100_00464A00", "voltage_l3", "V", 100),
-                    Sensor("6100_40465300", "current_l1", "A", 1000),
-                    Sensor("6100_40465400", "current_l2", "A", 1000),
-                    Sensor("6100_40465500", "current_l3", "A", 1000),
-                    # DC side - PV Generation
-                    #   Power form the panels: pv_power_a (similar to old pv_power)
-                    #   Old 6100_0046C200 is the power generated by the inverter (always equal to grid_power)
-                    Sensor("6380_40251E00_0", "pv_power_a", "W"),
-                    Sensor("6380_40251E00_1", "pv_power_b", "W"),
-                    Sensor("6380_40451F00_0", "pv_voltage_a", "V", 100),
-                    Sensor("6380_40451F00_1", "pv_voltage_b", "V", 100),
-                    Sensor("6380_40452100_0", "pv_current_a", "A", 1000),
-                    Sensor("6380_40452100_1", "pv_current_b", "A", 1000),
-                    Sensor("6400_0046C300", "pv_gen_meter", "kWh", 1000),
-                    Sensor("6400_00260100", "total_yield", "kWh", 1000),
-                    Sensor("6400_00262200", "daily_yield", "Wh"),
-                    # AC side - Measured values - Grid measurements
-                    Sensor("6100_40463600", "grid_power_supplied", "W"),
-                    Sensor("6100_40463700", "grid_power_absorbed", "W"),
-                    Sensor("6400_00462400", "grid_total_yield", "kWh", 1000),
-                    Sensor("6400_00462500", "grid_total_absorbed", "kWh", 1000),
-                    # Consumption = Energy from the PV system and grid
-                    Sensor("6100_00543100", "current_consumption", "W"),
-                    Sensor("6100_0046EB00", "grid_active_power_consumed_l1", "W"),
-                    Sensor("6100_0046EC00", "grid_active_power_consumed_l2", "W"),
-                    Sensor("6100_0046ED00", "grid_active_power_consumed_l3", "W"),
-                    Sensor("6400_00543A00", "total_consumption", "kWh", 1000),
-                    # General
-                    Sensor(
-                        "6180_08214800",
-                        "status",
-                        "",
-                        None,
-                        ('"1"[0].val[0].tag', "val[0].tag"),
-                        l10n_translate=True,
-                    ),
-                )
-            )
-
-    def __len__(self):
-        """Length."""
-        return len(self.__s)
-
-    def __contains__(self, key):
-        """Check if a sensor is defined."""
-        try:
-            if self[key]:
-                return True
-        except KeyError:
-            return False
-
-    def __getitem__(self, key):
-        """Get a sensor using either the name or key."""
-        for sen in self.__s:
-            if sen.name == key or sen.key == key:
-                return sen
-        raise KeyError(key)
-
-    def __iter__(self):
-        """Iterator."""
-        return self.__s.__iter__()
-
-    def add(self, sensor):
-        """Add a sensor, warning if it exists."""
-        if isinstance(sensor, (list, tuple)):
-            for sss in sensor:
-                self.add(sss)
-            return
-
-        if not isinstance(sensor, Sensor):
-            raise TypeError("pysma.Sensor expected")
-
-        if sensor.name in self:
-            old = self[sensor.name]
-            self.__s.remove(old)
-            _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
-
-        if sensor.key in self and self[sensor.key].key_idx == sensor.key_idx:
-            _LOGGER.warning(
-                "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.key_idx
-            )
-
-        self.__s.append(sensor)
-
-
-URL_LOGIN = "/dyn/login.json"
-URL_LOGOUT = "/dyn/logout.json"
-URL_VALUES = "/dyn/getValues.json"
-URL_LOGGER = "/dyn/getLogger.json"
-URL_DASH_LOGGER = "/dyn/getDashLogger.json"
-URL_DASH_VALUES = "/dyn/getDashValues.json"
 
 
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, session, url, password=None, group="user", uid=None):
         """Init SMA connection."""
         # pylint: disable=too-many-arguments
@@ -252,30 +56,7 @@ class SMA:
         self.sma_uid = uid
         self.l10n = {}
         self.devclass = None
-
-        self.device_info_sensors = Sensors(False)
-        self.device_info_sensors.add(Sensor("6800_00A21E00", "serial_number", ""))
-        self.device_info_sensors.add(Sensor("6800_10821E00", "device_name", ""))
-        self.device_info_sensors.add(
-            Sensor(
-                "6800_08822000",
-                "device_type",
-                "",
-                None,
-                ('"1"[0].val[0].tag', "val[0].tag"),
-                l10n_translate=True,
-            )
-        )
-        self.device_info_sensors.add(
-            Sensor(
-                "6800_08822B00",
-                "device_manufacturer",
-                "",
-                None,
-                ('"1"[0].val[0].tag', "val[0].tag"),
-                l10n_translate=True,
-            )
-        )
+        self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
     async def _fetch_json(self, url, payload):
         """Fetch json data for requests."""
@@ -378,7 +159,7 @@ class SMA:
             return False
 
         notfound = []
-        devclass = self.get_devclass(result_body)
+        devclass = await self.get_devclass(result_body)
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
@@ -419,42 +200,103 @@ class SMA:
 
     async def device_info(self):
         """Read device info and return the results."""
-        fallback_device_info = {
-            "manufacturer": "SMA",
-            "name": "SMA Device",
-            "type": "",
-            "serial": "9999999999",
-        }
-
         values = await self.read(self.device_info_sensors)
         if not values:
             return False
 
         device_info = {
             "serial": self.device_info_sensors["serial_number"].value
-            or fallback_device_info["serial"],
+            or FALLBACK_DEVICE_INFO["serial"],
             "name": self.device_info_sensors["device_name"].value
-            or fallback_device_info["name"],
+            or FALLBACK_DEVICE_INFO["name"],
             "type": self.device_info_sensors["device_type"].value
-            or fallback_device_info["type"],
+            or FALLBACK_DEVICE_INFO["type"],
             "manufacturer": self.device_info_sensors["device_manufacturer"].value
-            or fallback_device_info["manufacturer"],
+            or FALLBACK_DEVICE_INFO["manufacturer"],
         }
 
         return device_info
 
-    def get_devclass(self, result_body):
-        if not self.devclass:
-            sensor_values = list(result_body.values())
-            if len(sensor_values) == 0:
-                return None
+    async def get_devclass(self, result_body=None):
+        """Get the device class."""
+        if self.devclass:
+            return self.devclass
 
+        if not result_body or not isinstance(result_body, dict):
+            # Read the STATUS_SENSOR.
+            # self.read will call get_devclass and update self.devclass
+            await self.read(Sensors(definitions.status))
+        else:
+            sensor_values = list(result_body.values())
             devclass_keys = list(sensor_values[0].keys())
             if len(devclass_keys) == 0:
                 return None
             if len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
+            if devclass_keys[0] == "val":
+                return None
 
             self.devclass = devclass_keys[0]
+            _LOGGER.debug("Found device class %s", self.devclass)
 
         return self.devclass
+
+    async def get_sensors(self):
+        """Get the sensors based on the device class."""
+        # Fallback to DEVCLASS_INVERTER if devclass returns None
+        devclass = await self.get_devclass() or DEVCLASS_INVERTER
+
+        _LOGGER.debug("Loading sensors for device class %s", devclass)
+        device_sensors = Sensors(definitions.sensor_map.get(devclass))
+
+        if devclass == DEVCLASS_INVERTER:
+            em_sensor = copy.copy(definitions.energy_meter)
+            payload = {
+                "destDev": [],
+                "keys": [
+                    em_sensor.key,
+                    definitions.optimizer_serial.key,
+                ],
+            }
+            result_body = await self._read_body(URL_VALUES, payload)
+
+            if not result_body:
+                return device_sensors
+
+            # Detect and add Energy Meter sensors
+            em_sensor.extract_value(result_body)
+
+            if em_sensor.value:
+                _LOGGER.debug(
+                    "Energy Meter with serial %s detected. Adding extra sensors.",
+                    em_sensor.value,
+                )
+                device_sensors.add(
+                    [
+                        sensor
+                        for sensor in definitions.sensor_map[ENERGY_METER_VIA_INVERTER]
+                        if sensor not in device_sensors
+                    ]
+                )
+
+            # Detect and add Optimizer Sensors
+            optimizers = result_body.get(definitions.optimizer_serial.key)
+            if optimizers:
+                serials = optimizers.get(DEVCLASS_INVERTER)
+
+                for idx, serial in enumerate(serials or []):
+                    if serial["val"]:
+                        _LOGGER.debug(
+                            "Optimizer %s with serial %s detected. Adding extra sensors.",
+                            idx,
+                            serial,
+                        )
+                        for sensor_definition in definitions.sensor_map[
+                            OPTIMIZERS_VIA_INVERTER
+                        ]:
+                            new_sensor = copy.copy(sensor_definition)
+                            new_sensor.key_idx = idx
+                            new_sensor.name = f"{sensor_definition.name}_{idx}"
+                            device_sensors.add(new_sensor)
+
+        return device_sensors
