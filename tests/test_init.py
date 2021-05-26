@@ -396,3 +396,17 @@ class Test_SMA_class:
             + len(sensor_map[ENERGY_METER_VIA_INVERTER])
             + (len(sensor_map[OPTIMIZERS_VIA_INVERTER]) * 2)
         )
+
+    async def test_get_sensors_no_result_body(self, mock_aioresponse):  # noqa: F811
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
+            payload={},
+            repeat=True,
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        assert len(await sma.get_sensors()) == len(sensor_map[DEVCLASS_INVERTER])

@@ -247,7 +247,7 @@ class SMA:
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 
         _LOGGER.debug("Loading sensors for device class %s", devclass)
-        device_sensors = list(definitions.sensor_map.get(devclass))
+        device_sensors = Sensors(definitions.sensor_map.get(devclass))
 
         if devclass == DEVCLASS_INVERTER:
             em_sensor = copy.copy(definitions.energy_meter)
@@ -260,43 +260,43 @@ class SMA:
             }
             result_body = await self._read_body(URL_VALUES, payload)
 
-            if result_body:
-                # Detect and add Energy Meter sensors
-                em_sensor.extract_value(result_body)
+            if not result_body:
+                return device_sensors
 
-                if em_sensor.value:
-                    _LOGGER.debug(
-                        "Energy Meter with serial %s detected. Adding extra sensors.",
-                        em_sensor.value,
-                    )
-                    device_sensors.extend(
-                        [
-                            sensor
-                            for sensor in definitions.sensor_map[
-                                ENERGY_METER_VIA_INVERTER
-                            ]
-                            if sensor not in device_sensors
-                        ]
-                    )
+            # Detect and add Energy Meter sensors
+            em_sensor.extract_value(result_body)
 
-                # Detect and add Optimizer Sensors
-                optimizers = result_body.get(definitions.optimizer_serial.key)
-                if optimizers:
-                    serials = optimizers.get(DEVCLASS_INVERTER)
+            if em_sensor.value:
+                _LOGGER.debug(
+                    "Energy Meter with serial %s detected. Adding extra sensors.",
+                    em_sensor.value,
+                )
+                device_sensors.add(
+                    [
+                        sensor
+                        for sensor in definitions.sensor_map[ENERGY_METER_VIA_INVERTER]
+                        if sensor not in device_sensors
+                    ]
+                )
 
-                    for idx, serial in enumerate(serials or []):
-                        if serial["val"]:
-                            _LOGGER.debug(
-                                "Optimizer %s with serial %s detected. Adding extra sensors.",
-                                idx,
-                                serial,
-                            )
-                            for sensor_definition in definitions.sensor_map[
-                                OPTIMIZERS_VIA_INVERTER
-                            ]:
-                                new_sensor = copy.copy(sensor_definition)
-                                new_sensor.key_idx = idx
-                                new_sensor.name = f"{sensor_definition.name}_{idx}"
-                                device_sensors.append(new_sensor)
+            # Detect and add Optimizer Sensors
+            optimizers = result_body.get(definitions.optimizer_serial.key)
+            if optimizers:
+                serials = optimizers.get(DEVCLASS_INVERTER)
 
-        return Sensors(device_sensors)
+                for idx, serial in enumerate(serials or []):
+                    if serial["val"]:
+                        _LOGGER.debug(
+                            "Optimizer %s with serial %s detected. Adding extra sensors.",
+                            idx,
+                            serial,
+                        )
+                        for sensor_definition in definitions.sensor_map[
+                            OPTIMIZERS_VIA_INVERTER
+                        ]:
+                            new_sensor = copy.copy(sensor_definition)
+                            new_sensor.key_idx = idx
+                            new_sensor.name = f"{sensor_definition.name}_{idx}"
+                            device_sensors.add(new_sensor)
+
+        return device_sensors
