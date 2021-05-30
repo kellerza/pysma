@@ -16,6 +16,7 @@ from pysma.const import (
     OPTIMIZERS_VIA_INVERTER,
 )
 from pysma.definitions import sensor_map
+from pysma.exceptions import SmaAuthenticationException, SmaReadException
 from pysma.sensor import Sensor, Sensors
 
 from . import MOCK_DEVICE, MOCK_L10N, mock_aioresponse  # noqa: F401
@@ -174,7 +175,8 @@ class Test_SMA_class:
 
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
-        assert not await sma.new_session()
+        with pytest.raises(SmaAuthenticationException):
+            await sma.new_session()
 
     async def test_device_info(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
@@ -250,8 +252,8 @@ class Test_SMA_class:
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
         assert await sma.new_session()
-        result = await sma.device_info()
-        assert not result
+        with pytest.raises(SmaReadException):
+            await sma.device_info()
 
     async def test_get_devclass(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
@@ -397,6 +399,20 @@ class Test_SMA_class:
             + (len(sensor_map[OPTIMIZERS_VIA_INVERTER]) * 2)
         )
 
+    async def test_get_sensors_empty_result(self, mock_aioresponse):  # noqa: F811
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
+            payload={"result": {}},
+            repeat=True,
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        assert len(await sma.get_sensors()) == len(sensor_map[DEVCLASS_INVERTER])
+
     async def test_get_sensors_no_result_body(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
@@ -409,4 +425,5 @@ class Test_SMA_class:
 
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
-        assert len(await sma.get_sensors()) == len(sensor_map[DEVCLASS_INVERTER])
+        with pytest.raises(SmaReadException):
+            await sma.get_sensors()

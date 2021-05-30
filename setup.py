@@ -19,6 +19,6 @@ setup(
     author_email="kellerza@gmail.com",
     license="MIT",
     packages=["pysma"],
-    install_requires=["aiohttp>3,<4", "async_timeout>3,<4", "attrs>18", "jmespath<2"],
+    install_requires=["aiohttp>3.3,<4", "attrs>18", "jmespath<2"],
     zip_safe=True,
 )
