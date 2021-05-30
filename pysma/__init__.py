@@ -70,6 +70,8 @@ class SMA:
             kwargs.setdefault("params", {})
             kwargs["params"]["sid"] = self.sma_sid
 
+        _LOGGER.debug("Sending %s request to %s: %s", method, url, kwargs)
+
         try:
             res = await self._aio_session.request(
                 method,
@@ -84,11 +86,11 @@ class SMA:
 
         try:
             res_json = await res.json()
-        except client_exceptions.ContentTypeError:
+        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
             _LOGGER.warning("Request to %s did not return a valid json.", url)
             return {}
 
-        return res_json
+        return res_json or {}
 
     async def _get_json(self, url):
         """Get json data for requests."""
