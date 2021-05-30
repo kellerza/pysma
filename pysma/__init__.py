@@ -11,13 +11,6 @@ import logging
 import jmespath  # type: ignore
 from aiohttp import ClientTimeout, client_exceptions, hdrs
 
-from pysma.exceptions import (
-    SmaAuthenticationException,
-    SmaConnectionException,
-    SmaReadException,
-)
-from pysma.helpers import version_int_to_string
-
 from . import definitions
 from .const import (
     DEFAULT_TIMEOUT,
@@ -34,6 +27,12 @@ from .const import (
     URL_VALUES,
     USERS,
 )
+from .exceptions import (
+    SmaAuthenticationException,
+    SmaConnectionException,
+    SmaReadException,
+)
+from .helpers import version_int_to_string
 from .sensor import Sensors
 
 _LOGGER = logging.getLogger(__name__)
