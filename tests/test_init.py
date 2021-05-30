@@ -238,6 +238,7 @@ class Test_SMA_class:
         assert result["name"] == MOCK_DEVICE["name"]
         assert result["type"] == ""
         assert result["serial"] == "9999999999"
+        assert result["sw_version"] == ""
 
     async def test_device_info_fail(self, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
