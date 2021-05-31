@@ -64,7 +64,7 @@ jobs:
           python-version: ${{ env.DEFAULT_PYTHON }}
       - name: Install Requirements
         run: |
-          pip install mypy
+          pip install mypy .
       - name: Run Pylint
         run: |
           mypy pysma/
