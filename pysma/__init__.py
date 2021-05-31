@@ -42,6 +42,7 @@ _LOGGER = logging.getLogger(__name__)
 class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
+    # pylint: disable=too-many-instance-attributes
     _aio_session: ClientSession
     _new_session_data: Optional[dict]
     _url: str
@@ -51,7 +52,6 @@ class SMA:
     devclass: Optional[str]
     device_info_sensors: Sensors
 
-    # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         session: ClientSession,
