@@ -4,19 +4,16 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 
 Source: http://www.github.com/kellerza/pysma
 """
-import asyncio
 import copy
 import json
 import logging
 
-import async_timeout
 import jmespath  # type: ignore
-from aiohttp import client_exceptions
-
-from pysma.helpers import version_int_to_string
+from aiohttp import ClientTimeout, client_exceptions, hdrs
 
 from . import definitions
 from .const import (
+    DEFAULT_TIMEOUT,
     DEVCLASS_INVERTER,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
@@ -30,6 +27,12 @@ from .const import (
     URL_VALUES,
     USERS,
 )
+from .exceptions import (
+    SmaAuthenticationException,
+    SmaConnectionException,
+    SmaReadException,
+)
+from .helpers import version_int_to_string
 from .sensor import Sensors
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,36 +63,59 @@ class SMA:
         self.devclass = None
         self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
-    async def _fetch_json(self, url, payload):
-        """Fetch json data for requests."""
-        params = {
-            "data": json.dumps(payload),
-            "headers": {"content-type": "application/json"},
-            "params": {"sid": self.sma_sid} if self.sma_sid else None,
-        }
-        for _ in range(3):
-            try:
-                with async_timeout.timeout(10):
-                    res = await self._aio_session.post(self._url + url, **params)
-                    return (await res.json()) or {}
-            except (asyncio.TimeoutError, client_exceptions.ClientError):
-                continue
-        return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
+    async def _request_json(self, method, url, **kwargs):
+        """Request json data for requests."""
+        if self.sma_sid:
+            kwargs.setdefault("params", {})
+            kwargs["params"]["sid"] = self.sma_sid
+
+        _LOGGER.debug("Sending %s request to %s: %s", method, url, kwargs)
+
+        try:
+            res = await self._aio_session.request(
+                method,
+                self._url + url,
+                timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                **kwargs,
+            )
+        except client_exceptions.ClientError as exc:
+            raise SmaConnectionException(
+                f"Could not connect to SMA at {self._url}"
+            ) from exc
+
+        try:
+            res_json = await res.json()
+        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
+            _LOGGER.warning("Request to %s did not return a valid json.", url)
+            return {}
+
+        return res_json or {}
+
+    async def _get_json(self, url):
+        """Get json data for requests."""
+        return await self._request_json(hdrs.METH_GET, url)
+
+    async def _post_json(self, url, payload=None):
+        """Post json data for requests."""
+        params = {}
+        if payload is not None:
+            params["data"] = json.dumps(payload)
+            params["headers"] = {"content-type": "application/json"}
+
+        return await self._request_json(hdrs.METH_POST, url, **params)
 
     async def _read_l10n(self, lang="en-US"):
         """Read device language file."""
-        res = await self._aio_session.get(f"{self._url}/data/l10n/{lang}.json")
-        return (await res.json()) or {}
+        return await self._get_json(f"/data/l10n/{lang}.json")
 
     async def _read_body(self, url, payload):
         if self.sma_sid is None and self._new_session_data is not None:
             await self.new_session()
-            if self.sma_sid is None:
-                return None
-        body = await self._fetch_json(url, payload=payload)
+        body = await self._post_json(url, payload)
 
         # On the first error we close the session which will re-login
         err = body.get("err")
+
         if err is not None:
             _LOGGER.warning(
                 "%s: error detected, closing session to force another login attempt, got: %s",
@@ -97,11 +123,11 @@ class SMA:
                 body,
             )
             await self.close_session()
-            return None
+            raise SmaReadException("Error detected while reading")
 
-        if not isinstance(body, dict) or "result" not in body:
+        if "result" not in body:
             _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
-            return None
+            raise SmaReadException("No 'result' in reply from SMA")
 
         if self.sma_uid is None:
             # Get the unique ID
@@ -120,7 +146,7 @@ class SMA:
     async def new_session(self):
         """Establish a new session."""
         self.l10n = await self._read_l10n()
-        body = await self._fetch_json(URL_LOGIN, self._new_session_data)
+        body = await self._post_json(URL_LOGIN, self._new_session_data)
         self.sma_sid = jmespath.search("result.sid", body)
         if self.sma_sid:
             return True
@@ -135,14 +161,15 @@ class SMA:
                 _LOGGER.error(msg, err)
         else:
             _LOGGER.error(msg, "Session ID expected [result.sid]")
-        return False
+
+        raise SmaAuthenticationException()
 
     async def close_session(self):
         """Close the session login."""
         if self.sma_sid is None:
             return
         try:
-            await self._fetch_json(URL_LOGOUT, {})
+            await self._post_json(URL_LOGOUT)
         finally:
             self.sma_sid = None
 
@@ -202,9 +229,7 @@ class SMA:
 
     async def device_info(self):
         """Read device info and return the results."""
-        values = await self.read(self.device_info_sensors)
-        if not values:
-            return False
+        await self.read(self.device_info_sensors)
 
         device_info = {
             "serial": self.device_info_sensors["serial_number"].value
