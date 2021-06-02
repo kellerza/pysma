@@ -32,14 +32,6 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = skey[2]
 
-    def extract_logger(self, result_body):
-        """Extract logs from json body.
-
-        Args:
-            result_body: json body retrieved from device
-        """
-        self.value = result_body
-
     def extract_value(self, result_body, l10n=None, devclass="1"):
         """Extract value from json body.
 
