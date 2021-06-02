@@ -17,17 +17,17 @@ class Sensor:
 
     # pylint: disable=too-many-instance-attributes
     # pylint: disable=too-few-public-methods
-    key = attr.ib()
-    name = attr.ib()
-    unit = attr.ib(default="")
-    factor = attr.ib(default=None)
-    path = attr.ib(default=None)
-    enabled = attr.ib(default=True)
-    l10n_translate = attr.ib(default=False)
-    value = attr.ib(default=None, init=False)
-    key_idx = attr.ib(default="0", repr=False, init=False)
+    key: str = attr.ib()
+    name: str = attr.ib()
+    unit: str = attr.ib(default="")
+    factor: int = attr.ib(default=None)
+    path: Union[list, tuple] = attr.ib(default=None)
+    enabled: bool = attr.ib(default=True)
+    l10n_translate: bool = attr.ib(default=False)
+    value: Any = attr.ib(default=None, init=False)
+    key_idx: int = attr.ib(default=0, repr=False, init=False)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Init path."""
         key = str(self.key)
         skey = key.split("_")
@@ -35,7 +35,9 @@ class Sensor:
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = int(skey[2])
 
-    def extract_value(self, result_body, l10n=None, devclass="1"):
+    def extract_value(
+        self, result_body: dict, l10n: Optional[dict] = None, devclass: str = "1"
+    ) -> bool:
         """Extract value from json body.
 
         Args:
