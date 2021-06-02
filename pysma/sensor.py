@@ -1,6 +1,7 @@
 """Sensor classes for SMA WebConnect library for Python."""
 import copy
 import logging
+from typing import Any, Iterator, List, Optional, Union
 
 import attr
 import jmespath  # type: ignore
@@ -32,7 +33,7 @@ class Sensor:
         skey = key.split("_")
         if len(skey) > 2 and skey[2].isdigit():
             self.key = f"{skey[0]}_{skey[1]}"
-            self.key_idx = skey[2]
+            self.key_idx = int(skey[2])
 
     def extract_value(self, result_body, l10n=None, devclass="1"):
         """Extract value from json body.
@@ -101,31 +102,31 @@ class Sensor:
 class Sensors:
     """SMA Sensors."""
 
-    def __init__(self, sensors=None):
+    def __init__(self, sensors: Union[Sensor, List[Sensor], None] = None):
         """Init Sensors.
 
         Args:
             sensors: One or a list of sensors to add on init
         """
-        self.__s = []
+        self.__s: List[Sensor] = []
 
         if sensors:
             self.add(sensors)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length."""
         return len(self.__s)
 
-    # pylint: disable=R1710
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """Check if a sensor is defined."""
         try:
             if self[key]:
                 return True
         except KeyError:
-            return False
+            pass
+        return False
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Sensor:
         """Get a sensor.
 
         Args:
@@ -136,11 +137,11 @@ class Sensors:
                 return sen
         raise KeyError(key)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sensor]:
         """Iterate Sensor objects."""
         return self.__s.__iter__()
 
-    def add(self, sensor):
+    def add(self, sensor: Union[Sensor, List[Sensor]]) -> None:
         """Add a sensor, warning if it exists.
 
         Args:

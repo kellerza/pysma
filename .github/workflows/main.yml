@@ -54,6 +54,21 @@ jobs:
         run: |
           pylint pysma
 
+  mypy:
+    name: Check mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON }}
+      - name: Install Requirements
+        run: |
+          pip install mypy .
+      - name: Run Pylint
+        run: |
+          mypy pysma/
+
   pytest:
     name: Run tests Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -66,6 +81,7 @@ jobs:
       - isort
       - flake8
       - pylint
+      - mypy
     env:
       PYTHON: ${{ matrix.python-version }}
     steps:
