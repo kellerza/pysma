@@ -11,9 +11,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(slots=True)
-class Sensor:  # pylint: disable=too-many-instance-attributes
+class Sensor:
     """pysma sensor."""
 
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-few-public-methods
     key = attr.ib()
     name = attr.ib()
     unit = attr.ib(default="")
