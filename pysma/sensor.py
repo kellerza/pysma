@@ -1,6 +1,7 @@
 """Sensor classes for SMA WebConnect library for Python."""
 import copy
 import logging
+from typing import Any, Iterator, List, Optional, Union
 
 import attr
 import jmespath  # type: ignore
@@ -14,25 +15,25 @@ _LOGGER = logging.getLogger(__name__)
 class Sensor:  # pylint: disable=too-many-instance-attributes
     """pysma sensor."""
 
-    key = attr.ib()
-    name = attr.ib()
-    unit = attr.ib(default="")
-    factor = attr.ib(default=None)
-    path = attr.ib(default=None)
-    enabled = attr.ib(default=True)
-    l10n_translate = attr.ib(default=False)
-    value = attr.ib(default=None, init=False)
-    key_idx = attr.ib(default="0", repr=False, init=False)
+    key: str = attr.ib()
+    name: str = attr.ib()
+    unit: str = attr.ib(default="")
+    factor: int = attr.ib(default=None)
+    path: Union[list, tuple] = attr.ib(default=None)
+    enabled: bool = attr.ib(default=True)
+    l10n_translate: bool = attr.ib(default=False)
+    value: Any = attr.ib(default=None, init=False)
+    key_idx: int = attr.ib(default=0, repr=False, init=False)
 
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
         """Init path."""
         key = str(self.key)
         skey = key.split("_")
         if len(skey) > 2 and skey[2].isdigit():
             self.key = f"{skey[0]}_{skey[1]}"
-            self.key_idx = skey[2]
+            self.key_idx = int(skey[2])
 
-    def extract_logger(self, result_body):
+    def extract_logger(self, result_body: dict) -> None:
         """Extract logs from json body.
 
         Args:
@@ -40,7 +41,9 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
         """
         self.value = result_body
 
-    def extract_value(self, result_body, l10n=None, devclass="1"):
+    def extract_value(
+        self, result_body: dict, l10n: Optional[dict] = None, devclass: str = "1"
+    ) -> bool:
         """Extract value from json body.
 
         Args:
@@ -107,31 +110,31 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
 class Sensors:
     """SMA Sensors."""
 
-    def __init__(self, sensors=None):
+    def __init__(self, sensors: Union[Sensor, List[Sensor], None] = None):
         """Init Sensors.
 
         Args:
             sensors: One or a list of sensors to add on init
         """
-        self.__s = []
+        self.__s: List[Sensor] = []
 
         if sensors:
             self.add(sensors)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length."""
         return len(self.__s)
 
-    # pylint: disable=R1710
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         """Check if a sensor is defined."""
         try:
             if self[key]:
                 return True
         except KeyError:
-            return False
+            pass
+        return False
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Sensor:
         """Get a sensor.
 
         Args:
@@ -142,11 +145,11 @@ class Sensors:
                 return sen
         raise KeyError(key)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Sensor]:
         """Iterate Sensor objects."""
         return self.__s.__iter__()
 
-    def add(self, sensor):
+    def add(self, sensor: Union[Sensor, List[Sensor]]) -> None:
         """Add a sensor, warning if it exists.
 
         Args:

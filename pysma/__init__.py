@@ -7,9 +7,10 @@ Source: http://www.github.com/kellerza/pysma
 import copy
 import json
 import logging
+from typing import Any, Dict, Optional
 
 import jmespath  # type: ignore
-from aiohttp import ClientTimeout, client_exceptions, hdrs
+from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
 from . import definitions
 from .const import (
@@ -42,7 +43,23 @@ class SMA:
     """Class to connect to the SMA webconnect module and read parameters."""
 
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, session, url, password=None, group="user", uid=None):
+    _aio_session: ClientSession
+    _new_session_data: Optional[dict]
+    _url: str
+    sma_sid: Optional[str]
+    sma_uid: Optional[str]
+    l10n: dict
+    devclass: Optional[str]
+    device_info_sensors: Sensors
+
+    def __init__(
+        self,
+        session: ClientSession,
+        url: str,
+        password: Optional[str] = None,
+        group: str = "user",
+        uid: Optional[str] = None,
+    ):
         """Init SMA connection."""
         # pylint: disable=too-many-arguments
         if group not in USERS:
@@ -63,7 +80,9 @@ class SMA:
         self.devclass = None
         self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
-    async def _request_json(self, method, url, **kwargs):
+    async def _request_json(
+        self, method: str, url: str, **kwargs: Dict[str, Any]
+    ) -> dict:
         """Request json data for requests."""
         if self.sma_sid:
             kwargs.setdefault("params", {})
@@ -91,24 +110,24 @@ class SMA:
 
         return res_json or {}
 
-    async def _get_json(self, url):
+    async def _get_json(self, url: str) -> dict:
         """Get json data for requests."""
         return await self._request_json(hdrs.METH_GET, url)
 
-    async def _post_json(self, url, payload=None):
+    async def _post_json(self, url: str, payload: Optional[dict] = None) -> dict:
         """Post json data for requests."""
-        params = {}
+        params: Dict[str, Any] = {}
         if payload is not None:
             params["data"] = json.dumps(payload)
             params["headers"] = {"content-type": "application/json"}
 
         return await self._request_json(hdrs.METH_POST, url, **params)
 
-    async def _read_l10n(self, lang="en-US"):
+    async def _read_l10n(self, lang: str = "en-US") -> dict:
         """Read device language file."""
         return await self._get_json(f"/data/l10n/{lang}.json")
 
-    async def _read_body(self, url, payload):
+    async def _read_body(self, url: str, payload: dict) -> dict:
         if self.sma_sid is None and self._new_session_data is not None:
             await self.new_session()
         body = await self._post_json(url, payload)
@@ -143,7 +162,7 @@ class SMA:
 
         return result_body
 
-    async def new_session(self):
+    async def new_session(self) -> bool:
         """Establish a new session."""
         self.l10n = await self._read_l10n()
         body = await self._post_json(URL_LOGIN, self._new_session_data)
@@ -164,7 +183,7 @@ class SMA:
 
         raise SmaAuthenticationException()
 
-    async def close_session(self):
+    async def close_session(self) -> None:
         """Close the session login."""
         if self.sma_sid is None:
             return
@@ -173,10 +192,10 @@ class SMA:
         finally:
             self.sma_sid = None
 
-    async def read(self, sensors):
+    async def read(self, sensors: Sensors) -> bool:
         """Read a set of keys."""
         if self._new_session_data is None:
-            payload = {"destDev": [], "keys": []}
+            payload: Dict[str, Any] = {"destDev": [], "keys": []}
             result_body = await self._read_body(URL_DASH_VALUES, payload)
         else:
             payload = {
@@ -192,7 +211,7 @@ class SMA:
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body, self.l10n, devclass)
+                    sen.extract_value(result_body, self.l10n, str(devclass))
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -206,10 +225,12 @@ class SMA:
 
         return True
 
-    async def read_logger(self, sensors=None, start=None, end=None):
+    async def read_logger(
+        self, sensors: list, start: Optional[str] = None, end: Optional[str] = None
+    ) -> bool:
         """Read a logging key and return the results."""
         if self._new_session_data is None:
-            payload = {"destDev": [], "key": []}
+            payload: Dict[str, Any] = {"destDev": [], "key": []}
             result_body = await self._read_body(URL_DASH_LOGGER, payload)
         else:
             payload = {
@@ -227,7 +248,7 @@ class SMA:
 
         return True
 
-    async def device_info(self):
+    async def device_info(self) -> dict:
         """Read device info and return the results."""
         await self.read(self.device_info_sensors)
 
@@ -247,7 +268,7 @@ class SMA:
 
         return device_info
 
-    async def get_devclass(self, result_body=None):
+    async def get_devclass(self, result_body: Optional[dict] = None) -> Optional[str]:
         """Get the device class."""
         if self.devclass:
             return self.devclass
@@ -271,7 +292,7 @@ class SMA:
 
         return self.devclass
 
-    async def get_sensors(self):
+    async def get_sensors(self) -> Sensors:
         """Get the sensors based on the device class."""
         # Fallback to DEVCLASS_INVERTER if devclass returns None
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
