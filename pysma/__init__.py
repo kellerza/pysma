@@ -242,9 +242,7 @@ class SMA:
         }
         result_body = await self._read_body(URL_LOGGER, payload)
         if not isinstance(result_body, list):
-            raise SmaReadException(
-                "List of log entries expected. Response from inverter: %s", result_body
-            )
+            raise SmaReadException("List of log entries expected.")
 
         return result_body
 
