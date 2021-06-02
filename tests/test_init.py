@@ -213,6 +213,86 @@ class Test_SMA_class:
         assert result_body == {}
         assert mock_warn.call_count == 1
 
+    async def test_read_dash_logger(self, mock_aioresponse):  # noqa: F811
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getDashLogger.json",
+            payload={
+                "result": {
+                    "0199-xxxxx385": {
+                        "7000": {
+                            "1": [
+                                {"t": 1622569500, "v": 4565239},
+                                {"t": 1622569800, "v": 4565249},
+                            ]
+                        },
+                        "7020": {
+                            "1": [
+                                {"t": 1622498400, "v": 4542749},
+                                {"t": 1622584800, "v": 4565355},
+                            ]
+                        },
+                    }
+                }
+            },
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host)
+        read_dash_logger = await sma.read_dash_logger()
+        assert read_dash_logger == {
+            "7000": {
+                "1": [
+                    {"t": 1622569500, "v": 4565239},
+                    {"t": 1622569800, "v": 4565249},
+                ]
+            },
+            "7020": {
+                "1": [
+                    {"t": 1622498400, "v": 4542749},
+                    {"t": 1622584800, "v": 4565355},
+                ]
+            },
+        }
+
+    async def test_read_logger(self, mock_aioresponse):  # noqa: F811
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getLogger.json?sid=ABCD",
+            payload={
+                "result": {
+                    "0199-xxxxx385": [
+                        {"t": 1622498400, "v": 4542749},
+                        {"t": 1622584800, "v": 4565355},
+                    ]
+                }
+            },
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        read_logger = await sma.read_logger(28704, 1622592000, 1622491200)
+        assert read_logger == [
+            {"t": 1622498400, "v": 4542749},
+            {"t": 1622584800, "v": 4565355},
+        ]
+
+    async def test_read_logger_error(self, mock_aioresponse):  # noqa: F811
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getLogger.json?sid=ABCD",
+            payload={"result": {"0199-xxxxx385": "NOT A LIST"}},
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+
+        with pytest.raises(SmaReadException):
+            await sma.read_logger(28704, 1622592000, 1622491200)
+
     @patch("pysma._LOGGER.warning")
     async def test_session(self, mock_warn, mock_aioresponse):  # noqa: F811
         mock_aioresponse.post(
