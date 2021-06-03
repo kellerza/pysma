@@ -50,7 +50,7 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
             result_body (dict): json body retrieved from device
             l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
             devclass (str, optional): The device class of the device used to extract the value.
-            Defaults to "1".
+                Defaults to "1".
 
         Returns:
             bool: Extracting value successful
