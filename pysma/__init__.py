@@ -345,7 +345,8 @@ class SMA:
         """Get the device class.
 
         Args:
-            result_body (dict, optional): result body to extract device class from. Defaults to None.
+            result_body (dict, optional): result body to extract device class from.
+                Defaults to None.
 
         Raises:
             KeyError: More than 1 device class key is not supported

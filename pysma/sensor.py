@@ -49,7 +49,8 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
         Args:
             result_body (dict): json body retrieved from device
             l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
-            devclass (str, optional): The device class of the device used to extract the value. Defaults to "1".
+            devclass (str, optional): The device class of the device used to extract the value.
+            Defaults to "1".
 
         Returns:
             bool: Extracting value successful
@@ -117,7 +118,8 @@ class Sensors:
         """Init Sensors.
 
         Args:
-            sensors (Union[Sensor, List[Sensor], None], optional): One or a list of sensors to add on init. Defaults to None.
+            sensors (Union[Sensor, List[Sensor], None], optional): One or a list of sensors
+                to add on init. Defaults to None.
         """
         self.__s: List[Sensor] = []
 
