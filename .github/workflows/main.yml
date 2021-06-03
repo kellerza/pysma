@@ -65,7 +65,7 @@ jobs:
       - name: Install Requirements
         run: |
           pip install mypy .
-      - name: Run pydocstyle
+      - name: Run mypy
         run: |
           mypy pysma/
 
