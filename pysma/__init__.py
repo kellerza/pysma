@@ -60,7 +60,18 @@ class SMA:
         group: str = "user",
         uid: Optional[str] = None,
     ):
-        """Init SMA connection."""
+        """Init SMA connection.
+
+        Args:
+            session (ClientSession): aiohttp client session
+            url (str): Url or IP address of device
+            password (str, optional): Password to use during login. Defaults to None.
+            group (str, optional): Username to use during login. Defaults to "user".
+            uid (str, optional): uid used for data extraction. Defaults to None.
+
+        Raises:
+            KeyError: User was not in USERS
+        """
         # pylint: disable=too-many-arguments
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
@@ -83,7 +94,18 @@ class SMA:
     async def _request_json(
         self, method: str, url: str, **kwargs: Dict[str, Any]
     ) -> dict:
-        """Request json data for requests."""
+        """Request json data for requests.
+
+        Args:
+            method (str): HTTP method to use
+            url (str): URL to do request to
+
+        Raises:
+            SmaConnectionException: Connection to device failed
+
+        Returns:
+            dict: json returned by device
+        """
         if self.sma_sid:
             kwargs.setdefault("params", {})
             kwargs["params"]["sid"] = self.sma_sid
@@ -111,11 +133,26 @@ class SMA:
         return res_json or {}
 
     async def _get_json(self, url: str) -> dict:
-        """Get json data for requests."""
+        """Get json data for requests.
+
+        Args:
+            url (str): URL to do GET request to
+
+        Returns:
+            dict: json returned by device
+        """
         return await self._request_json(hdrs.METH_GET, url)
 
     async def _post_json(self, url: str, payload: Optional[dict] = None) -> dict:
-        """Post json data for requests."""
+        """Post json data for requests.
+
+        Args:
+            url (str): URL to do POST request to
+            payload (dict, optional): payload to send to device. Defaults to None.
+
+        Returns:
+            dict: json returned by device
+        """
         params: Dict[str, Any] = {}
         if payload is not None:
             params["data"] = json.dumps(payload)
@@ -124,10 +161,28 @@ class SMA:
         return await self._request_json(hdrs.METH_POST, url, **params)
 
     async def _read_l10n(self, lang: str = "en-US") -> dict:
-        """Read device language file."""
+        """Read device language file.
+
+        Args:
+            lang (str, optional): Language code of file to retrieve. Defaults to "en-US".
+
+        Returns:
+            dict: json returned by device
+        """
         return await self._get_json(f"/data/l10n/{lang}.json")
 
     async def _read_body(self, url: str, payload: dict) -> dict:
+        """Parse the json returned by the device and extract result.
+
+        Args:
+            url (str): URL to reqquest data from
+            payload (dict): payload to send to device
+        Raises:
+            SmaReadException: The json returned by the device was in an unexpected format
+
+        Returns:
+            dict: json result
+        """
         if self.sma_sid is None and self._new_session_data is not None:
             await self.new_session()
         body = await self._post_json(url, payload)
@@ -163,7 +218,14 @@ class SMA:
         return result_body
 
     async def new_session(self) -> bool:
-        """Establish a new session."""
+        """Establish a new session.
+
+        Raises:
+            SmaAuthenticationException: Authentication failed
+
+        Returns:
+            bool: authentication successful
+        """
         self.l10n = await self._read_l10n()
         body = await self._post_json(URL_LOGIN, self._new_session_data)
         self.sma_sid = jmespath.search("result.sid", body)
@@ -193,7 +255,14 @@ class SMA:
             self.sma_sid = None
 
     async def read(self, sensors: Sensors) -> bool:
-        """Read a set of keys."""
+        """Read a set of keys.
+
+        Args:
+            sensors (Sensors): Sensors object containing Sensor objects to read
+
+        Returns:
+            bool: reading was successful
+        """
         if self._new_session_data is None:
             payload: Dict[str, Any] = {"destDev": [], "keys": []}
             result_body = await self._read_body(URL_DASH_VALUES, payload)
@@ -249,7 +318,11 @@ class SMA:
         return True
 
     async def device_info(self) -> dict:
-        """Read device info and return the results."""
+        """Read device info and return the results.
+
+        Returns:
+            dict: dict containing serial, name, type, manufacturer and sw_version
+        """
         await self.read(self.device_info_sensors)
 
         device_info = {
@@ -269,7 +342,17 @@ class SMA:
         return device_info
 
     async def get_devclass(self, result_body: Optional[dict] = None) -> Optional[str]:
-        """Get the device class."""
+        """Get the device class.
+
+        Args:
+            result_body (dict, optional): result body to extract device class from. Defaults to None.
+
+        Raises:
+            KeyError: More than 1 device class key is not supported
+
+        Returns:
+            str: The device class identifier, or None if no identifier was found
+        """
         if self.devclass:
             return self.devclass
 
@@ -293,7 +376,11 @@ class SMA:
         return self.devclass
 
     async def get_sensors(self) -> Sensors:
-        """Get the sensors based on the device class."""
+        """Get the sensors based on the device class.
+
+        Returns:
+            Sensors: Sensors object containing Sensor objects
+        """
         # Fallback to DEVCLASS_INVERTER if devclass returns None
         devclass = await self.get_devclass() or DEVCLASS_INVERTER
 

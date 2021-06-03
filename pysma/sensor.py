@@ -26,7 +26,7 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
     key_idx: int = attr.ib(default=0, repr=False, init=False)
 
     def __attrs_post_init__(self) -> None:
-        """Init path."""
+        """Post init Sensor."""
         key = str(self.key)
         skey = key.split("_")
         if len(skey) > 2 and skey[2].isdigit():
@@ -47,9 +47,12 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
         """Extract value from json body.
 
         Args:
-            result_body: json body retrieved from device
-            l10n: Dictionary to translate tags to strings
-            devclass: The device class of the device used to extract the value
+            result_body (dict): json body retrieved from device
+            l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
+            devclass (str, optional): The device class of the device used to extract the value. Defaults to "1".
+
+        Returns:
+            bool: Extracting value successful
         """
         try:
             res = result_body[self.key]
@@ -114,7 +117,7 @@ class Sensors:
         """Init Sensors.
 
         Args:
-            sensors: One or a list of sensors to add on init
+            sensors (Union[Sensor, List[Sensor], None], optional): One or a list of sensors to add on init. Defaults to None.
         """
         self.__s: List[Sensor] = []
 
@@ -122,11 +125,22 @@ class Sensors:
             self.add(sensors)
 
     def __len__(self) -> int:
-        """Length."""
+        """Length of Sensor list.
+
+        Returns:
+            int: Number of Sensor objects
+        """
         return len(self.__s)
 
     def __contains__(self, key: str) -> bool:
-        """Check if a sensor is defined."""
+        """Check if a sensor is defined.
+
+        Args:
+            key (str): [description]
+
+        Returns:
+            bool: [description]
+        """
         try:
             if self[key]:
                 return True
@@ -138,7 +152,13 @@ class Sensors:
         """Get a sensor.
 
         Args:
-            key: Either the name or key of the Sensor
+            key (str): Either the name or key of the Sensor
+
+        Raises:
+            KeyError: Item was not found
+
+        Returns:
+            Sensor: The matching Sensor object
         """
         for sen in self.__s:
             if key in (sen.name, sen.key):
@@ -146,14 +166,21 @@ class Sensors:
         raise KeyError(key)
 
     def __iter__(self) -> Iterator[Sensor]:
-        """Iterate Sensor objects."""
+        """Iterate Sensor objects.
+
+        Yields:
+            Iterator[Sensor]: Sensor iterator
+        """
         return self.__s.__iter__()
 
     def add(self, sensor: Union[Sensor, List[Sensor]]) -> None:
-        """Add a sensor, warning if it exists.
+        """Add a sensor, logs warning if it exists.
 
         Args:
-            sensor: One or a list of sensors to add
+            sensor (Sensor, List[Sensor]): One or a list of sensors to add
+
+        Raises:
+            TypeError: Argument sensor does not match an expected type
         """
         if isinstance(sensor, (list, tuple)):
             for sss in sensor:
