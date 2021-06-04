@@ -65,9 +65,24 @@ jobs:
       - name: Install Requirements
         run: |
           pip install mypy .
-      - name: Run Pylint
+      - name: Run mypy
         run: |
           mypy pysma/
+
+  pydocstyle:
+    name: Check pydocstyle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.DEFAULT_PYTHON }}
+      - name: Install Requirements
+        run: |
+          pip install pydocstyle
+      - name: Run pydocstyle
+        run: |
+          pydocstyle
 
   pytest:
     name: Run tests Python ${{ matrix.python-version }}

@@ -1,8 +1,8 @@
-pysma library
-=============
+# pysma library
 
 [![Workflow Status](https://github.com/kellerza/pysma/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/kellerza/pysma/actions)
 [![Codecov](https://codecov.io/gh/kellerza/pysma/branch/master/graph/badge.svg)](https://codecov.io/gh/kellerza/pysma)
+[![Documentation Status](https://readthedocs.org/projects/pysma/badge/?version=latest)](https://pysma.readthedocs.io/en/latest/?badge=latest)
 
 SMA Webconnect library for Python 3. The library was originally created
 to integrate SMA with HomeAssistant
@@ -16,13 +16,11 @@ you can access your SMA via your browser, this might work for you.
 Other SMA interfaces include <https://sbfspot.codeplex.com/> and a
 Python [adaptation](https://github.com/TD22057/T-Home/)
 
-Example usage
-=============
+# Example usage
 
 See [example.py](./example.py) for a basic usage and tests
 
-Home Assistant
-==============
+# Home Assistant
 
 The Home Assistant sma sensor documentation can be found
 [here](https://www.home-assistant.io/components/sma)

@@ -2,7 +2,7 @@
 
 
 class SmaException(Exception):
-    """Base exception of the pysma library"""
+    """Base exception of the pysma library."""
 
 
 class SmaAuthenticationException(SmaException):
