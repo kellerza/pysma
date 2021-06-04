@@ -225,28 +225,45 @@ class SMA:
 
         return True
 
-    async def read_logger(
-        self, sensors: list, start: Optional[str] = None, end: Optional[str] = None
-    ) -> bool:
-        """Read a logging key and return the results."""
-        if self._new_session_data is None:
-            payload: Dict[str, Any] = {"destDev": [], "key": []}
-            result_body = await self._read_body(URL_DASH_LOGGER, payload)
-        else:
-            payload = {
-                "destDev": [],
-                "key": int(sensors[0].key),
-                "tStart": start,
-                "tEnd": end,
-            }
-            result_body = await self._read_body(URL_LOGGER, payload)
-        if not result_body:
-            return False
+    async def read_dash_logger(self) -> dict:
+        """Read the dash loggers.
 
-        for sen in sensors:
-            sen.extract_logger(result_body)
+        Returns:
+            dict: Dictionary containing loggers returned by device.
+        """
+        return await self._read_body(URL_DASH_LOGGER, {"destDev": [], "key": []})
 
-        return True
+    async def read_logger(self, log_id: int, start: int, end: int) -> list:
+        """Read a logging key and return the results.
+
+        Args:
+            log_id (int): The ID of the log to read.
+                totWhOut5min: 28672
+                totWhOutDaily: 28704
+                GridMsTotWhOutDaily: 28752
+                GridMsTotWhInDaily: 28768
+                ObjLogBatCha: 28816
+                totWhIn5min: 28736
+                totWhInDaily: 28768
+                ObjLogBatChrg: 29344
+                ObjLogBatDsch: 29360
+            start (int): Start timestamp in seconds.
+            end (int): End timestamp in seconds.
+
+        Returns:
+            list: The log entries returned by the device
+        """
+        payload = {
+            "destDev": [],
+            "key": log_id,
+            "tStart": start,
+            "tEnd": end,
+        }
+        result_body = await self._read_body(URL_LOGGER, payload)
+        if not isinstance(result_body, list):
+            raise SmaReadException("List of log entries expected.")
+
+        return result_body
 
     async def device_info(self) -> dict:
         """Read device info and return the results."""

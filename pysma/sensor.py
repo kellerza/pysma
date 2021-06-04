@@ -12,9 +12,11 @@ _LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(slots=True)
-class Sensor:  # pylint: disable=too-many-instance-attributes
+class Sensor:
     """pysma sensor."""
 
+    # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-few-public-methods
     key: str = attr.ib()
     name: str = attr.ib()
     unit: str = attr.ib(default="")
@@ -32,14 +34,6 @@ class Sensor:  # pylint: disable=too-many-instance-attributes
         if len(skey) > 2 and skey[2].isdigit():
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = int(skey[2])
-
-    def extract_logger(self, result_body: dict) -> None:
-        """Extract logs from json body.
-
-        Args:
-            result_body: json body retrieved from device
-        """
-        self.value = result_body
 
     def extract_value(
         self, result_body: dict, l10n: Optional[dict] = None, devclass: str = "1"
