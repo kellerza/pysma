@@ -5,8 +5,10 @@ Welcome to PySMA's documentation!
    :maxdepth: 1
    :caption: Contents:
 
+   getting_started
    pysma
    modules
+   Home Assistant Documentation <https://www.home-assistant.io/components/sma>
 
 Indices and tables
 ==================
