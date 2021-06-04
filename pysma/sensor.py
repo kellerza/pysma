@@ -178,6 +178,10 @@ class Sensors:
     def add(self, sensor: Union[Sensor, List[Sensor]]) -> None:
         """Add a sensor, logs warning if it exists.
 
+        A copy of sensor, or the sensors in the list, will be added.
+        If the sensor name already exists it will be overwritten.
+        If the sensor key already exists it will not be added.
+
         Args:
             sensor (Sensor, List[Sensor]): One or a list of sensors to add
 
