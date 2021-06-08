@@ -10,13 +10,13 @@ from .const import (
 )
 from .sensor import Sensor
 
-# Status - Operation
+#: Status - Operation
 status = Sensor("6180_08214800", "status", path=JMESPATHS_TAG, l10n_translate=True)
 operating_status_general = Sensor(
     "6180_08412800", "operating_status_general", path=JMESPATHS_TAG, l10n_translate=True
 )
 
-# Status - Operation - Inverter
+#: Status - Operation - Inverter
 inverter_condition = Sensor(
     "6180_08414C00", "inverter_condition", path=JMESPATHS_TAG, l10n_translate=True
 )
