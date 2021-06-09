@@ -1,5 +1,6 @@
 """Test pysma init."""
 import logging
+import re
 from unittest.mock import patch
 
 import aiohttp
@@ -11,8 +12,8 @@ from pysma.const import (
     ENERGY_METER_VIA_INVERTER,
     OPTIMIZERS_VIA_INVERTER,
 )
+from pysma.definitions import device_type as device_type_sensor
 from pysma.definitions import sensor_map
-from pysma.definitions import status as status_sensor
 from pysma.exceptions import (
     SmaAuthenticationException,
     SmaConnectionException,
@@ -33,7 +34,9 @@ class Test_SMA_class:
         self.host = "1.1.1.1"
         self.base_url = f"http://{self.host}"
         mock_aioresponse.get(
-            f"{self.base_url}/data/l10n/en-US.json", payload=MOCK_L10N, repeat=True
+            re.compile(f"{self.base_url}/data/l10n/en-US.json.*"),
+            payload=MOCK_L10N,
+            repeat=True,
         )
         mock_aioresponse.post(
             f"{self.base_url}/dyn/logout.json?sid=ABCD", payload={}, repeat=True
@@ -88,7 +91,9 @@ class Test_SMA_class:
         )
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host)
-        await sma.read(Sensors(status_sensor))
+        sensors = Sensors(device_type_sensor)
+        assert await sma.read(sensors)
+        assert sensors["6800_08822000"].value == "Sunny Boy 3.6"
         assert mock_warn.call_count == 0
 
     @patch("pysma._LOGGER.warning")
