@@ -48,7 +48,7 @@ class SMA:
     _url: str
     sma_sid: Optional[str]
     sma_uid: Optional[str]
-    l10n: dict
+    l10n: Optional[dict]
     devclass: Optional[str]
     device_info_sensors: Sensors
 
@@ -87,7 +87,7 @@ class SMA:
         self._aio_session = session
         self.sma_sid = None
         self.sma_uid = uid
-        self.l10n = {}
+        self.l10n = None
         self.devclass = None
         self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
@@ -161,7 +161,7 @@ class SMA:
         return await self._request_json(hdrs.METH_POST, url, **params)
 
     async def _read_l10n(self, lang: str = "en-US") -> dict:
-        """Read device language file.
+        """Read device language file. Returns cached value on subsequent calls.
 
         Args:
             lang (str, optional): Language code of file to retrieve. Defaults to "en-US".
@@ -169,7 +169,9 @@ class SMA:
         Returns:
             dict: json returned by device
         """
-        return await self._get_json(f"/data/l10n/{lang}.json")
+        if self.l10n is None:
+            self.l10n = await self._get_json(f"/data/l10n/{lang}.json")
+        return self.l10n
 
     async def _read_body(self, url: str, payload: dict) -> dict:
         """Parse the json returned by the device and extract result.
@@ -226,7 +228,6 @@ class SMA:
         Returns:
             bool: authentication successful
         """
-        self.l10n = await self._read_l10n()
         body = await self._post_json(URL_LOGIN, self._new_session_data)
         self.sma_sid = jmespath.search("result.sid", body)
         if self.sma_sid:
@@ -277,10 +278,11 @@ class SMA:
 
         notfound = []
         devclass = await self.get_devclass(result_body)
+        l10n = await self._read_l10n()
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body, self.l10n, str(devclass))
+                    sen.extract_value(result_body, l10n, str(devclass))
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
