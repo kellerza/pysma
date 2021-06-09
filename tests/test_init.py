@@ -104,7 +104,7 @@ class Test_SMA_class:
         )
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
-        sma.sma_sid = "ABCD"
+        sma._sid = "ABCD"
         with pytest.raises(SmaReadException):
             await sma._read_body("/dyn/getValues.json", payload={"dummy": "payload"})
         assert mock_warn.call_count == 1
@@ -125,7 +125,7 @@ class Test_SMA_class:
         )
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
-        sma.sma_sid = "ABCD"
+        sma._sid = "ABCD"
         result_body = await sma._read_body(
             "/dyn/getValues.json", payload={"dummy": "payload"}
         )
@@ -372,7 +372,7 @@ class Test_SMA_class:
 
         assert await sma.get_devclass() == DEVCLASS_INVERTER
 
-        sma.devclass = None
+        sma._devclass = None
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getValues.json?sid=ABCD",
             payload={
@@ -385,7 +385,7 @@ class Test_SMA_class:
         )
         assert await sma.get_devclass() is None
 
-        sma.devclass = None
+        sma._devclass = None
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getValues.json?sid=ABCD",
             payload={
@@ -430,7 +430,7 @@ class Test_SMA_class:
             },
         )
 
-        sma.devclass = None
+        sma._devclass = None
         assert await sma.get_devclass("BOGUS_BODY") == DEVCLASS_INVERTER
 
         mock_aioresponse.post(
@@ -448,7 +448,7 @@ class Test_SMA_class:
 
         assert await sma.get_devclass({}) == DEVCLASS_INVERTER
 
-        sma.devclass = "test"
+        sma._devclass = "test"
         assert await sma.get_devclass() == "test"
 
     async def test_get_sensors(self, mock_aioresponse):  # noqa: F811
