@@ -8,4 +8,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
 ]
+
+autoclass_content = "both"
 html_theme = "sphinx_rtd_theme"

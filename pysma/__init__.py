@@ -46,11 +46,11 @@ class SMA:
     _aio_session: ClientSession
     _new_session_data: Optional[dict]
     _url: str
-    sma_sid: Optional[str]
-    sma_uid: Optional[str]
-    l10n: Optional[dict]
-    devclass: Optional[str]
-    device_info_sensors: Sensors
+    _sid: Optional[str]
+    _uid: Optional[str]
+    _l10n: Optional[dict]
+    _devclass: Optional[str]
+    _device_info_sensors: Sensors
 
     def __init__(
         self,
@@ -85,11 +85,11 @@ class SMA:
         if not url.startswith("http"):
             self._url = "http://" + self._url
         self._aio_session = session
-        self.sma_sid = None
-        self.sma_uid = uid
-        self.l10n = None
-        self.devclass = None
-        self.device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
+        self._sid = None
+        self._uid = uid
+        self._l10n = None
+        self._devclass = None
+        self._device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
     async def _request_json(
         self, method: str, url: str, **kwargs: Dict[str, Any]
@@ -106,9 +106,9 @@ class SMA:
         Returns:
             dict: json returned by device
         """
-        if self.sma_sid:
+        if self._sid:
             kwargs.setdefault("params", {})
-            kwargs["params"]["sid"] = self.sma_sid
+            kwargs["params"]["sid"] = self._sid
 
         _LOGGER.debug("Sending %s request to %s: %s", method, url, kwargs)
 
@@ -169,9 +169,9 @@ class SMA:
         Returns:
             dict: json returned by device
         """
-        if self.l10n is None:
-            self.l10n = await self._get_json(f"/data/l10n/{lang}.json")
-        return self.l10n
+        if self._l10n is None:
+            self._l10n = await self._get_json(f"/data/l10n/{lang}.json")
+        return self._l10n
 
     async def _read_body(self, url: str, payload: dict) -> dict:
         """Parse the json returned by the device and extract result.
@@ -185,7 +185,7 @@ class SMA:
         Returns:
             dict: json result
         """
-        if self.sma_sid is None and self._new_session_data is not None:
+        if self._sid is None and self._new_session_data is not None:
             await self.new_session()
         body = await self._post_json(url, payload)
 
@@ -205,11 +205,11 @@ class SMA:
             _LOGGER.warning("No 'result' in reply from SMA, got: %s", body)
             raise SmaReadException("No 'result' in reply from SMA")
 
-        if self.sma_uid is None:
+        if self._uid is None:
             # Get the unique ID
-            self.sma_uid = next(iter(body["result"].keys()), None)
+            self._uid = next(iter(body["result"].keys()), None)
 
-        result_body = body["result"].pop(self.sma_uid, None)
+        result_body = body["result"].pop(self._uid, None)
         if body != {"result": {}}:
             _LOGGER.warning(
                 "Unexpected body %s, extracted %s",
@@ -229,8 +229,8 @@ class SMA:
             bool: authentication successful
         """
         body = await self._post_json(URL_LOGIN, self._new_session_data)
-        self.sma_sid = jmespath.search("result.sid", body)
-        if self.sma_sid:
+        self._sid = jmespath.search("result.sid", body)
+        if self._sid:
             return True
 
         err = body.pop("err", None)
@@ -248,12 +248,12 @@ class SMA:
 
     async def close_session(self) -> None:
         """Close the session login."""
-        if self.sma_sid is None:
+        if self._sid is None:
             return
         try:
             await self._post_json(URL_LOGOUT)
         finally:
-            self.sma_sid = None
+            self._sid = None
 
     async def read(self, sensors: Sensors) -> bool:
         """Read a set of keys.
@@ -342,19 +342,19 @@ class SMA:
         Returns:
             dict: dict containing serial, name, type, manufacturer and sw_version
         """
-        await self.read(self.device_info_sensors)
+        await self.read(self._device_info_sensors)
 
         device_info = {
-            "serial": self.device_info_sensors["serial_number"].value
+            "serial": self._device_info_sensors["serial_number"].value
             or FALLBACK_DEVICE_INFO["serial"],
-            "name": self.device_info_sensors["device_name"].value
+            "name": self._device_info_sensors["device_name"].value
             or FALLBACK_DEVICE_INFO["name"],
-            "type": self.device_info_sensors["device_type"].value
+            "type": self._device_info_sensors["device_type"].value
             or FALLBACK_DEVICE_INFO["type"],
-            "manufacturer": self.device_info_sensors["device_manufacturer"].value
+            "manufacturer": self._device_info_sensors["device_manufacturer"].value
             or FALLBACK_DEVICE_INFO["manufacturer"],
             "sw_version": version_int_to_string(
-                self.device_info_sensors["device_sw_version"].value
+                self._device_info_sensors["device_sw_version"].value
             ),
         }
 
@@ -373,8 +373,8 @@ class SMA:
         Returns:
             str: The device class identifier, or None if no identifier was found
         """
-        if self.devclass:
-            return self.devclass
+        if self._devclass:
+            return self._devclass
 
         if not result_body or not isinstance(result_body, dict):
             # Read the STATUS_SENSOR.
@@ -390,10 +390,10 @@ class SMA:
             if devclass_keys[0] == "val":
                 return None
 
-            self.devclass = devclass_keys[0]
-            _LOGGER.debug("Found device class %s", self.devclass)
+            self._devclass = devclass_keys[0]
+            _LOGGER.debug("Found device class %s", self._devclass)
 
-        return self.devclass
+        return self._devclass
 
     async def get_sensors(self) -> Sensors:
         """Get the sensors based on the device class.
