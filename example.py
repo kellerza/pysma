@@ -44,8 +44,6 @@ async def main_loop(loop, password, user, url):
             _LOGGER.warning("Unable to connect to device at %s", url)
             return
 
-        _LOGGER.info("NEW SID: %s", VAR["sma"].sma_sid)
-
         # We should not get any exceptions, but if we do we will close the session.
         try:
             VAR["running"] = True
