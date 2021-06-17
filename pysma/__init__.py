@@ -231,6 +231,7 @@ class SMA:
         body = await self._post_json(URL_LOGIN, self._new_session_data)
         self._sid = jmespath.search("result.sid", body)
         if self._sid:
+            _LOGGER.debug("New SID: %s", self._sid)
             return True
 
         err = body.pop("err", None)
