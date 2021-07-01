@@ -112,25 +112,36 @@ class SMA:
 
         _LOGGER.debug("Sending %s request to %s: %s", method, url, kwargs)
 
-        try:
-            res = await self._aio_session.request(
-                method,
-                self._url + url,
-                timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
-                **kwargs,
-            )
-        except client_exceptions.ClientError as exc:
-            raise SmaConnectionException(
-                f"Could not connect to SMA at {self._url}"
-            ) from exc
+        max_retries = 2
+        for retry in range(max_retries):
+            try:
+                async with self._aio_session.request(
+                    method,
+                    self._url + url,
+                    timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
+                    **kwargs,
+                ) as res:
+                    return await res.json() or {}
+            except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
+                _LOGGER.warning("Request to %s did not return a valid json.", url)
+                break
+            except client_exceptions.ServerDisconnectedError as exc:
+                if (retry + 1) < max_retries:
+                    # For some reason the SMA device sometimes raises a server disconnected error
+                    # If this happens we will retry up to `max_retries` times
+                    # This prevents errors in Home Assistant
+                    _LOGGER.debug("ServerDisconnectedError, will retry connection.")
+                    continue
 
-        try:
-            res_json = await res.json()
-        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
-            _LOGGER.warning("Request to %s did not return a valid json.", url)
-            return {}
+                raise SmaConnectionException(
+                    f"Server at {self._url} disconnected {max_retries+1} times."
+                ) from exc
+            except client_exceptions.ClientError as exc:
+                raise SmaConnectionException(
+                    f"Could not connect to SMA at {self._url}: {exc}"
+                ) from exc
 
-        return res_json or {}
+        return {}
 
     async def _get_json(self, url: str) -> dict:
         """Get json data for requests.

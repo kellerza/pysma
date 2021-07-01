@@ -53,6 +53,20 @@ class Test_SMA_class:
         with pytest.raises(SmaConnectionException):
             await sma._get_json("/dummy-url")
 
+    async def test_request_json_server_disconnect_error(
+        self, mock_aioresponse  # noqa: F811
+    ):
+        """Test request_json with a SmaConnectionException from ServerDisconnectedError."""
+        mock_aioresponse.get(
+            f"{self.base_url}/dummy-url",
+            exception=aiohttp.client_exceptions.ServerDisconnectedError("mocked error"),
+            repeat=True,
+        )
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        with pytest.raises(SmaConnectionException):
+            await sma._get_json("/dummy-url")
+
     @patch("pysma._LOGGER.warning")
     async def test_request_json_invalid_json(
         self, mock_warn, mock_aioresponse  # noqa: F811
