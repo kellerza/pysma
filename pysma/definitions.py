@@ -64,31 +64,43 @@ frequency = Sensor("6100_00465700", "frequency", unit="Hz", factor=100)
 
 # AC Side - Grid measurements - Active power
 #: Power for phase 1
-power_l1 = Sensor("6100_40464000", "power_l1", unit="W")
+power_l1 = Sensor("6100_40464000", "power_l1", unit="W", enabled=False)
 #: Power for phase 2
-power_l2 = Sensor("6100_40464100", "power_l2", unit="W")
+power_l2 = Sensor("6100_40464100", "power_l2", unit="W", enabled=False)
 #: Power for phase 3
-power_l3 = Sensor("6100_40464200", "power_l3", unit="W")
+power_l3 = Sensor("6100_40464200", "power_l3", unit="W", enabled=False)
 
 # AC Side - Grid measurements - Reactive power
 #: Total Reactive Power
 grid_reactive_power = Sensor("6100_40265F00", "grid_reactive_power", unit="var")
 #: Reactive Power for phase 1
-grid_reactive_power_l1 = Sensor("6100_40666000", "grid_reactive_power_l1", unit="var")
+grid_reactive_power_l1 = Sensor(
+    "6100_40666000", "grid_reactive_power_l1", unit="var", enabled=False
+)
 #: Reactive Power for phase 2
-grid_reactive_power_l2 = Sensor("6100_40666100", "grid_reactive_power_l2", unit="var")
+grid_reactive_power_l2 = Sensor(
+    "6100_40666100", "grid_reactive_power_l2", unit="var", enabled=False
+)
 #: Reactive Power for phase 3
-grid_reactive_power_l3 = Sensor("6100_40666200", "grid_reactive_power_l3", unit="var")
+grid_reactive_power_l3 = Sensor(
+    "6100_40666200", "grid_reactive_power_l3", unit="var", enabled=False
+)
 
 # AC Side - Grid measurements - Apparent power
 #: Total Apparent Power
 grid_apparent_power = Sensor("6100_40666700", "grid_apparent_power", unit="VA")
 #: Apparent Power for phase 1
-grid_apparent_power_l1 = Sensor("6100_40666800", "grid_apparent_power_l1", unit="VA")
+grid_apparent_power_l1 = Sensor(
+    "6100_40666800", "grid_apparent_power_l1", unit="VA", enabled=False
+)
 #: Apparent Power for phase 2
-grid_apparent_power_l2 = Sensor("6100_40666900", "grid_apparent_power_l2", unit="VA")
+grid_apparent_power_l2 = Sensor(
+    "6100_40666900", "grid_apparent_power_l2", unit="VA", enabled=False
+)
 #: Apparent Power for phase 3
-grid_apparent_power_l3 = Sensor("6100_40666A00", "grid_apparent_power_l3", unit="VA")
+grid_apparent_power_l3 = Sensor(
+    "6100_40666A00", "grid_apparent_power_l3", unit="VA", enabled=False
+)
 
 
 # AC Side - Grid measurements - Power factor
@@ -104,11 +116,11 @@ grid_power_factor_excitation = Sensor(
 
 # AC Side - Grid measurements - Phase Current
 #: Current for phase 1
-current_l1 = Sensor("6100_40465300", "current_l1", unit="A", factor=1000)
+current_l1 = Sensor("6100_40465300", "current_l1", unit="A", factor=1000, enabled=False)
 #: Current for phase 2
-current_l2 = Sensor("6100_40465400", "current_l2", unit="A", factor=1000)
+current_l2 = Sensor("6100_40465400", "current_l2", unit="A", factor=1000, enabled=False)
 #: Current for phase 3
-current_l3 = Sensor("6100_40465500", "current_l3", unit="A", factor=1000)
+current_l3 = Sensor("6100_40465500", "current_l3", unit="A", factor=1000, enabled=False)
 #: Total Current
 current_total = Sensor("6100_00664F00", "current_total", unit="A", factor=1000)
 
@@ -215,11 +227,11 @@ optimizer_temp = Sensor("6100_40652B00", "optimizer_temp", unit="C", factor=10)
 #: Total battery state of charge
 battery_soc_total = Sensor("6100_00295A00", "battery_soc_total", unit="%")
 #: State of charge battery A
-battery_soc_a = Sensor("6100_00498F00_0", "battery_soc_a", unit="%")
+battery_soc_a = Sensor("6100_00498F00_0", "battery_soc_a", unit="%", enabled=False)
 #: State of charge battery B
-battery_soc_b = Sensor("6100_00498F00_1", "battery_soc_b", unit="%")
+battery_soc_b = Sensor("6100_00498F00_1", "battery_soc_b", unit="%", enabled=False)
 #: State of charge battery C
-battery_soc_c = Sensor("6100_00498F00_2", "battery_soc_c", unit="%")
+battery_soc_c = Sensor("6100_00498F00_2", "battery_soc_c", unit="%", enabled=False)
 #: Voltage battery A
 battery_voltage_a = Sensor("6100_00495C00_0", "battery_voltage_a", unit="V", factor=100)
 #: Voltage battery B
@@ -256,11 +268,17 @@ battery_status_operating_mode = Sensor(
 #: Total battery capacity
 battery_capacity_total = Sensor("6100_00696E00", "battery_capacity_total", unit="%")
 #: Capacity battery A
-battery_capacity_a = Sensor("6100_00499100_0", "battery_capacity_a", unit="%")
+battery_capacity_a = Sensor(
+    "6100_00499100_0", "battery_capacity_a", unit="%", enabled=False
+)
 #: Capacity battery B
-battery_capacity_b = Sensor("6100_00499100_1", "battery_capacity_b", unit="%")
+battery_capacity_b = Sensor(
+    "6100_00499100_1", "battery_capacity_b", unit="%", enabled=False
+)
 #: Capacity battery C
-battery_capacity_c = Sensor("6100_00499100_2", "battery_capacity_c", unit="%")
+battery_capacity_c = Sensor(
+    "6100_00499100_2", "battery_capacity_c", unit="%", enabled=False
+)
 
 # Battery (inverter) - Charge (voltage)
 #: Charging voltage battery A
@@ -282,26 +300,32 @@ battery_power_charge_total = Sensor(
     "6100_00496900", "battery_power_charge_total", unit="W"
 )
 #: Charging power battery A
-battery_power_charge_a = Sensor("6100_00499300_0", "battery_power_charge_a", unit="W")
+battery_power_charge_a = Sensor(
+    "6100_00499300_0", "battery_power_charge_a", unit="W", enabled=False
+)
 #: Charging power battery B
-battery_power_charge_b = Sensor("6100_00499300_1", "battery_power_charge_b", unit="W")
+battery_power_charge_b = Sensor(
+    "6100_00499300_1", "battery_power_charge_b", unit="W", enabled=False
+)
 #: Charging power battery C
-battery_power_charge_c = Sensor("6100_00499300_2", "battery_power_charge_c", unit="W")
+battery_power_charge_c = Sensor(
+    "6100_00499300_2", "battery_power_charge_c", unit="W", enabled=False
+)
 #: Total charge
 battery_charge_total = Sensor(
     "6400_00496700", "battery_charge_total", unit="kWh", factor=1000
 )
 #: Charge battery A
 battery_charge_a = Sensor(
-    "6400_00499500_0", "battery_charge_a", unit="kWh", factor=1000
+    "6400_00499500_0", "battery_charge_a", unit="kWh", factor=1000, enabled=False
 )
 #: Charge battery B
 battery_charge_b = Sensor(
-    "6400_00499500_1", "battery_charge_b", unit="kWh", factor=1000
+    "6400_00499500_1", "battery_charge_b", unit="kWh", factor=1000, enabled=False
 )
 #: Charge battery C
 battery_charge_c = Sensor(
-    "6400_00499500_2", "battery_charge_c", unit="kWh", factor=1000
+    "6400_00499500_2", "battery_charge_c", unit="kWh", factor=1000, enabled=False
 )
 
 # Battery (inverter) - Battery discharge (power & energy)
@@ -311,15 +335,15 @@ battery_power_discharge_total = Sensor(
 )
 #: Disharging power battery A
 battery_power_discharge_a = Sensor(
-    "6100_00499400_0", "battery_power_discharge_a", unit="W"
+    "6100_00499400_0", "battery_power_discharge_a", unit="W", enabled=False
 )
 #: Disharging power battery B
 battery_power_discharge_b = Sensor(
-    "6100_00499400_1", "battery_power_discharge_b", unit="W"
+    "6100_00499400_1", "battery_power_discharge_b", unit="W", enabled=False
 )
 #: Disharging power battery C
 battery_power_discharge_c = Sensor(
-    "6100_00499400_2", "battery_power_discharge_c", unit="W"
+    "6100_00499400_2", "battery_power_discharge_c", unit="W", enabled=False
 )
 #: Total discharge
 battery_discharge_total = Sensor(
@@ -327,15 +351,15 @@ battery_discharge_total = Sensor(
 )
 #: Discharge battery A
 battery_discharge_a = Sensor(
-    "6400_00499600_0", "battery_discharge_a", unit="kWh", factor=1000
+    "6400_00499600_0", "battery_discharge_a", unit="kWh", factor=1000, enabled=False
 )
 #: Discharge battery B
 battery_discharge_b = Sensor(
-    "6400_00499600_1", "battery_discharge_b", unit="kWh", factor=1000
+    "6400_00499600_1", "battery_discharge_b", unit="kWh", factor=1000, enabled=False
 )
 #: Discharge battery C
 battery_discharge_c = Sensor(
-    "6400_00499600_2", "battery_discharge_c", unit="kWh", factor=1000
+    "6400_00499600_2", "battery_discharge_c", unit="kWh", factor=1000, enabled=False
 )
 
 # Device Parameters
