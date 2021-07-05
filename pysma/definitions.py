@@ -15,25 +15,45 @@ from .sensor import Sensor
 status = Sensor("6180_08214800", "status", path=JMESPATHS_TAG, l10n_translate=True)
 #: General operating status
 operating_status_general = Sensor(
-    "6180_08412800", "operating_status_general", path=JMESPATHS_TAG, l10n_translate=True
+    "6180_08412800",
+    "operating_status_general",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
 )
 
 # Status - Operation - Inverter
 #: General operating status
 inverter_condition = Sensor(
-    "6180_08414C00", "inverter_condition", path=JMESPATHS_TAG, l10n_translate=True
+    "6180_08414C00",
+    "inverter_condition",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
 )
 #: Inverter Condition
 inverter_system_init = Sensor(
-    "6800_08811F00", "inverter_system_init", path=JMESPATHS_TAG, l10n_translate=True
+    "6800_08811F00",
+    "inverter_system_init",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
 )
 #: Grid connection status
 grid_connection_status = Sensor(
-    "6180_0846A700", "grid_connection_status", path=JMESPATHS_TAG, l10n_translate=True
+    "6180_0846A700",
+    "grid_connection_status",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
 )
 #: Grid relay status
 grid_relay_status = Sensor(
-    "6180_08416400", "grid_relay_status", path=JMESPATHS_TAG, l10n_translate=True
+    "6180_08416400",
+    "grid_relay_status",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
 )
 
 # DC side - DC measurements PV
@@ -105,13 +125,16 @@ grid_apparent_power_l3 = Sensor(
 
 # AC Side - Grid measurements - Power factor
 #: Grid Power factor
-grid_power_factor = Sensor("6100_00665900", "grid_power_factor", unit="", factor=1000)
+grid_power_factor = Sensor(
+    "6100_00665900", "grid_power_factor", unit="", factor=1000, enabled=False
+)
 #: Grid Power factor excitation
 grid_power_factor_excitation = Sensor(
     "6180_08465A00",
     "grid_power_factor_excitation",
     path=JMESPATHS_TAG,
     l10n_translate=True,
+    enabled=False,
 )
 
 # AC Side - Grid measurements - Phase Current
@@ -216,11 +239,17 @@ optimizer_serial = Sensor("6800_10852600", "optimizer_serial")
 #: Power supplied by optimizer
 optimizer_power = Sensor("6100_40652A00", "optimizer_power", unit="W")
 #: Current supplied by optimizer
-optimizer_current = Sensor("6100_40652900", "optimizer_current", unit="A", factor=1000)
+optimizer_current = Sensor(
+    "6100_40652900", "optimizer_current", unit="A", factor=1000, enabled=False
+)
 #: Voltage supplied by optimizer
-optimizer_voltage = Sensor("6100_40652800", "optimizer_voltage", unit="V", factor=100)
+optimizer_voltage = Sensor(
+    "6100_40652800", "optimizer_voltage", unit="V", factor=100, enabled=False
+)
 #: Temperature of optimizer
-optimizer_temp = Sensor("6100_40652B00", "optimizer_temp", unit="C", factor=10)
+optimizer_temp = Sensor(
+    "6100_40652B00", "optimizer_temp", unit="C", factor=10, enabled=False
+)
 
 
 # Battery (inverter) - Battery (general parameters)
