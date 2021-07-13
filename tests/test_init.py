@@ -532,3 +532,25 @@ class Test_SMA_class:
         sma = SMA(session, self.host, "pass")
         with pytest.raises(SmaReadException):
             await sma.get_sensors()
+
+    async def test_post_json(self):
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+
+        with patch("pysma.SMA._request_json") as mock_request_json:
+            await sma._post_json("dummy_url")
+            mock_request_json.assert_called_once_with(
+                "POST",
+                "dummy_url",
+                data="{}",
+                headers={"content-type": "application/json"},
+            )
+
+        with patch("pysma.SMA._request_json") as mock_request_json:
+            await sma._post_json("dummy_url", {"data": "dummy"})
+            mock_request_json.assert_called_once_with(
+                "POST",
+                "dummy_url",
+                data='{"data": "dummy"}',
+                headers={"content-type": "application/json"},
+            )

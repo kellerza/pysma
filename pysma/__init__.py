@@ -121,7 +121,9 @@ class SMA:
                     timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
                     **kwargs,
                 ) as res:
-                    return await res.json() or {}
+                    res_json = await res.json()
+                    _LOGGER.debug("Received reply %s", res_json)
+                    return res_json or {}
             except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
                 _LOGGER.warning("Request to %s did not return a valid json.", url)
                 break
@@ -159,15 +161,18 @@ class SMA:
 
         Args:
             url (str): URL to do POST request to
-            payload (dict, optional): payload to send to device. Defaults to None.
+            payload (dict, optional): payload to send to device. Defaults to empty dict.
 
         Returns:
             dict: json returned by device
         """
-        params: Dict[str, Any] = {}
-        if payload is not None:
-            params["data"] = json.dumps(payload)
-            params["headers"] = {"content-type": "application/json"}
+        if payload is None:
+            payload = {}
+
+        params: Dict[str, Any] = {
+            "data": json.dumps(payload),
+            "headers": {"content-type": "application/json"},
+        }
 
         return await self._request_json(hdrs.METH_POST, url, **params)
 
