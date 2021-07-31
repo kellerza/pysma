@@ -254,11 +254,15 @@ metering_active_power_draw_l3 = Sensor(
 )
 #: Current power consumption measured by energy meter
 metering_current_consumption = Sensor(
-    "6100_00543100", "metering_current_consumption", unit="W"
+    "6100_00543100", "metering_current_consumption", unit="W", enabled=False
 )
 #: Total power consumption measured by energy meter
 metering_total_consumption = Sensor(
-    "6400_00543A00", "metering_total_consumption", unit="kWh", factor=1000
+    "6400_00543A00",
+    "metering_total_consumption",
+    unit="kWh",
+    factor=1000,
+    enabled=False,
 )
 
 # AC Side - PV generation
