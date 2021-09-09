@@ -284,7 +284,7 @@ optimizer_voltage = Sensor(
 )
 #: Temperature of optimizer
 optimizer_temp = Sensor(
-    "6100_40652B00", "optimizer_temp", unit="C", factor=10, enabled=False
+    "6100_40652B00", "optimizer_temp", unit="°C", factor=10, enabled=False
 )
 
 
@@ -322,11 +322,11 @@ battery_current_c = Sensor(
     "6100_40495D00_2", "battery_current_c", unit="A", factor=1000
 )
 #: Temperature battery A
-battery_temp_a = Sensor("6100_40495B00_0", "battery_temp_a", unit="C", factor=10)
+battery_temp_a = Sensor("6100_40495B00_0", "battery_temp_a", unit="°C", factor=10)
 #: Temperature battery B
-battery_temp_b = Sensor("6100_40495B00_1", "battery_temp_b", unit="C", factor=10)
+battery_temp_b = Sensor("6100_40495B00_1", "battery_temp_b", unit="°C", factor=10)
 #: Temperature battery C
-battery_temp_c = Sensor("6100_40495B00_2", "battery_temp_c", unit="C", factor=10)
+battery_temp_c = Sensor("6100_40495B00_2", "battery_temp_c", unit="°C", factor=10)
 #: Battery status operating mode
 battery_status_operating_mode = Sensor(
     "6180_08495E00",
