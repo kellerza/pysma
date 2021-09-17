@@ -74,7 +74,7 @@ class SMA:
         """
         # pylint: disable=too-many-arguments
         if group not in USERS:
-            raise KeyError("Invalid user type: {}".format(group))
+            raise KeyError(f"Invalid user type: {group}")
         if password is not None and len(password) > 12:
             _LOGGER.warning("Password should not exceed 12 characters")
         if password is None:
@@ -251,7 +251,7 @@ class SMA:
             return True
 
         err = body.pop("err", None)
-        msg = "Could not start session, %s, got {}".format(body)
+        msg = f"Could not start session, %s, got {body}"
 
         if err:
             if err == 503:
