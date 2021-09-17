@@ -402,10 +402,10 @@ class SMA:
             devclass_keys = list(sensor_values[0].keys())
             if len(devclass_keys) == 0:
                 return None
+            if devclass_keys[0] == "val":
+                return DEVCLASS_INVERTER
             if len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
-            if devclass_keys[0] == "val":
-                return None
 
             self._devclass = devclass_keys[0]
             _LOGGER.debug("Found device class %s", self._devclass)
