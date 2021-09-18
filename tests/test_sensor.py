@@ -71,20 +71,16 @@ class Test_sensor_class:
     def test_null(self):
         """Test a null or None result."""
         sens = Sensor("6100_40263F00", "s_null", "W")
-        assert (
-            sens.extract_value({"result": {"_": {"6100_40263F00": {"val": None}}}})
-            is False
-        )
+        assert sens.extract_value({"6100_40263F00": {"val": None}}) is False
         assert sens.value is None
-        assert (
-            sens.extract_value(
-                {"result": {"_": {"6100_40263F00": {"1": [{"val": None}]}}}}
-            )
-            is False
-        )
+        assert sens.extract_value({"6100_40263F00": {"1": [{"val": None}]}}) is False
         assert sens.value is None
-        assert sens.extract_value({"result": {"_": {}}}) is False
+        assert sens.extract_value({}) is False
         assert sens.value is None
+
+    def test_no_value_decoded(self):
+        sens = Sensor("6100_40263F00", "s_null", "W")
+        assert sens.extract_value({"6100_40263F00": None}) is False
 
 
 class Test_sensors_class:

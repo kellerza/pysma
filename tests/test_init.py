@@ -8,6 +8,7 @@ import pytest
 
 from pysma import SMA
 from pysma.const import (
+    DEVCLASS_BATTERY,
     DEVCLASS_INVERTER,
     ENERGY_METER_VIA_INVERTER,
     OPTIMIZERS_VIA_INVERTER,
@@ -377,59 +378,51 @@ class Test_SMA_class:
                 "result": {
                     "0199-xxxxx385": {
                         "6180_08214800": {
-                            "1": [{"val": [{"tag": "123"}]}],
+                            "7": [{"val": [{"tag": "123"}]}],
                         },
                     }
                 }
             },
         )
 
-        assert await sma.get_devclass() == DEVCLASS_INVERTER
+        assert await sma.get_devclass() == DEVCLASS_BATTERY
 
         sma._devclass = None
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {},
-                    }
-                }
-            },
-        )
-        assert await sma.get_devclass() is None
+        result_body = {
+            "6180_08214800": {},
+        }
+        assert await sma.get_devclass(result_body) is None
 
         sma._devclass = None
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {
-                            "val": "402",
-                        },
-                    }
-                }
+        result_body = {
+            "6180_08214800": {
+                "val": [{"tag": "123"}],
             },
-        )
-        assert await sma.get_devclass() is None
+        }
+        assert await sma.get_devclass(result_body) == DEVCLASS_INVERTER
 
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6800_12345678": {
-                            "1": [{"val": "value1"}],
-                            "7": [{"val": "value2"}],
-                        },
-                    }
-                }
+        sma._devclass = None
+        result_body = {
+            "6800_00823400": {"val": 33751296, "min": 0, "max": 4294967294},
+            "6800_10821E00": {"val": "SN: 1930023194"},
+            "6800_00A21E00": {"val": 1930023194, "min": 0, "max": 4294967294},
+            "6800_08822000": {
+                "val": [{"tag": 9301}],
+                "validVals": [9301, 9303, 9302],
             },
-        )
+        }
+        assert await sma.get_devclass(result_body) == DEVCLASS_INVERTER
+
+        sma._devclass = None
+        result_body = {
+            "6800_12345678": {
+                "1": [{"val": "value1"}],
+                "7": [{"val": "value2"}],
+            },
+        }
 
         with pytest.raises(KeyError):
-            await sma.get_devclass()
+            await sma.get_devclass(result_body)
 
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getValues.json?sid=ABCD",
