@@ -13,7 +13,7 @@ inverters
 Currently tested on Sunnyboy 1.5 and various other Webconnect models, If
 you can access your SMA via your browser, this might work for you.
 
-Other SMA interfaces include <https://sbfspot.codeplex.com/> and a
+Other SMA interfaces include [SBFspot](https://github.com/SBFspot/SBFspot/) and a
 Python [adaptation](https://github.com/TD22057/T-Home/)
 
 # Example usage
