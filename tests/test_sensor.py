@@ -5,7 +5,12 @@ from unittest.mock import patch
 
 import pytest
 
-from pysma.const import DEVCLASS_INVERTER, JMESPATH_VAL, JMESPATH_VAL_IDX
+from pysma.const import (
+    DEVCLASS_INVERTER,
+    JMESPATH_VAL,
+    JMESPATH_VAL_IDX,
+    JMESPATH_VAL_STR,
+)
 from pysma.definitions import sensor_map
 from pysma.sensor import Sensor, Sensors
 
@@ -17,7 +22,8 @@ SB_1_5 = loads(
     """
     {
         "6400_00260100": {"1": [{"val": 3514000}]},
-        "6400_00262200": {"1": [{"val": 402}]}
+        "6400_00262200": {"1": [{"val": 402}]},
+        "6380_40251E00": {"1": [{"val": 448}, {"val": 0}]}
     }
     """
     # }}
@@ -29,7 +35,8 @@ SB_2_5 = loads(
     {
         "6400_00262200": {"val": 402},
         "6100_40263F00": {"val": null},
-        "6400_00260100": {"val": 3514000}
+        "6400_00260100": {"val": 3514000},
+        "6380_40251E00": [{"str": 1, "val": 448}]
     }
     """
     # }}
@@ -42,6 +49,7 @@ def sensors():
     yield [
         (402, True, Sensor("6400_00262200", "s_402", "W")),
         (3514, True, Sensor("6400_00260100", "s_3514", "W", 1000)),
+        (448, True, Sensor("6380_40251E00_0", "pv_power_a", unit="W")),
     ]
 
 
@@ -64,27 +72,23 @@ class Test_sensor_class:
             assert sens.path is None
             assert sens.extract_value(SB_2_5) is change
             assert sens.value == val
-            assert sens.path == JMESPATH_VAL
+            assert sens.path == JMESPATH_VAL or JMESPATH_VAL_STR.format(sens.key_idx)
 
             assert sens.extract_value(SB_2_5) is False
 
     def test_null(self):
         """Test a null or None result."""
         sens = Sensor("6100_40263F00", "s_null", "W")
-        assert (
-            sens.extract_value({"result": {"_": {"6100_40263F00": {"val": None}}}})
-            is False
-        )
+        assert sens.extract_value({"6100_40263F00": {"val": None}}) is False
         assert sens.value is None
-        assert (
-            sens.extract_value(
-                {"result": {"_": {"6100_40263F00": {"1": [{"val": None}]}}}}
-            )
-            is False
-        )
+        assert sens.extract_value({"6100_40263F00": {"1": [{"val": None}]}}) is False
         assert sens.value is None
-        assert sens.extract_value({"result": {"_": {}}}) is False
+        assert sens.extract_value({}) is False
         assert sens.value is None
+
+    def test_no_value_decoded(self):
+        sens = Sensor("6100_40263F00", "s_null", "W")
+        assert sens.extract_value({"6100_40263F00": None}) is False
 
 
 class Test_sensors_class:

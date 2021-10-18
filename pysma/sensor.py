@@ -6,7 +6,7 @@ from typing import Any, Iterator, List, Optional, Union
 import attr
 import jmespath  # type: ignore
 
-from .const import JMESPATH_VAL, JMESPATH_VAL_IDX
+from .const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ class Sensor:
                 if isinstance(self.path, (list, tuple))
                 else [
                     JMESPATH_VAL,
+                    JMESPATH_VAL_STR.format(self.key_idx),
                     JMESPATH_VAL_IDX.format(devclass, self.key_idx),
                 ]
             )

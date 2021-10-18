@@ -74,7 +74,7 @@ class SMA:
         """
         # pylint: disable=too-many-arguments
         if group not in USERS:
-            raise KeyError("Invalid user type: {}".format(group))
+            raise KeyError(f"Invalid user type: {group}")
         if password is not None and len(password) > 12:
             _LOGGER.warning("Password should not exceed 12 characters")
         if password is None:
@@ -251,7 +251,7 @@ class SMA:
             return True
 
         err = body.pop("err", None)
-        msg = "Could not start session, %s, got {}".format(body)
+        msg = f"Could not start session, %s, got {body}"
 
         if err:
             if err == 503:
@@ -402,12 +402,12 @@ class SMA:
             devclass_keys = list(sensor_values[0].keys())
             if len(devclass_keys) == 0:
                 return None
-            if len(devclass_keys) > 1:
-                raise KeyError("More than 1 device class key is not supported")
             if devclass_keys[0] == "val":
-                return None
-
-            self._devclass = devclass_keys[0]
+                self._devclass = DEVCLASS_INVERTER
+            elif len(devclass_keys) > 1:
+                raise KeyError("More than 1 device class key is not supported")
+            else:
+                self._devclass = devclass_keys[0]
             _LOGGER.debug("Found device class %s", self._devclass)
 
         return self._devclass
