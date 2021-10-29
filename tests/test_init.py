@@ -547,3 +547,9 @@ class Test_SMA_class:
                 data='{"data": "dummy"}',
                 headers={"content-type": "application/json"},
             )
+
+    async def test_url_proprty(self):
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+
+        assert sma.url == f"http://{self.host}"

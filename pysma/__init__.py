@@ -475,3 +475,12 @@ class SMA:
                             device_sensors.add(new_sensor)
 
         return device_sensors
+
+    @property
+    def url(self) -> str:
+        """Property to get URL.
+
+        Returns:
+            str: The current URL used by PySMA
+        """
+        return self._url
