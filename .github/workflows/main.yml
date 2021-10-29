@@ -15,8 +15,6 @@ jobs:
         with:
           python-version: ${{ env.DEFAULT_PYTHON }}
       - uses: psf/black@stable
-        with:
-          args: ". --check"
 
   isort:
     name: Check isort
