@@ -5,7 +5,6 @@ from .const import (
     DEVCLASS_INVERTER,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
-    ENTITY_CATEGORY_DIAGNOSTIC,
     JMESPATHS_TAG,
     OPTIMIZERS_VIA_INVERTER,
 )
@@ -13,13 +12,7 @@ from .sensor import Sensor
 
 # Status - Operation
 #: Status of the device
-status = Sensor(
-    "6180_08214800",
-    "status",
-    path=JMESPATHS_TAG,
-    l10n_translate=True,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
-)
+status = Sensor("6180_08214800", "status", path=JMESPATHS_TAG, l10n_translate=True)
 #: General operating status
 operating_status_general = Sensor(
     "6180_08412800",
@@ -27,7 +20,6 @@ operating_status_general = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
 # Status - Operation - Inverter
@@ -38,7 +30,6 @@ inverter_condition = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 #: Inverter Condition
 inverter_system_init = Sensor(
@@ -47,7 +38,6 @@ inverter_system_init = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 #: Grid connection status
 grid_connection_status = Sensor(
@@ -56,7 +46,6 @@ grid_connection_status = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 #: Grid relay status
 grid_relay_status = Sensor(
@@ -65,7 +54,6 @@ grid_relay_status = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
 # DC side - DC measurements PV
@@ -165,7 +153,6 @@ grid_power_factor_excitation = Sensor(
     path=JMESPATHS_TAG,
     l10n_translate=True,
     enabled=False,
-    entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
 )
 
 # AC Side - Grid measurements - Phase Current
