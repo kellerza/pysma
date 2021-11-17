@@ -4,7 +4,7 @@ from pathlib import Path
 
 from setuptools import setup
 
-VERSION = "0.6.8"
+VERSION = "0.6.9"
 URL = "https://github.com/kellerza/pysma"
 
 setup(
