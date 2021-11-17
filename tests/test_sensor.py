@@ -86,6 +86,12 @@ class Test_sensor_class:
         assert sens.extract_value({}) is False
         assert sens.value is None
 
+        # After a valid value was seen. The next None value should be 0
+        assert sens.extract_value({"6100_40263F00": {"val": "dummy"}}) is True
+        assert sens.value == "dummy"
+        assert sens.extract_value({"6100_40263F00": {"val": None}}) is True
+        assert sens.value == 0
+
     def test_no_value_decoded(self):
         sens = Sensor("6100_40263F00", "s_null", "W")
         assert sens.extract_value({"6100_40263F00": None}) is False
