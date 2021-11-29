@@ -54,6 +54,10 @@ async def main_loop(loop, password, user, url):
             for name, value in device_info.items():
                 print("{:>15}{:>25}".format(name, value))
 
+            # enable all sensors
+            for sensor in sensors:
+                sensor.enabled = True
+
             while VAR.get("running"):
                 await VAR["sma"].read(sensors)
                 print_table(sensors)
