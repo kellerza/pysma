@@ -10,9 +10,10 @@ import aiohttp
 
 import pysma
 
-# This module will work with Python 3.5+
+# This example will work with Python 3.7+
 # Python 3.4+ "@asyncio.coroutine" decorator
 # Python 3.5+ uses "async def f()" syntax
+# Python 3.7+ provides asyncio.run(). For earlier versions the loop should be created manually.
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,10 +29,10 @@ def print_table(sensors):
             print("{:>25}{:>15} {}".format(sen.name, str(sen.value), sen.unit))
 
 
-async def main_loop(loop, password, user, url):
+async def main_loop(password, user, url):
     """Run main loop."""
     async with aiohttp.ClientSession(
-        loop=loop, connector=aiohttp.TCPConnector(ssl=False)
+        connector=aiohttp.TCPConnector(ssl=False)
     ) as session:
         VAR["sma"] = pysma.SMA(session, url, password=password, group=user)
 
@@ -70,7 +71,7 @@ async def main_loop(loop, password, user, url):
             await VAR["sma"].close_session()
 
 
-def main():
+async def main():
     """Run example."""
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -85,19 +86,13 @@ def main():
 
     args = parser.parse_args()
 
-    loop = asyncio.get_event_loop()
-
     def _shutdown(*_):
         VAR["running"] = False
-        # asyncio.ensure_future(sma.close_session(), loop=loop)
 
     signal.signal(signal.SIGINT, _shutdown)
-    # loop.add_signal_handler(signal.SIGINT, shutdown)
-    # signal.signal(signal.SIGINT, signal.SIG_DFL)
-    loop.run_until_complete(
-        main_loop(loop, user=args.user, password=args.password, url=args.url)
-    )
+
+    await main_loop(user=args.user, password=args.password, url=args.url)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
