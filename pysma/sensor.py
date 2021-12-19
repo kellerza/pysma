@@ -88,8 +88,9 @@ class Sensor:
 
             # SMA will return None instead of 0 if if no power is generated
             # If we have extracted a path, we know the value was previously
-            # present and res can be set to 0
-            if res is None:
+            # present and res can be set to 0. We will only do this for "W"
+            # to prevent issues with energy totals in HA.
+            if res is None and self.unit == "W":
                 res = 0
         else:
             _LOGGER.debug(
