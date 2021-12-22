@@ -86,6 +86,7 @@ class Test_sensor_class:
         assert sens.extract_value({}) is False
         assert sens.value is None
 
+        # For "W" sensors we will set it to 0 by default.
         sens = Sensor("6100_40263F00", "s_null", "W")
         assert sens.extract_value({"6100_40263F00": {"val": None}}) is True
         assert sens.value == 0
