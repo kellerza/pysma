@@ -78,7 +78,7 @@ class Test_sensor_class:
 
     def test_null(self):
         """Test a null or None result."""
-        sens = Sensor("6100_40263F00", "s_null", "W")
+        sens = Sensor("6100_40263F00", "s_null", "kWh")
         assert sens.extract_value({"6100_40263F00": {"val": None}}) is False
         assert sens.value is None
         assert sens.extract_value({"6100_40263F00": {"1": [{"val": None}]}}) is False
@@ -86,14 +86,19 @@ class Test_sensor_class:
         assert sens.extract_value({}) is False
         assert sens.value is None
 
-        # After a valid value was seen. The next None value should be 0
-        assert sens.extract_value({"6100_40263F00": {"val": "dummy"}}) is True
-        assert sens.value == "dummy"
+        # For "W" sensors we will set it to 0 by default.
+        sens = Sensor("6100_40263F00", "s_null", "W")
         assert sens.extract_value({"6100_40263F00": {"val": None}}) is True
         assert sens.value == 0
+        assert sens.extract_value({"6100_40263F00": {"1": [{"val": None}]}}) is False
+        assert sens.value == 0
+        assert sens.extract_value({}) is True
+        assert sens.value is None
 
     def test_no_value_decoded(self):
         sens = Sensor("6100_40263F00", "s_null", "W")
+        assert sens.extract_value({"6100_40263F00": None}) is True
+        sens = Sensor("6100_40263F00", "s_null", "kWh")
         assert sens.extract_value({"6100_40263F00": None}) is False
 
 
