@@ -85,18 +85,16 @@ class Sensor:
         # Extract new value
         if isinstance(self.path, str):
             res = jmespath.search(self.path, res)
-
-            # SMA will return None instead of 0 if if no power is generated
-            # If we have extracted a path, we know the value was previously
-            # present and res can be set to 0. We will only do this for "W"
-            # to prevent issues with energy totals in HA.
-            if res is None and self.unit == "W":
-                res = 0
         else:
             _LOGGER.debug(
                 "Sensor %s: No successful value decoded yet: %s", self.name, res
             )
             res = None
+
+        # SMA will return None instead of 0 if if no power is generated
+        # For "W" sensors we will set it to 0 by default.
+        if res is None and self.unit == "W":
+            res = 0
 
         if isinstance(res, (int, float)) and self.factor:
             res /= self.factor
