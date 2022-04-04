@@ -1,4 +1,5 @@
 """Test pysma init."""
+import asyncio
 import logging
 import re
 from unittest.mock import patch
@@ -61,6 +62,18 @@ class Test_SMA_class:
         mock_aioresponse.get(
             f"{self.base_url}/dummy-url",
             exception=aiohttp.client_exceptions.ServerDisconnectedError("mocked error"),
+            repeat=True,
+        )
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        with pytest.raises(SmaConnectionException):
+            await sma._get_json("/dummy-url")
+
+    async def test_timeout_error(self, mock_aioresponse):  # noqa: F811
+        """Test request_json with a SmaConnectionException from TimeoutError."""
+        mock_aioresponse.get(
+            f"{self.base_url}/dummy-url",
+            exception=asyncio.TimeoutError("mocked error"),
             repeat=True,
         )
         session = aiohttp.ClientSession()
