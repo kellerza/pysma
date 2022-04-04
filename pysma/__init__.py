@@ -144,9 +144,9 @@ class SMA:
                     f"Could not connect to SMA at {self._url}: {exc}"
                 ) from exc
             except asyncio.TimeoutError:
-                raise SmaConnectionException(
+                raise SmaConnectionException(  # pylint: disable=raise-missing-from
                     f"Could not connect to SMA at {self._url}: TimeoutError"
-                )  # pylint: disable=raise-missing-from
+                )
 
         return {}
 
