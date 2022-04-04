@@ -4,6 +4,7 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 
 Source: http://www.github.com/kellerza/pysma
 """
+import asyncio
 import copy
 import json
 import logging
@@ -142,6 +143,10 @@ class SMA:
                 raise SmaConnectionException(
                     f"Could not connect to SMA at {self._url}: {exc}"
                 ) from exc
+            except asyncio.TimeoutError:
+                raise SmaConnectionException(
+                    f"Could not connect to SMA at {self._url}: TimeoutError"
+                )
 
         return {}
 
