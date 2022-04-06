@@ -4,6 +4,7 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 
 Source: http://www.github.com/kellerza/pysma
 """
+import asyncio
 import copy
 import json
 import logging
@@ -138,7 +139,10 @@ class SMA:
                 raise SmaConnectionException(
                     f"Server at {self._url} disconnected {max_retries+1} times."
                 ) from exc
-            except client_exceptions.ClientError as exc:
+            except (
+                client_exceptions.ClientError,
+                asyncio.exceptions.TimeoutError,
+            ) as exc:
                 raise SmaConnectionException(
                     f"Could not connect to SMA at {self._url}: {exc}"
                 ) from exc
