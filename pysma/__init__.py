@@ -139,14 +139,13 @@ class SMA:
                 raise SmaConnectionException(
                     f"Server at {self._url} disconnected {max_retries+1} times."
                 ) from exc
-            except client_exceptions.ClientError as exc:
+            except (
+                client_exceptions.ClientError,
+                asyncio.exceptions.TimeoutError,
+            ) as exc:
                 raise SmaConnectionException(
                     f"Could not connect to SMA at {self._url}: {exc}"
                 ) from exc
-            except asyncio.TimeoutError:
-                raise SmaConnectionException(  # pylint: disable=raise-missing-from
-                    f"Could not connect to SMA at {self._url}: TimeoutError"
-                )
 
         return {}
 
