@@ -274,7 +274,8 @@ class Test_SMA_class:
         with pytest.raises(SmaAuthenticationException):
             await sma.new_session()
 
-    async def test_new_session_error(self, mock_aioresponse):  # noqa: F811
+    @patch("pysma._LOGGER.error")
+    async def test_new_session_error(self, mock_error, mock_aioresponse):  # noqa: F811
         """Test new_session with error."""
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
@@ -284,10 +285,27 @@ class Test_SMA_class:
         )
         with pytest.raises(SmaAuthenticationException):
             await sma.new_session()
+        assert mock_error.call_count == 1
+
+        mock_aioresponse.post(f"{self.base_url}/dyn/login.json", payload={"err": 404})
+        with pytest.raises(SmaAuthenticationException):
+            await sma.new_session()
+        assert mock_error.call_count == 2
+
+        # Temporary update the URL to have https
+        sma._url = f"https://{self.host}"
+        mock_aioresponse.post(
+            f"https://{self.host}/dyn/login.json", payload={"err": 404}
+        )
+        with pytest.raises(SmaAuthenticationException):
+            await sma.new_session()
+        sma._url = f"http://{self.host}"
+        assert mock_error.call_count == 3
 
         mock_aioresponse.post(f"{self.base_url}/dyn/login.json", payload={"err": 503})
         with pytest.raises(SmaAuthenticationException):
             await sma.new_session()
+        assert mock_error.call_count == 4
 
     async def test_device_info(self, mock_aioresponse):  # noqa: F811
         """Test device_info."""
