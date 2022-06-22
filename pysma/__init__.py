@@ -260,7 +260,7 @@ class SMA:
         if err:
             if err == 503:
                 _LOGGER.error(msg, "Max amount of sessions reached")
-            if err == 404:
+            elif err == 404:
                 if not self._url.startswith("https"):
                     _LOGGER.error(msg, "Login URL not found, try using HTTPS")
                 else:
