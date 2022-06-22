@@ -255,11 +255,16 @@ class SMA:
             return True
 
         err = body.pop("err", None)
-        msg = f"Could not start session, %s, got {body}"
+        msg = "Could not start session: %s"
 
         if err:
             if err == 503:
                 _LOGGER.error(msg, "Max amount of sessions reached")
+            if err == 404:
+                if not self._url.startswith("https"):
+                    _LOGGER.error(msg, "Login URL not found, try using HTTPS")
+                else:
+                    _LOGGER.error(msg, "Login URL not found")
             else:
                 _LOGGER.error(msg, err)
         else:
