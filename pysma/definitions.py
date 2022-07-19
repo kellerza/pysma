@@ -271,9 +271,13 @@ pv_gen_meter = Sensor("6400_0046C300", "pv_gen_meter", unit="kWh", factor=1000)
 
 # AC Side - Emergency power measurements (Secure Power Supply)
 #: Secure power supply voltage
-sps_voltage = Sensor("6100_0046C600", "sps_voltage", unit="V", factor=100, enabled=False)
+sps_voltage = Sensor(
+    "6100_0046C600", "sps_voltage", unit="V", factor=100, enabled=False
+)
 #: Secure power supply current
-sps_current = Sensor("6100_0046C700", "sps_current", unit="A", factor=1000, enabled=False)
+sps_current = Sensor(
+    "6100_0046C700", "sps_current", unit="A", factor=1000, enabled=False
+)
 #: Secure power supply power
 sps_power = Sensor("6100_0046C800", "sps_power", unit="W", enabled=False)
 
