@@ -83,6 +83,10 @@ pv_current_b = Sensor("6380_40452100_1", "pv_current_b", unit="A", factor=1000)
 pv_current_c = Sensor(
     "6380_40452100_2", "pv_current_c", unit="A", factor=1000, enabled=False
 )
+#: Isolation Resistance
+pv_isolation_resistance = Sensor(
+    "6102_00254F00_0", "pv_isolation_resistance", unit="kOhm", factor=100, enabled=False
+)
 
 # DC Side - Insulation monitoring
 #: Insulation residual current
@@ -483,6 +487,7 @@ sensor_map = {
         pv_current_a,
         pv_current_b,
         pv_current_c,
+        pv_isolation_resistance,
         grid_power,
         frequency,
         current_l1,
