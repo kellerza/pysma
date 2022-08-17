@@ -85,7 +85,7 @@ pv_current_c = Sensor(
 )
 #: Isolation Resistance
 pv_isolation_resistance = Sensor(
-    "6102_00254F00_0", "pv_isolation_resistance", unit="kOhm", factor=100, enabled=False
+    "6102_00254F00_0", "pv_isolation_resistance", unit="kOhm", factor=1000, enabled=False
 )
 
 # DC Side - Insulation monitoring
