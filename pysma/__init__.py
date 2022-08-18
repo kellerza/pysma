@@ -17,6 +17,7 @@ from . import definitions
 from .const import (
     DEFAULT_TIMEOUT,
     DEVCLASS_INVERTER,
+    DEVCLASS_BATTERY,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
     FALLBACK_DEVICE_INFO,
@@ -413,6 +414,8 @@ class SMA:
                 return None
             if devclass_keys[0] == "val":
                 self._devclass = DEVCLASS_INVERTER
+            elif devclass_keys[0] == "9":
+                self._devclass = DEVCLASS_INVERTER
             elif len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
             else:
@@ -435,10 +438,13 @@ class SMA:
 
         if devclass == DEVCLASS_INVERTER:
             em_sensor = copy.copy(definitions.energy_meter)
+            battery_sensor = copy.copy(definitions.battery_status_operating_mode)
+            
             payload = {
                 "destDev": [],
                 "keys": [
                     em_sensor.key,
+                    battery_sensor.key,
                     definitions.optimizer_serial.key,
                 ],
             }
@@ -459,6 +465,22 @@ class SMA:
                     [
                         sensor
                         for sensor in definitions.sensor_map[ENERGY_METER_VIA_INVERTER]
+                        if sensor not in device_sensors
+                    ]
+                )
+
+            # Detect and add Battery sensors
+            battery_sensor.extract_value(result_body)
+
+            if battery_sensor.value:
+                _LOGGER.debug(
+                    "Battery Controller in Inverter detected. Adding extra sensors.",
+                    em_sensor.value,
+                )
+                device_sensors.add(
+                    [
+                        sensor
+                        for sensor in definitions.sensor_map[DEVCLASS_BATTERY]
                         if sensor not in device_sensors
                     ]
                 )
