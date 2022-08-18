@@ -16,8 +16,8 @@ from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 from . import definitions
 from .const import (
     DEFAULT_TIMEOUT,
-    DEVCLASS_INVERTER,
     DEVCLASS_BATTERY,
+    DEVCLASS_INVERTER,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
     FALLBACK_DEVICE_INFO,
@@ -439,7 +439,7 @@ class SMA:
         if devclass == DEVCLASS_INVERTER:
             em_sensor = copy.copy(definitions.energy_meter)
             battery_sensor = copy.copy(definitions.battery_status_operating_mode)
-            
+
             payload = {
                 "destDev": [],
                 "keys": [
@@ -474,8 +474,7 @@ class SMA:
 
             if battery_sensor.value:
                 _LOGGER.debug(
-                    "Battery Controller in Inverter detected. Adding extra sensors.",
-                    em_sensor.value,
+                    "Battery Controller in Inverter detected. Adding extra sensors."
                 )
                 device_sensors.add(
                     [

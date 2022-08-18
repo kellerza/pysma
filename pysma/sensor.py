@@ -66,7 +66,7 @@ class Sensor:
                     JMESPATH_VAL,
                     JMESPATH_VAL_STR.format(self.key_idx),
                     JMESPATH_VAL_IDX.format(devclass, self.key_idx),
-                    JMESPATH_VAL_TRISE, 
+                    JMESPATH_VAL_TRISE,
                 ]
             )
 
