@@ -209,7 +209,7 @@ class Test_SMA_class:
                 ]
             },
         }
-        
+
     @pytest.mark.asyncio
     async def test_read_logger(self, mock_aioresponse):  # noqa: F811
         """Test read_logger."""
