@@ -414,8 +414,6 @@ class SMA:
                 return None
             if devclass_keys[0] == "val":
                 self._devclass = DEVCLASS_INVERTER
-            elif devclass_keys[0] == "9":
-                self._devclass = DEVCLASS_INVERTER
             elif len(devclass_keys) > 1:
                 raise KeyError("More than 1 device class key is not supported")
             else:
