@@ -69,8 +69,6 @@ class Sensor:
                 ]
             )
 
-            path_tmp = _paths.copy()
-
             while _paths:
                 _path = _paths.pop()
                 _val = jmespath.search(_path, res)
