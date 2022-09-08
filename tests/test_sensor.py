@@ -62,7 +62,7 @@ class Test_sensor_class:
             assert sens.path is None
             assert sens.extract_value(SB_1_5) is change
             assert sens.value == val
-            assert sens.path == JMESPATH_VAL_IDX.format("1", sens.key_idx)
+            assert sens.path == JMESPATH_VAL_IDX.format(sens.key_idx)
 
             assert sens.extract_value(SB_1_5) is False
 

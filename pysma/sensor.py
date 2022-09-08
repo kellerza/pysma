@@ -60,12 +60,12 @@ class Sensor:
         if not isinstance(self.path, str):
             # Try different methods until we can decode...
             _paths = (
-                [sens_path.format(devclass, self.key_idx) for sens_path in self.path]
+                [sens_path.format(self.key_idx) for sens_path in self.path]
                 if isinstance(self.path, (list, tuple))
                 else [
                     JMESPATH_VAL,
                     JMESPATH_VAL_STR.format(self.key_idx),
-                    JMESPATH_VAL_IDX.format(devclass, self.key_idx),
+                    JMESPATH_VAL_IDX.format(self.key_idx),
                 ]
             )
 
