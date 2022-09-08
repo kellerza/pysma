@@ -18,6 +18,7 @@ from .const import (
     DEFAULT_TIMEOUT,
     DEVCLASS_BATTERY,
     DEVCLASS_INVERTER,
+    DEVCLASS_INVERTER_TRI,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
     FALLBACK_DEVICE_INFO,
@@ -434,7 +435,7 @@ class SMA:
         _LOGGER.debug("Loading sensors for device class %s", devclass)
         device_sensors = Sensors(definitions.sensor_map.get(devclass))
 
-        if devclass == DEVCLASS_INVERTER:
+        if devclass in [DEVCLASS_INVERTER, DEVCLASS_INVERTER_TRI]:
             em_sensor = copy.copy(definitions.energy_meter)
             battery_sensor = copy.copy(definitions.battery_status_operating_mode)
 
@@ -452,7 +453,7 @@ class SMA:
                 return device_sensors
 
             # Detect and add Energy Meter sensors
-            em_sensor.extract_value(result_body)
+            em_sensor.extract_value(result_body, devclass=str(devclass))
 
             if em_sensor.value:
                 _LOGGER.debug(
@@ -468,7 +469,7 @@ class SMA:
                 )
 
             # Detect and add Battery sensors
-            battery_sensor.extract_value(result_body)
+            battery_sensor.extract_value(result_body, devclass=str(devclass))
 
             if battery_sensor.value:
                 _LOGGER.debug(
