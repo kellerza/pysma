@@ -11,6 +11,7 @@ from pysma import SMA
 from pysma.const import (
     DEVCLASS_BATTERY,
     DEVCLASS_INVERTER,
+    DEVCLASS_INVERTER_TRI,
     ENERGY_METER_VIA_INVERTER,
     OPTIMIZERS_VIA_INVERTER,
 )
@@ -524,6 +525,37 @@ class Test_SMA_class:
             len(sensor_map[DEVCLASS_INVERTER])
             + len(sensor_map[ENERGY_METER_VIA_INVERTER])
             + (len(sensor_map[OPTIMIZERS_VIA_INVERTER]) * 2)
+        )
+
+    async def test_get_sensors_with_battery(self, mock_aioresponse):  # noqa: F811
+        """Test get_sensors with Battery Controller in Inverter."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
+            payload={
+                "result": {
+                    "0199-xxxxx385": {
+                        "6180_08214800": {"9": [{"val": [{"tag": 307}]}]},
+                        "6180_08495E00": {"9": [{"val": [{"tag": 303}]}]},
+                    }
+                }
+            },
+            repeat=True,
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass")
+        assert len(await sma.get_sensors()) == (
+            len(sensor_map[DEVCLASS_INVERTER_TRI])
+            + len(
+                list(
+                    x
+                    for x in sensor_map[DEVCLASS_BATTERY]
+                    if x not in sensor_map[DEVCLASS_INVERTER_TRI]
+                )
+            )
         )
 
     async def test_get_sensors_empty_result(self, mock_aioresponse):  # noqa: F811
