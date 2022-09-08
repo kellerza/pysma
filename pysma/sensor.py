@@ -35,16 +35,12 @@ class Sensor:
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = int(skey[2])
 
-    def extract_value(
-        self, result_body: dict, l10n: Optional[dict] = None, devclass: str = "1"
-    ) -> bool:
+    def extract_value(self, result_body: dict, l10n: Optional[dict] = None) -> bool:
         """Extract value from json body.
 
         Args:
             result_body (dict): json body retrieved from device
             l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
-            devclass (str, optional): The device class of the device used to extract the value.
-                Defaults to "1".
 
         Returns:
             bool: Extracting value successful

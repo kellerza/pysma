@@ -301,16 +301,13 @@ class SMA:
                 "keys": list({s.key for s in sensors if s.enabled}),
             }
             result_body = await self._read_body(URL_VALUES, payload)
-        if not result_body:
-            return False
 
         notfound = []
-        devclass = await self.get_devclass(result_body)
         l10n = await self._read_l10n()
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body, l10n, str(devclass))
+                    sen.extract_value(result_body, l10n)
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -406,20 +403,28 @@ class SMA:
 
         if not result_body or not isinstance(result_body, dict):
             # Read the STATUS_SENSOR.
-            # self.read will call get_devclass and update self.devclass
-            await self.read(Sensors(definitions.status))
+            _LOGGER.debug("Fetching body for status sensor")
+            payload = {
+                "destDev": [],
+                "keys": [definitions.status.key],
+            }
+            result_body = await self._read_body(URL_VALUES, payload)
+
+        if not result_body or not isinstance(result_body, dict):
+            _LOGGER.debug("No result_body, returning None!")
+            return None
+
+        sensor_values = list(result_body.values())
+        devclass_keys = list(sensor_values[0].keys())
+        if len(devclass_keys) == 0:
+            return None
+        if devclass_keys[0] == "val":
+            self._devclass = DEVCLASS_INVERTER
+        elif len(devclass_keys) > 1:
+            raise KeyError("More than 1 device class key is not supported")
         else:
-            sensor_values = list(result_body.values())
-            devclass_keys = list(sensor_values[0].keys())
-            if len(devclass_keys) == 0:
-                return None
-            if devclass_keys[0] == "val":
-                self._devclass = DEVCLASS_INVERTER
-            elif len(devclass_keys) > 1:
-                raise KeyError("More than 1 device class key is not supported")
-            else:
-                self._devclass = devclass_keys[0]
-            _LOGGER.debug("Found device class %s", self._devclass)
+            self._devclass = devclass_keys[0]
+        _LOGGER.debug("Found device class %s", self._devclass)
 
         return self._devclass
 
@@ -453,7 +458,7 @@ class SMA:
                 return device_sensors
 
             # Detect and add Energy Meter sensors
-            em_sensor.extract_value(result_body, devclass=str(devclass))
+            em_sensor.extract_value(result_body)
 
             if em_sensor.value:
                 _LOGGER.debug(
@@ -469,7 +474,7 @@ class SMA:
                 )
 
             # Detect and add Battery sensors
-            battery_sensor.extract_value(result_body, devclass=str(devclass))
+            battery_sensor.extract_value(result_body)
 
             if battery_sensor.value:
                 _LOGGER.debug(
