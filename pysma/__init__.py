@@ -195,7 +195,7 @@ class SMA:
             self._l10n = await self._get_json(f"/data/l10n/{lang}.json")
         return self._l10n
 
-    async def _read_body(self, url: str, payload: dict = {"destDev": []}) -> dict:
+    async def _read_body(self, url: str, payload: dict) -> dict:
         """Parse the json returned by the device and extract result.
 
         Args:
@@ -385,16 +385,18 @@ class SMA:
 
         return device_info
 
+    async def _read_all_sensors(self) -> dict:
+        all_values = await self._read_body(URL_ALL_VALUES, {"destDev": []})
+        all_params = await self._read_body(URL_ALL_PARAMS, {"destDev": []})
+        return all_values | all_params
+
     async def get_sensors(self) -> Sensors:
         """Get the sensors that are present on the device.
 
         Returns:
             Sensors: Sensors object containing Sensor objects
         """
-        all_values = await self._read_body(URL_ALL_VALUES)
-        all_params = await self._read_body(URL_ALL_PARAMS)
-        all_sensors = all_values | all_params
-
+        all_sensors = await self._read_all_sensors()
         sensor_keys = all_sensors.keys()
         device_sensors = Sensors()
 
@@ -404,11 +406,14 @@ class SMA:
             if sensor.key in sensor_keys:
                 sensors_values = list(all_sensors[sensor.key].values())[0]
                 val_len = len(sensors_values)
-                _LOGGER.debug(f"Found {sensor.key} with {val_len} value(s).")
+                _LOGGER.debug("Found %s with %d value(s).", sensor.key, val_len)
 
                 if sensor.key_idx < val_len:
                     _LOGGER.debug(
-                        f"Adding sensor {sensor.name} ({sensor.key}_{sensor.key_idx})"
+                        "Adding sensor %s (%s_%s)",
+                        sensor.name,
+                        sensor.key,
+                        sensor.key_idx,
                     )
                     device_sensors.add(sensor)
 
