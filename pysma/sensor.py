@@ -130,15 +130,18 @@ class Sensors:
         """
         return len(self.__s)
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: Union[str, Sensor]) -> bool:
         """Check if a sensor is defined.
 
         Args:
-            key (str): [description]
+            key (str, Sensor): [description]
 
         Returns:
             bool: [description]
         """
+        if isinstance(key, Sensor):
+            key = key.name
+
         try:
             if self[key]:
                 return True

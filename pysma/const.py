@@ -2,6 +2,8 @@
 URL_LOGIN = "/dyn/login.json"
 URL_LOGOUT = "/dyn/logout.json"
 URL_VALUES = "/dyn/getValues.json"
+URL_ALL_VALUES = "/dyn/getAllOnlValues.json"
+URL_ALL_PARAMS = "/dyn/getAllParamValues.json"
 URL_LOGGER = "/dyn/getLogger.json"
 URL_DASH_LOGGER = "/dyn/getDashLogger.json"
 URL_DASH_VALUES = "/dyn/getDashValues.json"
@@ -37,10 +39,7 @@ FALLBACK_DEVICE_INFO = {
     "serial": "9999999999",
 }
 
-DEVCLASS_INVERTER = "1"
-DEVCLASS_BATTERY = "7"
-DEVCLASS_INVERTER_TRI = "9"
-DEVCLASS_ENERGY_METER = "65"
-OPTIMIZERS_VIA_INVERTER = "253"
-ENERGY_METER_VIA_INVERTER = "254"
-DEVICE_INFO = "255"
+GENERIC_SENSORS = "generic"
+OPTIMIZERS_VIA_INVERTER = "optimizers"
+ENERGY_METER_VIA_INVERTER = "energy-meter"
+DEVICE_INFO = "device-info"
