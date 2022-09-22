@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from pysma.const import (
-    DEVCLASS_INVERTER,
+    GENERIC_SENSORS,
     JMESPATH_VAL,
     JMESPATH_VAL_IDX,
     JMESPATH_VAL_STR,
@@ -108,9 +108,8 @@ class Test_sensors_class:
     @patch("pysma.sensor._LOGGER.warning")
     def test_default_no_duplicates(self, mock_warn):
         """Ensure warning on duplicates."""
-        sen = Sensors(sensor_map[DEVCLASS_INVERTER])
-        assert len(sen) > 20
-        assert len(sen) < 50
+        sen = Sensors(sensor_map[GENERIC_SENSORS])
+        assert len(sen) == len(sensor_map[GENERIC_SENSORS])
         assert mock_warn.call_count == 0
         # Add duplicate frequency
         news = Sensor("key1", "frequency", "")
@@ -139,7 +138,7 @@ class Test_sensors_class:
     @patch("pysma.sensor._LOGGER.warning")
     def test_default_jmes(self, mock_warn):
         """Ensure default sensors are ok."""
-        sens = Sensors(sensor_map[DEVCLASS_INVERTER])
+        sens = Sensors(sensor_map[GENERIC_SENSORS])
         for sen in sens:
             sen.extract_value(SB_1_5)
         assert mock_warn.called

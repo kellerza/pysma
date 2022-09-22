@@ -8,15 +8,7 @@ import aiohttp
 import pytest
 
 from pysma import SMA
-from pysma.const import (
-    DEVCLASS_BATTERY,
-    DEVCLASS_INVERTER,
-    DEVCLASS_INVERTER_TRI,
-    ENERGY_METER_VIA_INVERTER,
-    OPTIMIZERS_VIA_INVERTER,
-)
 from pysma.definitions import device_type as device_type_sensor
-from pysma.definitions import sensor_map
 from pysma.exceptions import (
     SmaAuthenticationException,
     SmaConnectionException,
@@ -24,7 +16,7 @@ from pysma.exceptions import (
 )
 from pysma.sensor import Sensors
 
-from . import MOCK_DEVICE, MOCK_L10N, mock_aioresponse  # noqa: F401
+from . import MOCK_DEVICE, MOCK_L10N, SMA_TESTDATA, mock_aioresponse  # noqa: F401
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -389,109 +381,28 @@ class Test_SMA_class:
         with pytest.raises(SmaReadException):
             await sma.device_info()
 
-    async def test_get_devclass(self, mock_aioresponse):  # noqa: F811
-        """Test get_devclass."""
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/login.json",
-            payload={"result": {"sid": "ABCD"}},
-        )
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={"result": {"0199-xxxxx385": {}}},
-        )
-
-        session = aiohttp.ClientSession()
-        sma = SMA(session, self.host, "pass")
-        assert await sma.get_devclass() is None
-
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {
-                            "7": [{"val": [{"tag": "123"}]}],
-                        },
-                    }
-                }
-            },
-        )
-
-        assert await sma.get_devclass() == DEVCLASS_BATTERY
-
-        sma._devclass = None
-        result_body = {
-            "6180_08214800": {},
-        }
-        assert await sma.get_devclass(result_body) is None
-
-        sma._devclass = None
-        result_body = {
-            "6180_08214800": {
-                "val": [{"tag": "123"}],
-            },
-        }
-        assert await sma.get_devclass(result_body) == DEVCLASS_INVERTER
-
-        sma._devclass = None
-        result_body = {
-            "6800_00823400": {"val": 33751296, "min": 0, "max": 4294967294},
-            "6800_10821E00": {"val": "SN: 1930023194"},
-            "6800_00A21E00": {"val": 1930023194, "min": 0, "max": 4294967294},
-            "6800_08822000": {
-                "val": [{"tag": 9301}],
-                "validVals": [9301, 9303, 9302],
-            },
-        }
-        assert await sma.get_devclass(result_body) == DEVCLASS_INVERTER
-
-        sma._devclass = None
-        result_body = {
-            "6800_12345678": {
-                "1": [{"val": "value1"}],
-                "7": [{"val": "value2"}],
-            },
-        }
-
-        with pytest.raises(KeyError):
-            await sma.get_devclass(result_body)
-
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {
-                            "1": [{"val": [{"tag": "123"}]}],
-                        },
-                    }
-                }
-            },
-        )
-
-        sma._devclass = None
-        assert await sma.get_devclass("BOGUS_BODY") == DEVCLASS_INVERTER
-
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {
-                            "1": [{"val": [{"tag": "123"}]}],
-                        },
-                    }
-                }
-            },
-        )
-
-        assert await sma.get_devclass({}) == DEVCLASS_INVERTER
-
-        sma._devclass = "test"
-        assert await sma.get_devclass() == "test"
-
-    async def test_get_sensors(self, mock_aioresponse):  # noqa: F811
+    @pytest.mark.parametrize(
+        "get_all_onl_values,get_all_param_values,number_of_sensors", SMA_TESTDATA
+    )
+    async def test_get_sensors(
+        self,
+        get_all_onl_values,
+        get_all_param_values,
+        number_of_sensors,
+        mock_aioresponse,  # noqa: F811
+    ):
         """Test get_sensors."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getAllOnlValues.json?sid=ABCD",
+            payload=get_all_onl_values,
+            repeat=True,
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getAllParamValues.json?sid=ABCD",
+            payload=get_all_param_values,
+            repeat=True,
+        )
+
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -521,73 +432,7 @@ class Test_SMA_class:
 
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
-        assert len(await sma.get_sensors()) == (
-            len(sensor_map[DEVCLASS_INVERTER])
-            + len(sensor_map[ENERGY_METER_VIA_INVERTER])
-            + (len(sensor_map[OPTIMIZERS_VIA_INVERTER]) * 2)
-        )
-
-    async def test_get_sensors_with_battery(self, mock_aioresponse):  # noqa: F811
-        """Test get_sensors with Battery Controller in Inverter."""
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
-        )
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={
-                "result": {
-                    "0199-xxxxx385": {
-                        "6180_08214800": {"9": [{"val": [{"tag": 307}]}]},
-                        "6180_08495E00": {"9": [{"val": [{"tag": 303}]}]},
-                    }
-                }
-            },
-            repeat=True,
-        )
-
-        session = aiohttp.ClientSession()
-        sma = SMA(session, self.host, "pass")
-        assert len(await sma.get_sensors()) == (
-            len(sensor_map[DEVCLASS_INVERTER_TRI])
-            + len(
-                list(
-                    x
-                    for x in sensor_map[DEVCLASS_BATTERY]
-                    if x not in sensor_map[DEVCLASS_INVERTER_TRI]
-                )
-            )
-        )
-
-    async def test_get_sensors_empty_result(self, mock_aioresponse):  # noqa: F811
-        """Test get_sensors with empty result."""
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
-        )
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={"result": {}},
-            repeat=True,
-        )
-
-        session = aiohttp.ClientSession()
-        sma = SMA(session, self.host, "pass")
-        assert len(await sma.get_sensors()) == len(sensor_map[DEVCLASS_INVERTER])
-
-    async def test_get_sensors_no_result_body(self, mock_aioresponse):  # noqa: F811
-        """Test get_sensors with no result body."""
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
-        )
-        mock_aioresponse.post(
-            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
-            payload={},
-            repeat=True,
-        )
-
-        session = aiohttp.ClientSession()
-        sma = SMA(session, self.host, "pass")
-        with pytest.raises(SmaReadException):
-            await sma.get_sensors()
+        assert len(await sma.get_sensors()) == number_of_sensors
 
     async def test_post_json(self):
         session = aiohttp.ClientSession()
