@@ -10,10 +10,7 @@ import aiohttp
 
 import pysma
 
-# This example will work with Python 3.7+
-# Python 3.4+ "@asyncio.coroutine" decorator
-# Python 3.5+ uses "async def f()" syntax
-# Python 3.7+ provides asyncio.run(). For earlier versions the loop should be created manually.
+# This example will work with Python 3.9+
 
 _LOGGER = logging.getLogger(__name__)
 
