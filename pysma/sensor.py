@@ -35,16 +35,12 @@ class Sensor:
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = int(skey[2])
 
-    def extract_value(
-        self, result_body: dict, l10n: Optional[dict] = None, devclass: str = "1"
-    ) -> bool:
+    def extract_value(self, result_body: dict, l10n: Optional[dict] = None) -> bool:
         """Extract value from json body.
 
         Args:
             result_body (dict): json body retrieved from device
             l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
-            devclass (str, optional): The device class of the device used to extract the value.
-                Defaults to "1".
 
         Returns:
             bool: Extracting value successful
@@ -60,12 +56,12 @@ class Sensor:
         if not isinstance(self.path, str):
             # Try different methods until we can decode...
             _paths = (
-                [sens_path.format(devclass, self.key_idx) for sens_path in self.path]
+                [sens_path.format(self.key_idx) for sens_path in self.path]
                 if isinstance(self.path, (list, tuple))
                 else [
                     JMESPATH_VAL,
                     JMESPATH_VAL_STR.format(self.key_idx),
-                    JMESPATH_VAL_IDX.format(devclass, self.key_idx),
+                    JMESPATH_VAL_IDX.format(self.key_idx),
                 ]
             )
 
@@ -134,15 +130,18 @@ class Sensors:
         """
         return len(self.__s)
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: Union[str, Sensor]) -> bool:
         """Check if a sensor is defined.
 
         Args:
-            key (str): [description]
+            key (str, Sensor): [description]
 
         Returns:
             bool: [description]
         """
+        if isinstance(key, Sensor):
+            key = key.name
+
         try:
             if self[key]:
                 return True

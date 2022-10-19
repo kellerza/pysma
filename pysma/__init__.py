@@ -16,11 +16,13 @@ from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 from . import definitions
 from .const import (
     DEFAULT_TIMEOUT,
-    DEVCLASS_INVERTER,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
     FALLBACK_DEVICE_INFO,
+    GENERIC_SENSORS,
     OPTIMIZERS_VIA_INVERTER,
+    URL_ALL_PARAMS,
+    URL_ALL_VALUES,
     URL_DASH_LOGGER,
     URL_DASH_VALUES,
     URL_LOGGER,
@@ -299,16 +301,13 @@ class SMA:
                 "keys": list({s.key for s in sensors if s.enabled}),
             }
             result_body = await self._read_body(URL_VALUES, payload)
-        if not result_body:
-            return False
 
         notfound = []
-        devclass = await self.get_devclass(result_body)
         l10n = await self._read_l10n()
         for sen in sensors:
             if sen.enabled:
                 if sen.key in result_body:
-                    sen.extract_value(result_body, l10n, str(devclass))
+                    sen.extract_value(result_body, l10n)
                     continue
 
                 notfound.append(f"{sen.name} [{sen.key}]")
@@ -386,101 +385,75 @@ class SMA:
 
         return device_info
 
-    async def get_devclass(self, result_body: Optional[dict] = None) -> Optional[str]:
-        """Get the device class.
-
-        Args:
-            result_body (dict, optional): result body to extract device class from.
-                Defaults to None.
-
-        Raises:
-            KeyError: More than 1 device class key is not supported
-
-        Returns:
-            str: The device class identifier, or None if no identifier was found
-        """
-        if self._devclass:
-            return self._devclass
-
-        if not result_body or not isinstance(result_body, dict):
-            # Read the STATUS_SENSOR.
-            # self.read will call get_devclass and update self.devclass
-            await self.read(Sensors(definitions.status))
-        else:
-            sensor_values = list(result_body.values())
-            devclass_keys = list(sensor_values[0].keys())
-            if len(devclass_keys) == 0:
-                return None
-            if devclass_keys[0] == "val":
-                self._devclass = DEVCLASS_INVERTER
-            elif len(devclass_keys) > 1:
-                raise KeyError("More than 1 device class key is not supported")
-            else:
-                self._devclass = devclass_keys[0]
-            _LOGGER.debug("Found device class %s", self._devclass)
-
-        return self._devclass
+    async def _read_all_sensors(self) -> dict:
+        all_values = await self._read_body(URL_ALL_VALUES, {"destDev": []})
+        all_params = await self._read_body(URL_ALL_PARAMS, {"destDev": []})
+        return all_values | all_params
 
     async def get_sensors(self) -> Sensors:
-        """Get the sensors based on the device class.
+        """Get the sensors that are present on the device.
 
         Returns:
             Sensors: Sensors object containing Sensor objects
         """
-        # Fallback to DEVCLASS_INVERTER if devclass returns None
-        devclass = await self.get_devclass() or DEVCLASS_INVERTER
+        all_sensors = await self._read_all_sensors()
+        sensor_keys = all_sensors.keys()
+        device_sensors = Sensors()
 
-        _LOGGER.debug("Loading sensors for device class %s", devclass)
-        device_sensors = Sensors(definitions.sensor_map.get(devclass))
+        _LOGGER.debug("Matching generic sensors")
 
-        if devclass == DEVCLASS_INVERTER:
-            em_sensor = copy.copy(definitions.energy_meter)
-            payload = {
-                "destDev": [],
-                "keys": [
-                    em_sensor.key,
-                    definitions.optimizer_serial.key,
-                ],
-            }
-            result_body = await self._read_body(URL_VALUES, payload)
+        for sensor in definitions.sensor_map[GENERIC_SENSORS]:
+            if sensor.key in sensor_keys:
+                sensors_values = list(all_sensors[sensor.key].values())[0]
+                val_len = len(sensors_values)
+                _LOGGER.debug("Found %s with %d value(s).", sensor.key, val_len)
 
-            if not result_body:
-                return device_sensors
+                if sensor.key_idx < val_len:
+                    _LOGGER.debug(
+                        "Adding sensor %s (%s_%s)",
+                        sensor.name,
+                        sensor.key,
+                        sensor.key_idx,
+                    )
+                    device_sensors.add(sensor)
 
-            # Detect and add Energy Meter sensors
-            em_sensor.extract_value(result_body)
+        _LOGGER.debug("Checking if Energy Meter is present...")
+        # Detect and add Energy Meter sensors
+        em_sensor = copy.copy(definitions.energy_meter)
+        em_sensor.extract_value(all_sensors)
 
-            if em_sensor.value:
-                _LOGGER.debug(
-                    "Energy Meter with serial %s detected. Adding extra sensors.",
-                    em_sensor.value,
-                )
-                device_sensors.add(
-                    [
-                        sensor
-                        for sensor in definitions.sensor_map[ENERGY_METER_VIA_INVERTER]
-                        if sensor not in device_sensors
-                    ]
-                )
+        if em_sensor.value:
+            _LOGGER.debug(
+                "Energy Meter with serial %s detected. Adding extra sensors.",
+                em_sensor.value,
+            )
+            device_sensors.add(
+                [
+                    sensor
+                    for sensor in definitions.sensor_map[ENERGY_METER_VIA_INVERTER]
+                    if sensor not in device_sensors
+                ]
+            )
 
-            # Detect and add Optimizer Sensors
-            optimizers = result_body.get(definitions.optimizer_serial.key)
-            if optimizers:
-                serials = optimizers.get(DEVCLASS_INVERTER)
+        _LOGGER.debug("Finding connected optimizers...")
+        # Detect and add Optimizer Sensors
+        optimizers = all_sensors.get(definitions.optimizer_serial.key)
+        if optimizers:
+            serials = optimizers.popitem()[1]
 
-                for idx, serial in enumerate(serials or []):
-                    if serial["val"]:
-                        _LOGGER.debug(
-                            "Optimizer %s with serial %s detected. Adding extra sensors.",
-                            idx,
-                            serial,
-                        )
-                        for sensor_definition in definitions.sensor_map[
-                            OPTIMIZERS_VIA_INVERTER
-                        ]:
-                            new_sensor = copy.copy(sensor_definition)
-                            new_sensor.key_idx = idx
-                            new_sensor.name = f"{sensor_definition.name}_{idx}"
-                            device_sensors.add(new_sensor)
+            for idx, serial in enumerate(serials or []):
+                if serial["val"]:
+                    _LOGGER.debug(
+                        "Optimizer %s with serial %s detected. Adding extra sensors.",
+                        idx,
+                        serial,
+                    )
+                    for sensor_definition in definitions.sensor_map[
+                        OPTIMIZERS_VIA_INVERTER
+                    ]:
+                        new_sensor = copy.copy(sensor_definition)
+                        new_sensor.key_idx = idx
+                        new_sensor.name = f"{sensor_definition.name}_{idx}"
+                        device_sensors.add(new_sensor)
 
         return device_sensors
