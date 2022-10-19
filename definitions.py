@@ -551,7 +551,7 @@ sensor_map = {
         pv_current_b,
         pv_current_c,
         pv_gen_meter,
-	    pv_power,
+        pv_power,
         pv_isolation_resistance,
         pv_power_a,
         pv_power_b,
