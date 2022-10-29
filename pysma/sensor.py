@@ -19,7 +19,7 @@ class Sensor:
     # pylint: disable=too-few-public-methods
     key: str = attr.ib()
     name: str = attr.ib()
-    unit: str = attr.ib(default="")
+    unit: str = attr.ib(default=None)
     factor: int = attr.ib(default=None)
     path: Union[list, tuple] = attr.ib(default=None)
     enabled: bool = attr.ib(default=True)
