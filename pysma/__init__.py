@@ -404,8 +404,16 @@ class SMA:
 
         for sensor in definitions.sensor_map[GENERIC_SENSORS]:
             if sensor.key in sensor_keys:
-                sensors_values = list(all_sensors[sensor.key].values())[0]
-                val_len = len(sensors_values)
+                if isinstance(all_sensors[sensor.key], list):
+                    # SB1.5 multi value
+                    val_len = len(all_sensors[sensor.key])
+                elif "val" in all_sensors[sensor.key]:
+                    # SB1.5 single value
+                    val_len = 1
+                else:
+                    # All other types, single or multi value
+                    sensors_values = list(all_sensors[sensor.key].values())[0]
+                    val_len = len(sensors_values)
                 _LOGGER.debug("Found %s with %d value(s).", sensor.key, val_len)
 
                 if sensor.key_idx < val_len:
