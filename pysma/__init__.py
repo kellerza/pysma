@@ -15,6 +15,7 @@ from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
 from . import definitions
 from .const import (
+    DEFAULT_LANG,
     DEFAULT_TIMEOUT,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
@@ -51,6 +52,7 @@ class SMA:
     _url: str
     _sid: Optional[str]
     _uid: Optional[str]
+    _lang: str
     _l10n: Optional[dict]
     _devclass: Optional[str]
     _device_info_sensors: Sensors
@@ -62,6 +64,7 @@ class SMA:
         password: Optional[str] = None,
         group: str = "user",
         uid: Optional[str] = None,
+        lang: str = DEFAULT_LANG,
     ):
         """Init SMA connection.
 
@@ -71,6 +74,7 @@ class SMA:
             password (str, optional): Password to use during login. Defaults to None.
             group (str, optional): Username to use during login. Defaults to "user".
             uid (str, optional): uid used for data extraction. Defaults to None.
+            lang (str, optional): Language code of file to retrieve. Defaults to "en-US".
 
         Raises:
             KeyError: User was not in USERS
@@ -90,6 +94,7 @@ class SMA:
         self._aio_session = session
         self._sid = None
         self._uid = uid
+        self._lang = lang
         self._l10n = None
         self._devclass = None
         self._device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
@@ -182,17 +187,21 @@ class SMA:
 
         return await self._request_json(hdrs.METH_POST, url, **params)
 
-    async def _read_l10n(self, lang: str = "en-US") -> dict:
+    async def _read_l10n(self) -> dict:
         """Read device language file. Returns cached value on subsequent calls.
-
-        Args:
-            lang (str, optional): Language code of file to retrieve. Defaults to "en-US".
 
         Returns:
             dict: json returned by device
         """
         if self._l10n is None:
-            self._l10n = await self._get_json(f"/data/l10n/{lang}.json")
+            self._l10n = await self._get_json(f"/data/l10n/{self._lang}.json")
+            if len(self._l10n) == 0:
+                _LOGGER.warning(
+                    "Language '%s' not supported, fallback to '%s'",
+                    self._lang,
+                    DEFAULT_LANG,
+                )
+                self._l10n = await self._get_json(f"/data/l10n/{DEFAULT_LANG}.json")
         return self._l10n
 
     async def _read_body(self, url: str, payload: dict) -> dict:

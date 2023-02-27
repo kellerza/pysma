@@ -455,3 +455,16 @@ class Test_SMA_class:
                 data='{"data": "dummy"}',
                 headers={"content-type": "application/json"},
             )
+
+    @patch("pysma._LOGGER.warning")
+    async def test_unsupported_lang(self, mock_warn, mock_aioresponse):  # noqa: F811
+        """Test fallback lang in case requested lang is not available."""
+        mock_aioresponse.get(
+            f"{self.base_url}/data/l10n/de-CH.json",
+            status=400,
+        )
+        session = aiohttp.ClientSession()
+        sma = SMA(session, self.host, "pass", lang="de-CH")
+        await sma._read_l10n()
+        assert mock_warn.call_count == 1
+        assert len(sma._l10n) > 0
