@@ -461,7 +461,7 @@ class Test_SMA_class:
         """Test fallback lang in case requested lang is not available."""
         mock_aioresponse.get(
             f"{self.base_url}/data/l10n/de-CH.json",
-            body="",
+            status=400,
         )
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass", lang="de-CH")
