@@ -19,7 +19,14 @@ operating_status_general = Sensor(
     l10n_translate=True,
     enabled=False,
 )
-
+#: Operating status
+operating_status = Sensor(
+    "6180_08412B00",
+    "operating_status",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+    enabled=False,
+)
 # Status - Operation - Inverter
 #: General operating status
 inverter_condition = Sensor(
@@ -544,6 +551,7 @@ sensor_map = {
         inverter_power_limit,
         inverter_system_init,
         operating_status_general,
+        operating_status,
         power_l1,
         power_l2,
         power_l3,

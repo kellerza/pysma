@@ -4598,7 +4598,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        47,
+        48,
         id="STP 10.0 SE, no energy meter, no optimizers",
     ),
     pytest.param(
@@ -5631,7 +5631,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        68,
+        69,
         id="STP 6.0 SE, with energy meter, no optimizers",
     ),
     pytest.param(
@@ -6156,7 +6156,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        66,
+        67,
         id="STP 10.0 SE, with energy meter, no optimizers",
     ),
     pytest.param(
