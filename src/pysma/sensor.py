@@ -5,29 +5,27 @@ import logging
 from collections.abc import Iterator
 from typing import Any
 
-import attr
+import attrs
 import jmespath
 
 from pysma.const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
 
-_LOGGER = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
-@attr.s(slots=True)
+@attrs.define(slots=True)
 class Sensor:
     """pysma sensor."""
 
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-few-public-methods
-    key: str = attr.ib()
-    name: str = attr.ib()
-    unit: str = attr.ib(default=None)
-    factor: int = attr.ib(default=None)
-    path: list | tuple = attr.ib(default=None)
-    enabled: bool = attr.ib(default=True)
-    l10n_translate: bool = attr.ib(default=False)
-    value: Any = attr.ib(default=None, init=False)
-    key_idx: int = attr.ib(default=0, repr=False, init=False)
+    key: str
+    name: str
+    unit: str | None = None
+    factor: int | None = None
+    path: list | tuple | None = None
+    enabled: bool = True
+    l10n_translate: bool = False
+    value: Any = attrs.field(default=None, init=False)
+    key_idx: int = attrs.field(default=0, repr=False, init=False)
 
     def __attrs_post_init__(self) -> None:
         """Post init Sensor."""
@@ -51,7 +49,7 @@ class Sensor:
         try:
             res = result_body[self.key]
         except (KeyError, TypeError):
-            _LOGGER.warning("Sensor %s: Not found in %s", self.key, result_body)
+            _LOG.warning("Sensor %s: Not found in %s", self.key, result_body)
             res = self.value
             self.value = None
             return self.value != res
@@ -72,7 +70,7 @@ class Sensor:
                 _path = _paths.pop()
                 _val = jmespath.search(_path, res)
                 if _val is not None:
-                    _LOGGER.debug(
+                    _LOG.debug(
                         "Sensor %s: Will be decoded with %s from %s",
                         self.name,
                         _path,
@@ -85,9 +83,7 @@ class Sensor:
         if isinstance(self.path, str):
             res = jmespath.search(self.path, res)
         else:
-            _LOGGER.debug(
-                "Sensor %s: No successful value decoded yet: %s", self.name, res
-            )
+            _LOG.debug("Sensor %s: No successful value decoded yet: %s", self.name, res)
             res = None
 
         # SMA will return None instead of 0 if if no power is generated
@@ -209,10 +205,10 @@ class Sensors:
         if sensor.name in self:
             old = self[sensor.name]
             self.__s.remove(old)
-            _LOGGER.warning("Replacing sensor %s with %s", old, sensor)
+            _LOG.warning("Replacing sensor %s with %s", old, sensor)
 
         if sensor.key in self and self[sensor.key].key_idx == sensor.key_idx:
-            _LOGGER.warning(
+            _LOG.warning(
                 "Duplicate SMA sensor key %s (idx: %s)", sensor.key, sensor.key_idx
             )
 

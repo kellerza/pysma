@@ -1,12 +1,12 @@
 """Test pysma const file."""
 
-import pysma.definitions
+from pysma.definitions import webconnect
 from pysma.sensor import Sensor
 
 
 def test_duplicate_sensors() -> None:
     """Test if defined sensors have unique key and name."""
-    variables = vars(pysma.definitions)
+    variables = vars(webconnect)
     found_keys = []
     found_names = []
     for value in variables.values():
@@ -23,6 +23,6 @@ def test_duplicate_sensors() -> None:
 
 def test_sensor_map() -> None:
     """Test if all map entries only contain unique items."""
-    for sensor_map in pysma.definitions.sensor_map.values():
+    for sensor_map in webconnect.sensor_map.values():
         unique_items = list({f"{s.key}_{s.key_idx}": s for s in sensor_map}.values())
         assert unique_items == sensor_map

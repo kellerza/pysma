@@ -10,16 +10,16 @@ from typing import Any
 
 import aiohttp
 
-import pysma
+from pysma import exceptions, sma_webconnect
 
 # This example will work with Python 3.9+
 
-_LOGGER = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 VAR = {}
 
 
-def print_table(sensors: pysma.Sensors) -> None:
+def print_table(sensors: sma_webconnect.Sensors) -> None:
     """Print sensors formatted as table."""
     for sen in sensors:
         if sen.value is None:
@@ -33,15 +33,17 @@ async def main_loop(password: str, user: str, url: str) -> None:
     async with aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=False)
     ) as session:
-        VAR["sma"] = pysma.SMA(session, url, password=password, group=user)
+        VAR["sma"] = sma_webconnect.SMAWebConnect(
+            session, url, password=password, group=user
+        )
 
         try:
             await VAR["sma"].new_session()
-        except pysma.exceptions.SmaAuthenticationException:
-            _LOGGER.warning("Authentication failed!")
+        except exceptions.SmaAuthenticationException:
+            _LOG.warning("Authentication failed!")
             return
-        except pysma.exceptions.SmaConnectionException:
-            _LOGGER.warning("Unable to connect to device at %s", url)
+        except exceptions.SmaConnectionException:
+            _LOG.warning("Unable to connect to device at %s", url)
             return
 
         # We should not get any exceptions, but if we do we will close the session.
@@ -66,7 +68,7 @@ async def main_loop(password: str, user: str, url: str) -> None:
                     break
                 await asyncio.sleep(2)
         finally:
-            _LOGGER.info("Closing Session...")
+            _LOG.info("Closing Session...")
             await VAR["sma"].close_session()
 
 

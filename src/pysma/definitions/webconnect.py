@@ -1,13 +1,13 @@
 """Sensor definitions for SMA WebConnect library for Python."""
 
-from .const import (
+from ..const import (
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
     GENERIC_SENSORS,
     JMESPATHS_TAG,
     OPTIMIZERS_VIA_INVERTER,
 )
-from .sensor import Sensor
+from ..sensor import Sensor
 
 # Status - Operation
 #: Status of the device

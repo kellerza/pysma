@@ -13,10 +13,10 @@ from pysma.const import (
     JMESPATH_VAL_IDX,
     JMESPATH_VAL_STR,
 )
-from pysma.definitions import sensor_map
+from pysma.definitions.webconnect import sensor_map
 from pysma.sensor import Sensor, Sensors
 
-_LOGGER = logging.getLogger(__name__)
+_LOG = logging.getLogger(__name__)
 
 
 SB_1_5 = loads(
@@ -109,7 +109,7 @@ class Test_sensor_class:
 class Test_sensors_class:
     """Test the Sensors class."""
 
-    @patch("pysma.sensor._LOGGER.warning")
+    @patch("pysma.sensor._LOG.warning")
     def test_default_no_duplicates(self, mock_warn: MagicMock) -> None:
         """Ensure warning on duplicates."""
         sen = Sensors(sensor_map[GENERIC_SENSORS])
@@ -132,14 +132,14 @@ class Test_sensors_class:
         sen.add(Sensor("key1_1", "frequency_1", ""))
         assert mock_warn.call_count == 3
 
-    @patch("pysma.sensor._LOGGER.warning")
+    @patch("pysma.sensor._LOG.warning")
     def test_type_error(self, mock_warn: Callable) -> None:
         """Ensure TypeError on not isinstance."""
         sen = Sensors()
         with pytest.raises(TypeError):
             sen.add("This is not a Sensor")  # type: ignore[arg-type]
 
-    @patch("pysma.sensor._LOGGER.warning")
+    @patch("pysma.sensor._LOG.warning")
     def test_default_jmes(self, mock_warn: MagicMock) -> None:
         """Ensure default sensors are ok."""
         sens = Sensors(sensor_map[GENERIC_SENSORS])
