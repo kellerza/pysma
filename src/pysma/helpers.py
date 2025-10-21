@@ -9,6 +9,7 @@ def version_int_to_string(version_integer: int) -> str:
 
     Returns:
         str: The version translated to a readable string.
+
     """
     if not version_integer:
         return ""

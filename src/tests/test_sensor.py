@@ -1,7 +1,9 @@
 """Test pysma sensors."""
+
 import logging
+from collections.abc import Callable, Generator
 from json import loads
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -44,7 +46,7 @@ SB_2_5 = loads(
 
 
 @pytest.fixture
-def sensors():
+def sensors() -> Generator[list[tuple[int, bool, Sensor]], None, None]:
     """Fixture to create some sensors."""
     yield [
         (402, True, Sensor("6400_00262200", "s_402", "W")),
@@ -57,7 +59,7 @@ def sensors():
 class Test_sensor_class:
     """Test the Sensor class."""
 
-    def test_sensor_sb_1_5(self, sensors):
+    def test_sensor_sb_1_5(self, sensors: list) -> None:
         """Test extract value."""
         for val, change, sens in sensors:
             assert sens.path is None
@@ -67,7 +69,7 @@ class Test_sensor_class:
 
             assert sens.extract_value(SB_1_5) is False
 
-    def test_sensor_sb_2_5(self, sensors):
+    def test_sensor_sb_2_5(self, sensors: list) -> None:
         """Test extract value."""
         for val, change, sens in sensors:
             assert sens.path is None
@@ -77,7 +79,7 @@ class Test_sensor_class:
 
             assert sens.extract_value(SB_2_5) is False
 
-    def test_null(self):
+    def test_null(self) -> None:
         """Test a null or None result."""
         sens = Sensor("6100_40263F00", "s_null", "kWh")
         assert sens.extract_value({"6100_40263F00": {"val": None}}) is False
@@ -96,7 +98,8 @@ class Test_sensor_class:
         assert sens.extract_value({}) is True
         assert sens.value is None
 
-    def test_no_value_decoded(self):
+    def test_no_value_decoded(self) -> None:
+        """Test no value decoded."""
         sens = Sensor("6100_40263F00", "s_null", "W")
         assert sens.extract_value({"6100_40263F00": None}) is True
         sens = Sensor("6100_40263F00", "s_null", "kWh")
@@ -107,7 +110,7 @@ class Test_sensors_class:
     """Test the Sensors class."""
 
     @patch("pysma.sensor._LOGGER.warning")
-    def test_default_no_duplicates(self, mock_warn):
+    def test_default_no_duplicates(self, mock_warn: MagicMock) -> None:
         """Ensure warning on duplicates."""
         sen = Sensors(sensor_map[GENERIC_SENSORS])
         assert len(sen) == len(sensor_map[GENERIC_SENSORS])
@@ -130,14 +133,14 @@ class Test_sensors_class:
         assert mock_warn.call_count == 3
 
     @patch("pysma.sensor._LOGGER.warning")
-    def test_type_error(self, mock_warn):
+    def test_type_error(self, mock_warn: Callable) -> None:
         """Ensure TypeError on not isinstance."""
         sen = Sensors()
         with pytest.raises(TypeError):
-            sen.add("This is not a Sensor")
+            sen.add("This is not a Sensor")  # type: ignore[arg-type]
 
     @patch("pysma.sensor._LOGGER.warning")
-    def test_default_jmes(self, mock_warn):
+    def test_default_jmes(self, mock_warn: MagicMock) -> None:
         """Ensure default sensors are ok."""
         sens = Sensors(sensor_map[GENERIC_SENSORS])
         for sen in sens:

@@ -1,11 +1,13 @@
 """Test pysma init."""
-import asyncio
+
 import logging
 import re
-from unittest.mock import patch
+from collections.abc import Callable, Generator
+from unittest.mock import MagicMock, patch
 
 import aiohttp
 import pytest
+from aioresponses import aioresponses
 
 from pysma import SMA
 from pysma.definitions import device_type as device_type_sensor
@@ -16,7 +18,19 @@ from pysma.exceptions import (
 )
 from pysma.sensor import Sensors
 
-from . import MOCK_DEVICE, MOCK_L10N, SMA_TESTDATA, mock_aioresponse  # noqa: F401
+from .conftest import (
+    MOCK_DEVICE,
+    MOCK_L10N,
+    SMA_TESTDATA,
+)
+
+
+@pytest.fixture
+def mock_aioresponse() -> Generator[aioresponses, None, None]:
+    """Fixture for aioresponses."""
+    with aioresponses() as m:
+        yield m
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,24 +38,27 @@ _LOGGER = logging.getLogger(__name__)
 class Test_SMA_class:
     """Test the SMA class."""
 
-    @pytest.fixture(autouse=True)
-    def _setup(self, mock_aioresponse):  # noqa: F811
-        self.host = "1.1.1.1"
-        self.base_url = f"http://{self.host}"
-        mock_aioresponse.get(
+    host: str = "1.1.1.1"
+    base_url: str = "http://1.1.1.1"
+
+    def mock_login(self, aioresp: aioresponses) -> None:
+        """Add login mocks."""
+        aioresp.get(
             re.compile(f"{self.base_url}/data/l10n/en-US.json.*"),
             payload=MOCK_L10N,
             repeat=True,
         )
-        mock_aioresponse.post(
+        aioresp.post(
             f"{self.base_url}/dyn/logout.json?sid=ABCD", payload={}, repeat=True
         )
 
-    async def test_request_json_connect_error(self, mock_aioresponse):  # noqa: F811
+    async def test_request_json_connect_error(
+        self, mock_aioresponse: aioresponses
+    ) -> None:
         """Test request_json with a SmaConnectionException."""
         mock_aioresponse.get(
             f"{self.base_url}/dummy-url",
-            exception=aiohttp.client_exceptions.ClientConnectionError("mocked error"),
+            exception=aiohttp.ClientConnectionError("mocked error"),
         )
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
@@ -49,12 +66,12 @@ class Test_SMA_class:
             await sma._get_json("/dummy-url")
 
     async def test_request_json_server_disconnect_error(
-        self, mock_aioresponse  # noqa: F811
-    ):
+        self, mock_aioresponse: aioresponses
+    ) -> None:
         """Test request_json with a SmaConnectionException from ServerDisconnectedError."""
         mock_aioresponse.get(
             f"{self.base_url}/dummy-url",
-            exception=aiohttp.client_exceptions.ServerDisconnectedError("mocked error"),
+            exception=aiohttp.ServerDisconnectedError("mocked error"),
             repeat=True,
         )
         session = aiohttp.ClientSession()
@@ -62,11 +79,11 @@ class Test_SMA_class:
         with pytest.raises(SmaConnectionException):
             await sma._get_json("/dummy-url")
 
-    async def test_timeout_error(self, mock_aioresponse):  # noqa: F811
+    async def test_timeout_error(self, mock_aioresponse: aioresponses) -> None:
         """Test request_json with a SmaConnectionException from TimeoutError."""
         mock_aioresponse.get(
             f"{self.base_url}/dummy-url",
-            exception=asyncio.TimeoutError("mocked error"),
+            exception=TimeoutError("mocked error"),
             repeat=True,
         )
         session = aiohttp.ClientSession()
@@ -76,8 +93,10 @@ class Test_SMA_class:
 
     @patch("pysma._LOGGER.warning")
     async def test_request_json_invalid_json(
-        self, mock_warn, mock_aioresponse  # noqa: F811
-    ):
+        self,
+        mock_warn: MagicMock,
+        mock_aioresponse: aioresponses,
+    ) -> None:
         """Test request_json with invalid json."""
         mock_aioresponse.get(
             f"{self.base_url}/dummy-url",
@@ -91,8 +110,11 @@ class Test_SMA_class:
         assert mock_warn.call_count == 1
 
     @patch("pysma._LOGGER.warning")
-    async def test_read_no_password(self, mock_warn, mock_aioresponse):  # noqa: F811
+    async def test_read_no_password(
+        self, mock_warn: MagicMock, mock_aioresponse: aioresponses
+    ) -> None:
         """Test read_body without password."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getDashValues.json",
             payload={
@@ -118,8 +140,11 @@ class Test_SMA_class:
         assert mock_warn.call_count == 0
 
     @patch("pysma._LOGGER.warning")
-    async def test_read_body_error(self, mock_warn, mock_aioresponse):  # noqa: F811
+    async def test_read_body_error(
+        self, mock_warn: MagicMock, mock_aioresponse: aioresponses
+    ) -> None:
         """Test read_body with SmaReadException."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getValues.json?sid=ABCD", payload={"err": 401}
         )
@@ -132,8 +157,10 @@ class Test_SMA_class:
 
     @patch("pysma._LOGGER.warning")
     async def test_read_body_unexpected(
-        self, mock_warn, mock_aioresponse  # noqa: F811
-    ):
+        self,
+        mock_warn: MagicMock,
+        mock_aioresponse: aioresponses,
+    ) -> None:
         """Test read_body with unexpected body."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getValues.json?sid=ABCD",
@@ -153,7 +180,7 @@ class Test_SMA_class:
         assert result_body == {}
         assert mock_warn.call_count == 1
 
-    async def test_read_dash_logger(self, mock_aioresponse):  # noqa: F811
+    async def test_read_dash_logger(self, mock_aioresponse: aioresponses) -> None:
         """Test read_dash_logger."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getDashLogger.json",
@@ -195,7 +222,7 @@ class Test_SMA_class:
             },
         }
 
-    async def test_read_logger(self, mock_aioresponse):  # noqa: F811
+    async def test_read_logger(self, mock_aioresponse: aioresponses) -> None:
         """Test read_logger."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
@@ -220,7 +247,7 @@ class Test_SMA_class:
             {"t": 1622584800, "v": 4565355},
         ]
 
-    async def test_read_logger_error(self, mock_aioresponse):  # noqa: F811
+    async def test_read_logger_error(self, mock_aioresponse: aioresponses) -> None:
         """Test read_logger with SmaReadException."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
@@ -237,8 +264,11 @@ class Test_SMA_class:
             await sma.read_logger(28704, 1622592000, 1622491200)
 
     @patch("pysma._LOGGER.warning")
-    async def test_new_session(self, mock_warn, mock_aioresponse):  # noqa: F811
+    async def test_new_session(
+        self, mock_warn: MagicMock, mock_aioresponse: aioresponses
+    ) -> None:
         """Test new_session."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -252,13 +282,15 @@ class Test_SMA_class:
 
         assert mock_warn.call_count == 1
 
-    async def test_new_session_invalid_group(self, mock_aioresponse):  # noqa: F811
+    async def test_new_session_invalid_group(
+        self, mock_aioresponse: aioresponses
+    ) -> None:
         """Test new_session with invalid group."""
         session = aiohttp.ClientSession()
         with pytest.raises(KeyError):
             SMA(session, self.host, "pass", "invalid-group")
 
-    async def test_new_session_fail(self, mock_aioresponse):  # noqa: F811
+    async def test_new_session_fail(self, mock_aioresponse: aioresponses) -> None:
         """Test new_session with empty result."""
         mock_aioresponse.post(f"{self.base_url}/dyn/login.json", payload={"result": {}})
 
@@ -268,7 +300,9 @@ class Test_SMA_class:
             await sma.new_session()
 
     @patch("pysma._LOGGER.error")
-    async def test_new_session_error(self, mock_error, mock_aioresponse):  # noqa: F811
+    async def test_new_session_error(
+        self, mock_error: MagicMock, mock_aioresponse: aioresponses
+    ) -> None:
         """Test new_session with error."""
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
@@ -300,8 +334,9 @@ class Test_SMA_class:
             await sma.new_session()
         assert mock_error.call_count == 4
 
-    async def test_device_info(self, mock_aioresponse):  # noqa: F811
+    async def test_device_info(self, mock_aioresponse: aioresponses) -> None:
         """Test device_info."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -337,8 +372,9 @@ class Test_SMA_class:
         assert result
         assert result == MOCK_DEVICE
 
-    async def test_device_info_fallback(self, mock_aioresponse):  # noqa: F811
+    async def test_device_info_fallback(self, mock_aioresponse: aioresponses) -> None:
         """Test device_info fallback."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
         )
@@ -366,7 +402,7 @@ class Test_SMA_class:
         assert result["serial"] == "9999999999"
         assert result["sw_version"] == ""
 
-    async def test_device_info_fail(self, mock_aioresponse):  # noqa: F811
+    async def test_device_info_fail(self, mock_aioresponse: aioresponses) -> None:
         """Test device_info with SmaReadException."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
@@ -386,11 +422,11 @@ class Test_SMA_class:
     )
     async def test_get_sensors(
         self,
-        get_all_onl_values,
-        get_all_param_values,
-        number_of_sensors,
-        mock_aioresponse,  # noqa: F811
-    ):
+        get_all_onl_values: Callable,
+        get_all_param_values: Callable,
+        number_of_sensors: int,
+        mock_aioresponse: aioresponses,
+    ) -> None:
         """Test get_sensors."""
         mock_aioresponse.post(
             f"{self.base_url}/dyn/getAllOnlValues.json?sid=ABCD",
@@ -434,7 +470,8 @@ class Test_SMA_class:
         sma = SMA(session, self.host, "pass")
         assert len(await sma.get_sensors()) == number_of_sensors
 
-    async def test_post_json(self):
+    async def test_post_json(self) -> None:
+        """Test _post_json method."""
         session = aiohttp.ClientSession()
         sma = SMA(session, self.host, "pass")
 
@@ -457,8 +494,11 @@ class Test_SMA_class:
             )
 
     @patch("pysma._LOGGER.warning")
-    async def test_unsupported_lang(self, mock_warn, mock_aioresponse):  # noqa: F811
+    async def test_unsupported_lang(
+        self, mock_warn: MagicMock, mock_aioresponse: aioresponses
+    ) -> None:
         """Test fallback lang in case requested lang is not available."""
+        self.mock_login(mock_aioresponse)
         mock_aioresponse.get(
             f"{self.base_url}/data/l10n/de-CH.json",
             status=400,
@@ -467,4 +507,4 @@ class Test_SMA_class:
         sma = SMA(session, self.host, "pass", lang="de-CH")
         await sma._read_l10n()
         assert mock_warn.call_count == 1
-        assert len(sma._l10n) > 0
+        assert len(sma._l10n) > 0  # type: ignore[arg-type]
