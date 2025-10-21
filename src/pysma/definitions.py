@@ -1,4 +1,5 @@
 """Sensor definitions for SMA WebConnect library for Python."""
+
 from .const import (
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,

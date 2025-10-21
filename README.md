@@ -25,7 +25,7 @@ The Home Assistant sma sensor documentation can be found
 > ---
 >
 > **This library uses Webconnect.** ~Modbus~ is not supported
-> 
+>
 > **If you can access your SMA via your browser, this might work for you.**
 >
 > ---
@@ -54,4 +54,4 @@ logger:
 
 ## Energy Meter
 
-This library can read the second version of the emnergy meter, there is a seperate Home Assistant OS Addon that could also read older Energy Meters directly. See [Energy Meter](https://github.com/kellerza/hassio-sma-em)
+This library can read the second version of the emnergy meter, there is a separate Home Assistant OS Addon that could also read older Energy Meters directly. See [Energy Meter](https://github.com/kellerza/hassio-sma-em)

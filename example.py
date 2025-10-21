@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 """Basic usage example and testing of pysma."""
+
 import argparse
 import asyncio
 import logging
 import signal
 import sys
+from typing import Any
 
 import aiohttp
 
@@ -17,16 +19,16 @@ _LOGGER = logging.getLogger(__name__)
 VAR = {}
 
 
-def print_table(sensors):
+def print_table(sensors: pysma.Sensors) -> None:
     """Print sensors formatted as table."""
     for sen in sensors:
         if sen.value is None:
-            print("{:>25}".format(sen.name))
+            print(f"{sen.name:>25}")
         else:
-            print("{:>25}{:>15} {}".format(sen.name, str(sen.value), sen.unit))
+            print(f"{sen.name:>25}{sen.value!s:>15} {sen.unit}")
 
 
-async def main_loop(password, user, url):
+async def main_loop(password: str, user: str, url: str) -> None:
     """Run main loop."""
     async with aiohttp.ClientSession(
         connector=aiohttp.TCPConnector(ssl=False)
@@ -44,13 +46,13 @@ async def main_loop(password, user, url):
 
         # We should not get any exceptions, but if we do we will close the session.
         try:
-            VAR["running"] = True
+            VAR["running"] = True  # type: ignore[assignment]
             cnt = 5
             sensors = await VAR["sma"].get_sensors()
             device_info = await VAR["sma"].device_info()
 
             for name, value in device_info.items():
-                print("{:>15}{:>25}".format(name, value))
+                print(f"{name:>15}{value:>25}")
 
             # enable all sensors
             for sensor in sensors:
@@ -68,7 +70,7 @@ async def main_loop(password, user, url):
             await VAR["sma"].close_session()
 
 
-async def main():
+async def main() -> None:
     """Run example."""
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -83,8 +85,8 @@ async def main():
 
     args = parser.parse_args()
 
-    def _shutdown(*_):
-        VAR["running"] = False
+    def _shutdown(*_: Any) -> None:
+        VAR["running"] = False  # type: ignore[assignment]
 
     signal.signal(signal.SIGINT, _shutdown)
 

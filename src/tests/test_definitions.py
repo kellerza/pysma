@@ -4,7 +4,7 @@ import pysma.definitions
 from pysma.sensor import Sensor
 
 
-def test_duplicate_sensors():
+def test_duplicate_sensors() -> None:
     """Test if defined sensors have unique key and name."""
     variables = vars(pysma.definitions)
     found_keys = []
@@ -21,7 +21,7 @@ def test_duplicate_sensors():
             found_names.append(found_name)
 
 
-def test_sensor_map():
+def test_sensor_map() -> None:
     """Test if all map entries only contain unique items."""
     for sensor_map in pysma.definitions.sensor_map.values():
         unique_items = list({f"{s.key}_{s.key_idx}": s for s in sensor_map}.values())

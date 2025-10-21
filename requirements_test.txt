@@ -1,6 +1,0 @@
-aioresponses
-jmespath
-pytest
-pytest-aiohttp
-pytest-cov
-pytest-github-actions-annotate-failures

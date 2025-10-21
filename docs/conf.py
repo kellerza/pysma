@@ -1,7 +1,7 @@
 """Config for pysma documentation."""
 
 project = "PySMA"
-copyright = "2021, Johann Kellerman, René Klomp"
+copyright = "2021, Johann Kellerman, René Klomp"  # noqa: A001
 author = "Johann Kellerman, René Klomp"
 
 extensions = [

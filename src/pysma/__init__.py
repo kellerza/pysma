@@ -4,13 +4,14 @@ See: http://www.sma.de/en/products/monitoring-control/webconnect.html
 
 Source: http://www.github.com/kellerza/pysma
 """
+
 import asyncio
 import copy
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
-import jmespath  # type: ignore
+import jmespath
 from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
 from . import definitions
@@ -48,22 +49,22 @@ class SMA:
 
     # pylint: disable=too-many-instance-attributes
     _aio_session: ClientSession
-    _new_session_data: Optional[dict]
+    _new_session_data: dict | None
     _url: str
-    _sid: Optional[str]
-    _uid: Optional[str]
+    _sid: str | None
+    _uid: str | None
     _lang: str
-    _l10n: Optional[dict]
-    _devclass: Optional[str]
+    _l10n: dict | None
+    _devclass: str | None
     _device_info_sensors: Sensors
 
     def __init__(
         self,
         session: ClientSession,
         url: str,
-        password: Optional[str] = None,
+        password: str | None = None,
         group: str = "user",
-        uid: Optional[str] = None,
+        uid: str | None = None,
         lang: str = DEFAULT_LANG,
     ):
         """Init SMA connection.
@@ -78,6 +79,7 @@ class SMA:
 
         Raises:
             KeyError: User was not in USERS
+
         """
         # pylint: disable=too-many-arguments
         if group not in USERS:
@@ -100,19 +102,21 @@ class SMA:
         self._device_info_sensors = Sensors(definitions.sensor_map[DEVICE_INFO])
 
     async def _request_json(
-        self, method: str, url: str, **kwargs: Dict[str, Any]
+        self, method: str, url: str, **kwargs: dict[str, Any]
     ) -> dict:
         """Request json data for requests.
 
         Args:
             method (str): HTTP method to use
             url (str): URL to do request to
+            **kwargs (dict): Additional request parameters
 
         Raises:
             SmaConnectionException: Connection to device failed
 
         Returns:
             dict: json returned by device
+
         """
         if self._sid:
             kwargs.setdefault("params", {})
@@ -127,7 +131,7 @@ class SMA:
                     method,
                     self._url + url,
                     timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
-                    **kwargs,
+                    **kwargs,  # type:ignore[arg-type]
                 ) as res:
                     res_json = await res.json()
                     _LOGGER.debug("Received reply %s", res_json)
@@ -144,7 +148,7 @@ class SMA:
                     continue
 
                 raise SmaConnectionException(
-                    f"Server at {self._url} disconnected {max_retries+1} times."
+                    f"Server at {self._url} disconnected {max_retries + 1} times."
                 ) from exc
             except (
                 client_exceptions.ClientError,
@@ -164,10 +168,11 @@ class SMA:
 
         Returns:
             dict: json returned by device
+
         """
         return await self._request_json(hdrs.METH_GET, url)
 
-    async def _post_json(self, url: str, payload: Optional[dict] = None) -> dict:
+    async def _post_json(self, url: str, payload: dict | None = None) -> dict:
         """Post json data for requests.
 
         Args:
@@ -176,11 +181,12 @@ class SMA:
 
         Returns:
             dict: json returned by device
+
         """
         if payload is None:
             payload = {}
 
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "data": json.dumps(payload),
             "headers": {"content-type": "application/json"},
         }
@@ -192,6 +198,7 @@ class SMA:
 
         Returns:
             dict: json returned by device
+
         """
         if self._l10n is None:
             self._l10n = await self._get_json(f"/data/l10n/{self._lang}.json")
@@ -215,6 +222,7 @@ class SMA:
 
         Returns:
             dict: json result
+
         """
         if self._sid is None and self._new_session_data is not None:
             await self.new_session()
@@ -258,6 +266,7 @@ class SMA:
 
         Returns:
             bool: authentication successful
+
         """
         body = await self._post_json(URL_LOGIN, self._new_session_data)
         self._sid = jmespath.search("result.sid", body)
@@ -300,9 +309,10 @@ class SMA:
 
         Returns:
             bool: reading was successful
+
         """
         if self._new_session_data is None:
-            payload: Dict[str, Any] = {"destDev": [], "keys": []}
+            payload: dict[str, Any] = {"destDev": [], "keys": []}
             result_body = await self._read_body(URL_DASH_VALUES, payload)
         else:
             payload = {
@@ -335,6 +345,7 @@ class SMA:
 
         Returns:
             dict: Dictionary containing loggers returned by device.
+
         """
         return await self._read_body(URL_DASH_LOGGER, {"destDev": [], "key": []})
 
@@ -357,6 +368,7 @@ class SMA:
 
         Returns:
             list: The log entries returned by the device
+
         """
         payload = {
             "destDev": [],
@@ -375,6 +387,7 @@ class SMA:
 
         Returns:
             dict: dict containing serial, name, type, manufacturer and sw_version
+
         """
         await self.read(self._device_info_sensors)
 
@@ -404,6 +417,7 @@ class SMA:
 
         Returns:
             Sensors: Sensors object containing Sensor objects
+
         """
         all_sensors = await self._read_all_sensors()
         sensor_keys = all_sensors.keys()
@@ -421,7 +435,7 @@ class SMA:
                     val_len = 1
                 else:
                     # All other types, single or multi value
-                    sensors_values = list(all_sensors[sensor.key].values())[0]
+                    sensors_values = next(iter(all_sensors[sensor.key].values()))
                     val_len = len(sensors_values)
                 _LOGGER.debug("Found %s with %d value(s).", sensor.key, val_len)
 

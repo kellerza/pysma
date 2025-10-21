@@ -1,12 +1,14 @@
 """Sensor classes for SMA WebConnect library for Python."""
+
 import copy
 import logging
-from typing import Any, Iterator, List, Optional, Union
+from collections.abc import Iterator
+from typing import Any
 
 import attr
-import jmespath  # type: ignore
+import jmespath
 
-from .const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
+from pysma.const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class Sensor:
     name: str = attr.ib()
     unit: str = attr.ib(default=None)
     factor: int = attr.ib(default=None)
-    path: Union[list, tuple] = attr.ib(default=None)
+    path: list | tuple = attr.ib(default=None)
     enabled: bool = attr.ib(default=True)
     l10n_translate: bool = attr.ib(default=False)
     value: Any = attr.ib(default=None, init=False)
@@ -35,7 +37,7 @@ class Sensor:
             self.key = f"{skey[0]}_{skey[1]}"
             self.key_idx = int(skey[2])
 
-    def extract_value(self, result_body: dict, l10n: Optional[dict] = None) -> bool:
+    def extract_value(self, result_body: dict, l10n: dict | None = None) -> bool:
         """Extract value from json body.
 
         Args:
@@ -44,6 +46,7 @@ class Sensor:
 
         Returns:
             bool: Extracting value successful
+
         """
         try:
             res = result_body[self.key]
@@ -75,7 +78,7 @@ class Sensor:
                         _path,
                         res,
                     )
-                    self.path = _path
+                    self.path = _path  # type:ignore[arg-type]
                     break
 
         # Extract new value
@@ -110,14 +113,15 @@ class Sensor:
 class Sensors:
     """SMA Sensors."""
 
-    def __init__(self, sensors: Union[Sensor, List[Sensor], None] = None):
+    def __init__(self, sensors: Sensor | list[Sensor] | None = None):
         """Init Sensors.
 
         Args:
             sensors (Union[Sensor, List[Sensor], None], optional): One or a list of sensors
                 to add on init. Defaults to None.
+
         """
-        self.__s: List[Sensor] = []
+        self.__s: list[Sensor] = []
 
         if sensors:
             self.add(sensors)
@@ -127,10 +131,11 @@ class Sensors:
 
         Returns:
             int: Number of Sensor objects
+
         """
         return len(self.__s)
 
-    def __contains__(self, key: Union[str, Sensor]) -> bool:
+    def __contains__(self, key: str | Sensor) -> bool:
         """Check if a sensor is defined.
 
         Args:
@@ -138,6 +143,7 @@ class Sensors:
 
         Returns:
             bool: [description]
+
         """
         if isinstance(key, Sensor):
             key = key.name
@@ -160,6 +166,7 @@ class Sensors:
 
         Returns:
             Sensor: The matching Sensor object
+
         """
         for sen in self.__s:
             if key in (sen.name, sen.key):
@@ -171,10 +178,11 @@ class Sensors:
 
         Yields:
             Iterator[Sensor]: Sensor iterator
+
         """
         return self.__s.__iter__()
 
-    def add(self, sensor: Union[Sensor, List[Sensor]]) -> None:
+    def add(self, sensor: Sensor | list[Sensor]) -> None:
         """Add a sensor, logs warning if it exists.
 
         A copy of sensor, or the sensors in the list, will be added.
@@ -186,6 +194,7 @@ class Sensors:
 
         Raises:
             TypeError: Argument sensor does not match an expected type
+
         """
         if isinstance(sensor, (list, tuple)):
             for sss in sensor:

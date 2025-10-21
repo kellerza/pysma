@@ -1,30 +1,45 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.19
     hooks:
-      - id: black
-        args:
-          - --quiet
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
+      - id: uv-lock
+
+  - repo: local
     hooks:
-      - id: isort
-  - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
-    hooks:
-      - id: flake8
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.1.0
-    hooks:
+      - id: pyproject-fmt
+        name: pyproject-fmt
+        entry: uv run pyproject-fmt pyproject.toml
+        language: system
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff-check
+        entry: uv run ruff check --fix --exit-non-zero-on-fix
+        language: system
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff-format
+        entry: uv run ruff format --exit-non-zero-on-fix
+        language: system
+        pass_filenames: false
+
       - id: codespell
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.961
-    hooks:
+        name: codespell
+        entry: uv run codespell --toml pyproject.toml
+        language: system
+        pass_filenames: false
+
       - id: mypy
-        files: "pysma/.*.py"
-        additional_dependencies: [types-attrs]
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
-    hooks:
-      - id: pydocstyle
-        files: "pysma/.*.py"
+        name: mypy
+        entry: uv run mypy --config-file pyproject.toml .
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      # - id: pytest
+      #   name: pytest
+      #   entry: uv run pytest
+      #   language: system
+      #   types: [python]
+      #   pass_filenames: false

@@ -1,0 +1,107 @@
+[build-system]
+build-backend = "uv_build"
+requires = [ "uv-build>=0.9,<0.10" ]
+
+[project]
+name = "pysma"
+version = "0.7.5"
+description = "Library to interface an SMA Solar devices"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [ { name = "Johann Kellerman", email = "kellerza@gmail.com" }, { name = "René Klomp" } ]
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "aiohttp>=3,<4",
+  "attrs",
+  "jmespath",
+]
+
+[dependency-groups]
+dev = [
+  "aioresponses",
+  "codespell",
+  "jmespath",
+  "mypy",
+  "pyproject-fmt",
+  "pytest",
+  "pytest-aiohttp",
+  "pytest-cov",
+  "pytest-github-actions-annotate-failures",
+]
+
+[tool.ruff]
+target-version = "py312"
+format.indent-style = "space"
+format.quote-style = "double"
+format.line-ending = "lf"
+format.skip-magic-trailing-comma = false
+format.docstring-code-line-length = "dynamic"
+format.docstring-code-format = true
+lint.select = [
+  "A",     # flake8-builtins
+  "ASYNC", # flake8-async
+  "B",     # bugbear
+  "D",     # pydocstyle
+  "E",     # pycodestyle
+  "F",     # pyflakes
+  "I",     # isort
+  "PGH",   # pygrep-hooks
+  "PIE",   # flake8-pie
+  "PL",    # pylint
+  "PTH",   # flake8-pathlib
+  "PYI",   # flake8-pyi
+  "RUF",   # ruff
+  "UP",    # pyupgrade
+  "W",     # pycodestyle
+]
+lint.ignore = [ "D203", "D213", "E203", "E501", "PLR2004" ]
+lint.pylint.max-args = 7
+
+[tool.codespell]
+ignore-words-list = "hass"
+
+[tool.pytest.ini_options]
+pythonpath = [ ".", "src" ]
+testpaths = "src/tests"
+filterwarnings = "ignore:.+@coroutine.+deprecated.+"
+norecursedirs = [ ".git", "modules" ]
+log_cli = true
+log_cli_level = "DEBUG"
+asyncio_mode = "auto"
+addopts = "--cov=src --cov-report xml:cov.xml"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+disallow_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_configs = true
+exclude = [ "build" ]
+enable_error_code = [ "ignore-without-code" ]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = true
+
+[tool.semantic_release]
+commit = true
+tag = true
+vcs_release = true
+commit_parser = "emoji"
+# https://python-semantic-release.readthedocs.io/en/latest/configuration.html#version-toml
+version_toml = [ "pyproject.toml:project.version" ]
+build_command = "pip install uv && uv build"
+commit_version_number = true
+
+[tool.semantic_release.branches.main]
+match = "main"
+
+[tool.semantic_release.commit_parser_options]
+major_tags = [ ":boom:" ]
+minor_tags = [ ":rocket:" ]
+patch_tags = [ "" ]
