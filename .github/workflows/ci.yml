@@ -3,8 +3,8 @@ name: CI
 on: [push, pull_request]
 
 env:
-  RUFF_VERSION: 0.13.1
-  UV_VERSION: 0.8.19
+  RUFF_VERSION: 0.14.0
+  UV_VERSION: 0.9.2
 
 jobs:
   ruff:
@@ -65,29 +65,48 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
+          fail_ci_if_error: true
+          files: ./cov.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: PYTHON
           verbose: true
 
-  build-n-publish:
+  release:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
+    needs: [pytest]
+    #if: startsWith(github.ref, 'refs/tags')
+
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags')
-    needs:
-      - pytest
+    concurrency: release
     permissions:
-      id-token: write # used for trusted publishing
+      id-token: write
+      contents: write
     steps:
-      - uses: actions/checkout@v5
-      - name: "Set up Python"
-        uses: actions/setup-python@v6
+      - name: Setup | Checkout Repository at workflow sha
+        uses: actions/checkout@v5
         with:
-          python-version-file: "pyproject.toml"
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Setup | Force correct release branch on workflow sha
+        run: |
+          git checkout -B ${{ github.ref_name }} ${{ github.sha }}
+
+      - name: Action | Semantic Version Release
+        id: release
+        # Adjust tag with desired version if applicable.
+        uses: python-semantic-release/python-semantic-release@v10.4.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           version: ${{ env.UV_VERSION }}
-      - name: Build a binary wheel and a source tarball
-        run: uv build
+        if: steps.release.outputs.released == 'true'
+
       - name: Publish distribution 📦 to PyPI
         run: uv publish
+        if: steps.release.outputs.released == 'true'

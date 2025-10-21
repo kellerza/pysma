@@ -1,6 +1,6 @@
 # pysma library
 
-[![Workflow Status](https://github.com/kellerza/pysma/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/kellerza/pysma/actions)
+[![Workflow Status](https://github.com/kellerza/pysma/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/kellerza/pysma/actions)
 [![Codecov](https://codecov.io/gh/kellerza/pysma/branch/master/graph/badge.svg)](https://codecov.io/gh/kellerza/pysma)
 [![Documentation Status](https://readthedocs.org/projects/pysma/badge/?version=latest)](https://pysma.readthedocs.io/en/latest/?badge=latest)
 
