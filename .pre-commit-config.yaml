@@ -37,9 +37,9 @@ repos:
         types: [python]
         pass_filenames: false
 
-      # - id: pytest
-      #   name: pytest
-      #   entry: uv run pytest
-      #   language: system
-      #   types: [python]
-      #   pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false

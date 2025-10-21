@@ -91,7 +91,7 @@ class Test_SMA_class:
         with pytest.raises(SmaConnectionException):
             await sma._get_json("/dummy-url")
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_request_json_invalid_json(
         self,
         mock_warn: MagicMock,
@@ -109,7 +109,7 @@ class Test_SMA_class:
         assert json == {}
         assert mock_warn.call_count == 1
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_read_no_password(
         self, mock_warn: MagicMock, mock_aioresponse: aioresponses
     ) -> None:
@@ -139,7 +139,7 @@ class Test_SMA_class:
         assert sensors["6800_08822000"].value == "Sunny Boy 3.6"
         assert mock_warn.call_count == 0
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_read_body_error(
         self, mock_warn: MagicMock, mock_aioresponse: aioresponses
     ) -> None:
@@ -155,7 +155,7 @@ class Test_SMA_class:
             await sma._read_body("/dyn/getValues.json", payload={"dummy": "payload"})
         assert mock_warn.call_count == 1
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_read_body_unexpected(
         self,
         mock_warn: MagicMock,
@@ -263,7 +263,7 @@ class Test_SMA_class:
         with pytest.raises(SmaReadException):
             await sma.read_logger(28704, 1622592000, 1622491200)
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_new_session(
         self, mock_warn: MagicMock, mock_aioresponse: aioresponses
     ) -> None:
@@ -299,7 +299,7 @@ class Test_SMA_class:
         with pytest.raises(SmaAuthenticationException):
             await sma.new_session()
 
-    @patch("pysma._LOG.error")
+    @patch("pysma.sma_webconnect._LOG.error")
     async def test_new_session_error(
         self, mock_error: MagicMock, mock_aioresponse: aioresponses
     ) -> None:
@@ -475,7 +475,9 @@ class Test_SMA_class:
         session = aiohttp.ClientSession()
         sma = SMAWebConnect(session, self.host, "pass")
 
-        with patch("pysma.SMA._request_json") as mock_request_json:
+        with patch(
+            "pysma.sma_webconnect.SMAWebConnect._request_json"
+        ) as mock_request_json:
             await sma._post_json("dummy_url")
             mock_request_json.assert_called_once_with(
                 "POST",
@@ -484,7 +486,9 @@ class Test_SMA_class:
                 headers={"content-type": "application/json"},
             )
 
-        with patch("pysma.SMA._request_json") as mock_request_json:
+        with patch(
+            "pysma.sma_webconnect.SMAWebConnect._request_json"
+        ) as mock_request_json:
             await sma._post_json("dummy_url", {"data": "dummy"})
             mock_request_json.assert_called_once_with(
                 "POST",
@@ -493,7 +497,7 @@ class Test_SMA_class:
                 headers={"content-type": "application/json"},
             )
 
-    @patch("pysma._LOG.warning")
+    @patch("pysma.sma_webconnect._LOG.warning")
     async def test_unsupported_lang(
         self, mock_warn: MagicMock, mock_aioresponse: aioresponses
     ) -> None:
