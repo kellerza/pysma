@@ -488,6 +488,11 @@ inverter_power_limit = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
 #: Serial number of energy meter
 energy_meter = Sensor("6800_008AA300", "energy_meter")
 
+#: Temperature of inverter
+inverter_temp = Sensor("6102_40633E00", "inverter_temp", unit="°C", factor=10)
+
+#: Temperature of transformer
+transformer_temp = Sensor("6102_40633400", "transformer_temp", unit="°C", factor=10)
 
 sensor_map = {
     GENERIC_SENSORS: [
