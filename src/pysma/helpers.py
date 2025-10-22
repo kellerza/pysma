@@ -37,16 +37,14 @@ def ensure_string(value: Any) -> str:
 class DeviceInfo:
     """Device information."""
 
-    serial: str = attrs.field(converter=ensure_string, default="9999999999")
-    name: str = attrs.field(converter=ensure_string, default="SMA Device")
+    serial: str = attrs.field(converter=ensure_string, default="")
+    name: str = attrs.field(converter=ensure_string, default="")
     type: str = attrs.field(converter=ensure_string, default="")
-    manufacturer: str = attrs.field(converter=ensure_string, default="SMA")
+    manufacturer: str = attrs.field(converter=ensure_string, default="")
     sw_version: str = attrs.field(converter=version_int_to_string, default="")
 
     def __attrs_post_init__(self) -> None:
         """Fallback values."""
-        self.manufacturer = (
-            self.manufacturer or attrs.fields_dict(DeviceInfo)["manufacturer"].default
-        )
-        self.name = self.name or attrs.fields_dict(DeviceInfo)["name"].default
-        self.serial = self.serial or attrs.fields_dict(DeviceInfo)["serial"].default
+        self.manufacturer = self.manufacturer or "SMA"
+        self.name = self.name or "SMA Device"
+        self.serial = self.serial or "9999999999"

@@ -2,7 +2,7 @@
 
 import attrs
 
-from pysma.helpers import version_int_to_string, DeviceInfo
+from pysma.helpers import DeviceInfo, version_int_to_string
 
 
 def test_version_int_to_string() -> None:
