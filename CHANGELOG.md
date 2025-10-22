@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.0.2 (2025-10-22)
+
+### 
+
+- Improve typing and return DeviceInfo
+  ([`e21bb6c`](https://github.com/kellerza/pysma/commit/e21bb6ce0cb3ca18e1fa6d2abe38aacb5dfc87e1))
+
+- More typing
+  ([`6edae4e`](https://github.com/kellerza/pysma/commit/6edae4efd9f4f363cbb0aead5866a3dc2130c86e))
+
+
 ## v1.0.1 (2025-10-22)
 
 ### 
