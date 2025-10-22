@@ -34,12 +34,6 @@ LEGACY_MAP = {
     },
 }
 
-FALLBACK_DEVICE_INFO = {
-    "manufacturer": "SMA",
-    "name": "SMA Device",
-    "type": "",
-    "serial": "9999999999",
-}
 
 GENERIC_SENSORS = "generic"
 OPTIMIZERS_VIA_INVERTER = "optimizers"

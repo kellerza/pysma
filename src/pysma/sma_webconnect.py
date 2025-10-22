@@ -19,7 +19,6 @@ from .const import (
     DEFAULT_TIMEOUT,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
-    FALLBACK_DEVICE_INFO,
     GENERIC_SENSORS,
     OPTIMIZERS_VIA_INVERTER,
     URL_ALL_PARAMS,
@@ -38,7 +37,7 @@ from .exceptions import (
     SmaConnectionException,
     SmaReadException,
 )
-from .helpers import version_int_to_string
+from .helpers import DeviceInfo
 from .sensor import Sensors
 
 _LOG = logging.getLogger(__name__)
@@ -380,30 +379,22 @@ class SMAWebConnect:
 
         return result_body
 
-    async def device_info(self) -> dict:
+    async def device_info(self) -> DeviceInfo:
         """Read device info and return the results.
 
         Returns:
-            dict: dict containing serial, name, type, manufacturer and sw_version
+            DeviceInfo: Object containing serial, name, type, manufacturer and sw_version
 
         """
         await self.read(self._device_info_sensors)
 
-        device_info = {
-            "serial": self._device_info_sensors["serial_number"].value
-            or FALLBACK_DEVICE_INFO["serial"],
-            "name": self._device_info_sensors["device_name"].value
-            or FALLBACK_DEVICE_INFO["name"],
-            "type": self._device_info_sensors["device_type"].value
-            or FALLBACK_DEVICE_INFO["type"],
-            "manufacturer": self._device_info_sensors["device_manufacturer"].value
-            or FALLBACK_DEVICE_INFO["manufacturer"],
-            "sw_version": version_int_to_string(
-                self._device_info_sensors["device_sw_version"].value
-            ),
-        }
-
-        return device_info
+        return DeviceInfo(
+            serial=self._device_info_sensors["serial_number"].value,
+            name=self._device_info_sensors["device_name"].value,
+            type=self._device_info_sensors["device_type"].value,
+            manufacturer=self._device_info_sensors["device_manufacturer"].value,
+            sw_version=self._device_info_sensors["device_sw_version"].value,
+        )
 
     async def _read_all_sensors(self) -> dict:
         all_values = await self._read_body(URL_ALL_VALUES, {"destDev": []})

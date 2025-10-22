@@ -3,7 +3,6 @@
 import copy
 import logging
 from collections.abc import Iterator
-from typing import Any
 
 import attrs
 import jmespath
@@ -24,7 +23,7 @@ class Sensor:
     path: list | tuple | str | None = None
     enabled: bool = True
     l10n_translate: bool = False
-    value: Any = attrs.field(default=None, init=False)
+    value: str | int | float | None = attrs.field(default=None, init=False)
     key_idx: int = attrs.field(default=0, repr=False, init=False)
 
     def __attrs_post_init__(self) -> None:

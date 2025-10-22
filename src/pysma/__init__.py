@@ -6,10 +6,13 @@ from pysma.exceptions import (
     SmaException,
     SmaReadException,
 )
+from pysma.sensor import Sensor, Sensors
 from pysma.sma_webconnect import SMAWebConnect
 
 __all__ = [
     "SMAWebConnect",
+    "Sensor",
+    "Sensors",
     "SmaAuthenticationException",
     "SmaConnectionException",
     "SmaException",

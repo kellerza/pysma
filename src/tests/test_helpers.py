@@ -1,6 +1,8 @@
 """Test pysma helpers file."""
 
-from pysma.helpers import version_int_to_string
+import attrs
+
+from pysma.helpers import version_int_to_string, DeviceInfo
 
 
 def test_version_int_to_string() -> None:
@@ -10,3 +12,31 @@ def test_version_int_to_string() -> None:
     assert version_int_to_string(1) == "0.0.0.E"
     assert version_int_to_string(0) == ""
     assert version_int_to_string(None) == ""  # type: ignore[arg-type]
+
+
+def test_devtype() -> None:
+    """Test DeviceInfo."""
+    res = DeviceInfo(
+        serial="123456789",
+        name="SMA Device",
+        type=None,
+        manufacturer="SMA",
+        sw_version="1.0.0",
+    )
+    assert attrs.asdict(res) == {
+        "serial": "123456789",
+        "name": "SMA Device",
+        "type": "",
+        "manufacturer": "SMA",
+        "sw_version": "1.0.0",
+    }
+
+    res = DeviceInfo(sw_version=1)
+
+    assert attrs.asdict(res) == {
+        "serial": "9999999999",
+        "name": "SMA Device",
+        "type": "",
+        "manufacturer": "SMA",
+        "sw_version": "0.0.0.E",
+    }

@@ -349,9 +349,7 @@ class Test_SMA_class:
                             "1": [{"validVals": [461], "val": [{"tag": 461}]}]
                         },
                         "6800_00A21E00": {
-                            "1": [
-                                {"low": 0, "high": None, "val": MOCK_DEVICE["serial"]}
-                            ]
+                            "1": [{"low": 0, "high": None, "val": MOCK_DEVICE.serial}]
                         },
                         "6800_08822000": {
                             "1": [
@@ -361,7 +359,7 @@ class Test_SMA_class:
                                 }
                             ]
                         },
-                        "6800_10821E00": {"1": [{"val": MOCK_DEVICE["name"]}]},
+                        "6800_10821E00": {"1": [{"val": MOCK_DEVICE.name}]},
                     }
                 }
             },
@@ -369,7 +367,6 @@ class Test_SMA_class:
         session = aiohttp.ClientSession()
         sma = SMAWebConnect(session, self.host, "pass")
         result = await sma.device_info()
-        assert result
         assert result == MOCK_DEVICE
 
     async def test_device_info_fallback(self, mock_aioresponse: aioresponses) -> None:
@@ -386,7 +383,7 @@ class Test_SMA_class:
                         "6800_08822B00": {
                             "1": [{"validVals": [461], "val": [{"tag": 461}]}]
                         },
-                        "6800_10821E00": {"1": [{"val": MOCK_DEVICE["name"]}]},
+                        "6800_10821E00": {"1": [{"val": MOCK_DEVICE.name}]},
                     }
                 }
             },
@@ -396,11 +393,11 @@ class Test_SMA_class:
         assert await sma.new_session()
         result = await sma.device_info()
         assert result
-        assert result["manufacturer"] == "SMA"
-        assert result["name"] == MOCK_DEVICE["name"]
-        assert result["type"] == ""
-        assert result["serial"] == "9999999999"
-        assert result["sw_version"] == ""
+        assert result.manufacturer == "SMA"
+        assert result.name == MOCK_DEVICE.name
+        assert result.type == ""
+        assert result.serial == "9999999999"
+        assert result.sw_version == ""
 
     async def test_device_info_fail(self, mock_aioresponse: aioresponses) -> None:
         """Test device_info with SmaReadException."""
