@@ -9,14 +9,14 @@ import aiohttp
 import pytest
 from aioresponses import aioresponses
 
-from pysma.definitions.webconnect import device_type as device_type_sensor
-from pysma.exceptions import (
+from pysma import (
     SmaAuthenticationException,
     SmaConnectionException,
     SmaReadException,
+    SMAWebConnect,
 )
+from pysma.definitions.webconnect import device_type as device_type_sensor
 from pysma.sensor import Sensors
-from pysma.sma_webconnect import SMAWebConnect
 
 from .conftest import (
     MOCK_DEVICE,

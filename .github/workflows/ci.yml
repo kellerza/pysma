@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   RUFF_VERSION: 0.14.0
-  UV_VERSION: 0.9.2
+  UV_VERSION: 0.9.5
 
 jobs:
   ruff:

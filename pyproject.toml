@@ -60,7 +60,7 @@ lint.select = [
   "UP",    # pyupgrade
   "W",     # pycodestyle
 ]
-lint.ignore = [ "D203", "D213", "E203", "E501", "PLR2004" ]
+lint.ignore = [ "D203", "D213", "E501", "PLR2004" ]
 lint.pylint.max-args = 7
 
 [tool.codespell]
@@ -84,9 +84,9 @@ warn_unused_configs = true
 exclude = [ "build" ]
 enable_error_code = [ "ignore-without-code" ]
 
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = true
+# [[tool.mypy.overrides]]
+# module = "tests.*"
+# disallow_untyped_defs = true
 
 [tool.semantic_release]
 commit = true

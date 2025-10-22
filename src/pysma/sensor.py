@@ -21,7 +21,7 @@ class Sensor:
     name: str
     unit: str | None = None
     factor: int | None = None
-    path: list | tuple | None = None
+    path: list | tuple | str | None = None
     enabled: bool = True
     l10n_translate: bool = False
     value: Any = attrs.field(default=None, init=False)
@@ -76,7 +76,7 @@ class Sensor:
                         _path,
                         res,
                     )
-                    self.path = _path  # type:ignore[arg-type]
+                    self.path = _path
                     break
 
         # Extract new value
