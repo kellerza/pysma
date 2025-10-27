@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.0.3 (2025-10-27)
+
+### 
+
+- Update project metadata ([#131](https://github.com/kellerza/pysma/pull/131),
+  [`bb5edb0`](https://github.com/kellerza/pysma/commit/bb5edb0f0329804190152441dcc504ff9ce2de2d))
+
+
 ## v1.0.2 (2025-10-22)
 
 ### 

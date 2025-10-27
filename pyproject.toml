@@ -4,7 +4,7 @@ requires = [ "uv-build>=0.9,<0.10" ]
 
 [project]
 name = "pysma"
-version = "1.0.2"
+version = "1.0.3"
 description = "Library to interface an SMA Solar devices"
 readme = "README.md"
 license = "MIT"
