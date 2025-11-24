@@ -10,7 +10,7 @@ jobs:
   ruff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: chartboost/ruff-action@v1
         with:
           version: ${{ env.RUFF_VERSION }}
@@ -24,7 +24,7 @@ jobs:
     needs: [ruff]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: "Set up Python"
         uses: actions/setup-python@v6
         with:
@@ -49,7 +49,7 @@ jobs:
     env:
       PYTHON: ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: "Set up Python"
         uses: actions/setup-python@v6
         with:
@@ -83,7 +83,7 @@ jobs:
       contents: write
     steps:
       - name: Setup | Checkout Repository at workflow sha
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
@@ -95,7 +95,7 @@ jobs:
       - name: Action | Semantic Version Release
         id: release
         # Adjust tag with desired version if applicable.
-        uses: python-semantic-release/python-semantic-release@v10.4.1
+        uses: python-semantic-release/python-semantic-release@v10.5.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           git_committer_name: "github-actions"
