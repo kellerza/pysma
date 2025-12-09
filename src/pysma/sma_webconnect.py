@@ -206,6 +206,13 @@ class SMAWebConnect:
                     DEFAULT_LANG,
                 )
                 self._l10n = await self._get_json(f"/data/l10n/{DEFAULT_LANG}.json")
+            if len(self._l10n) == 0:
+                _LOG.warning(
+                    "Fallback to en-US.71668c77.json",
+                    self._lang,
+                    DEFAULT_LANG,
+                )
+                self._l10n = await self._get_json(f"/data/l10n/en-US.71668c77.json")
         return self._l10n
 
     async def _read_body(self, url: str, payload: dict) -> dict:
