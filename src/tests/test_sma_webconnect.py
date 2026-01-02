@@ -1,12 +1,12 @@
 """Test sma_webconnect."""
 
+import json
 import logging
 import re
 from collections.abc import Callable, Generator
 from unittest.mock import MagicMock, patch
 
 import aiohttp
-import json
 import pytest
 from aioresponses import aioresponses
 
