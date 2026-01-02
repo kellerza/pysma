@@ -225,6 +225,7 @@ class SMAWebConnect:
         Returns:
             dict: Dictionary containing translation keys and localized strings. Empty dict if file
             not found or cannot be loaded.
+
         """
         try:
             data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
