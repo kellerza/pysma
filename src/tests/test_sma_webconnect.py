@@ -504,18 +504,16 @@ class Test_SMA_class:
     ) -> None:
         """Test fallback language when requested language is not available locally."""
 
-        def read_text_side_effect(*args, **kwargs):
-            path = str(args[1])
-            if path.endswith("none.json"):
-                return None
-            if path.endswith("de-CH.json"):
-                raise FileNotFoundError
-            if path.endswith("en-US.json"):
+        def get_data_side_effect(package: str, resource: str) -> str | None:
+            if resource.endswith("en-US.json"):
                 return json.dumps({"key": "value"})
 
-        mock_get_data.side_effect = read_text_side_effect
+            return None
 
-        sma = SMAWebConnect(None, self.host, "pass", lang="de-CH")
+        mock_get_data.side_effect = get_data_side_effect
+
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass", lang="de-CH")
 
         l10n = await sma._read_l10n()
 
@@ -531,11 +529,3 @@ class Test_SMA_class:
         l10n2 = await sma._read_l10n()
         assert mock_get_data.call_count == 2
         assert l10n == l10n2
-
-        # Cover None return
-        sma = SMAWebConnect(None, self.host, "pass", lang="none")
-        l10n3 = await sma._read_l10n()
-
-        # Fallback language must be loaded
-        assert l10n3
-        assert l10n3["key"] == "value"

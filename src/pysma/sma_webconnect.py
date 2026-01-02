@@ -227,14 +227,10 @@ class SMAWebConnect:
             not found or cannot be loaded.
 
         """
-        try:
-            data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
-            if data is None:
-                return {}
-            return json.loads(data)
-        except Exception as e:
-            _LOG.error("Failed to load language '%s': %s", locale, e)
+        data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
+        if data is None:
             return {}
+        return json.loads(data)
 
     async def _read_body(self, url: str, payload: dict) -> dict:
         """Parse the json returned by the device and extract result.
