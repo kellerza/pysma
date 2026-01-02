@@ -6,6 +6,7 @@ from collections.abc import Callable, Generator
 from unittest.mock import MagicMock, patch
 
 import aiohttp
+import json
 import pytest
 from aioresponses import aioresponses
 
@@ -495,17 +496,46 @@ class Test_SMA_class:
             )
 
     @patch("pysma.sma_webconnect._LOG.warning")
+    @patch("pkgutil.get_data")
     async def test_unsupported_lang(
-        self, mock_warn: MagicMock, mock_aioresponse: aioresponses
+        self,
+        mock_get_data: MagicMock,
+        mock_warn: MagicMock,
     ) -> None:
-        """Test fallback lang in case requested lang is not available."""
-        self.mock_login(mock_aioresponse)
-        mock_aioresponse.get(
-            f"{self.base_url}/data/l10n/de-CH.json",
-            status=400,
-        )
-        session = aiohttp.ClientSession()
-        sma = SMAWebConnect(session, self.host, "pass", lang="de-CH")
-        await sma._read_l10n()
-        assert mock_warn.call_count == 1
-        assert len(sma._l10n) > 0  # type: ignore[arg-type]
+        """Test fallback language when requested language is not available locally."""
+
+        def read_text_side_effect(*args, **kwargs):
+            path = str(args[1])
+            if path.endswith("none.json"):
+                return None
+            if path.endswith("de-CH.json"):
+                raise FileNotFoundError
+            if path.endswith("en-US.json"):
+                return json.dumps({"key": "value"})
+
+        mock_get_data.side_effect = read_text_side_effect
+
+        sma = SMAWebConnect(None, self.host, "pass", lang="de-CH")
+
+        l10n = await sma._read_l10n()
+
+        # Warning should be logged once
+        mock_warn.assert_called_once()
+        assert mock_get_data.call_count == 2
+
+        # Fallback language must be loaded
+        assert l10n
+        assert l10n["key"] == "value"
+
+        # Verify the cached entry is returned on subsequent calls
+        l10n2 = await sma._read_l10n()
+        assert mock_get_data.call_count == 2
+        assert l10n == l10n2
+
+        # Cover None return
+        sma = SMAWebConnect(None, self.host, "pass", lang="none")
+        l10n3 = await sma._read_l10n()
+
+        # Fallback language must be loaded
+        assert l10n3
+        assert l10n3["key"] == "value"
