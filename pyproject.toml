@@ -8,7 +8,7 @@ version = "1.0.3"
 description = "Library to interface an SMA Solar devices"
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = [ "LICENSE" ]
 authors = [ { name = "Johann Kellerman", email = "kellerza@gmail.com" }, { name = "René Klomp" } ]
 requires-python = ">=3.12"
 classifiers = [
@@ -23,8 +23,7 @@ dependencies = [
   "jmespath",
 ]
 
-[project.urls]
-Source = "https://github.com/kellerza/pysma"
+urls.Source = "https://github.com/kellerza/pysma"
 
 [dependency-groups]
 dev = [
@@ -69,6 +68,7 @@ lint.pylint.max-args = 7
 
 [tool.codespell]
 ignore-words-list = "hass"
+skip = "**/l10n/*.json"
 
 [tool.pytest.ini_options]
 pythonpath = [ ".", "src" ]

@@ -13,7 +13,7 @@ import attrs
 
 from pysma import exceptions, sma_webconnect
 
-# This example will work with Python 3.9+
+# This example will work with Python 3.12+
 
 _LOG = logging.getLogger(__name__)
 
