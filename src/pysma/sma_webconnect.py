@@ -9,6 +9,7 @@ import asyncio
 import copy
 import json
 import logging
+import pkgutil
 from typing import Any
 
 import jmespath
@@ -191,22 +192,46 @@ class SMAWebConnect:
         return await self._request_json(hdrs.METH_POST, url, **params)
 
     async def _read_l10n(self) -> dict:
-        """Read device language file. Returns cached value on subsequent calls.
+        """Read language file. Returns cached value on subsequent calls.
 
         Returns:
-            dict: json returned by device
+            dict: Dictionary containing translation keys and their localized strings.
 
         """
-        if self._l10n is None:
-            self._l10n = await self._get_json(f"/data/l10n/{self._lang}.json")
-            if len(self._l10n) == 0:
-                _LOG.warning(
-                    "Language '%s' not supported, fallback to '%s'",
-                    self._lang,
-                    DEFAULT_LANG,
-                )
-                self._l10n = await self._get_json(f"/data/l10n/{DEFAULT_LANG}.json")
+        if self._l10n is not None:
+            return self._l10n
+
+        # Try to load the requested language from package
+        self._l10n = await asyncio.to_thread(self._load_l10n_from_package, self._lang)
+
+        # Fallback to default language if requested not found or empty
+        if not self._l10n and self._lang != DEFAULT_LANG:
+            _LOG.warning(
+                "Language '%s' not found in package, falling back to '%s'",
+                self._lang,
+                DEFAULT_LANG,
+            )
+            self._l10n = await asyncio.to_thread(
+                self._load_l10n_from_package, DEFAULT_LANG
+            )
+
         return self._l10n
+
+    def _load_l10n_from_package(self, locale: str) -> dict:
+        """Load JSON translation file from package resources.
+
+        Args:
+            locale (str): Locale code, e.g., "en-US" or "de-DE".
+
+        Returns:
+            dict: Dictionary containing translation keys and localized strings. Empty dict if file
+            not found or cannot be loaded.
+
+        """
+        data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
+        if data is None:
+            return {}
+        return json.loads(data)
 
     async def _read_body(self, url: str, payload: dict) -> dict:
         """Parse the json returned by the device and extract result.
