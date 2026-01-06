@@ -202,17 +202,18 @@ class SMAWebConnect:
             return self._l10n
 
         # Try to load the requested language from package
-        self._l10n = self._load_l10n_from_package(self._lang)
+        self._l10n = await asyncio.to_thread(self._load_l10n_from_package, self._lang)
 
         # Fallback to default language if requested not found or empty
-        if not self._l10n:
-            if self._lang != DEFAULT_LANG:
-                _LOG.warning(
-                    "Language '%s' not found in package, falling back to '%s'",
-                    self._lang,
-                    DEFAULT_LANG,
-                )
-            self._l10n = self._load_l10n_from_package(DEFAULT_LANG)
+        if not self._l10n and self._lang != DEFAULT_LANG:
+            _LOG.warning(
+                "Language '%s' not found in package, falling back to '%s'",
+                self._lang,
+                DEFAULT_LANG,
+            )
+            self._l10n = await asyncio.to_thread(
+                self._load_l10n_from_package, DEFAULT_LANG
+            )
 
         return self._l10n
 
