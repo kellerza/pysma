@@ -2,6 +2,56 @@
 
 <!-- version list -->
 
+## v1.1.1 (2026-02-03)
+
+### 
+
+- ([#147](https://github.com/kellerza/pysma/pull/147),
+  [`a760854`](https://github.com/kellerza/pysma/commit/a7608548d35e21cec9c18e956ba3a08cd008c0ed))
+
+- ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- --- ([#147](https://github.com/kellerza/pysma/pull/147),
+  [`a760854`](https://github.com/kellerza/pysma/commit/a7608548d35e21cec9c18e956ba3a08cd008c0ed))
+
+- --- ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- Bump python-semantic-release/python-semantic-release
+  ([#147](https://github.com/kellerza/pysma/pull/147),
+  [`a760854`](https://github.com/kellerza/pysma/commit/a7608548d35e21cec9c18e956ba3a08cd008c0ed))
+
+- Bump the dev-deps group across 1 directory with 3 updates
+  ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- Bumps the actions-deps group with 1 update:
+  [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release).
+  ([#147](https://github.com/kellerza/pysma/pull/147),
+  [`a760854`](https://github.com/kellerza/pysma/commit/a7608548d35e21cec9c18e956ba3a08cd008c0ed))
+
+- Bumps the dev-deps group with 3 updates in the / directory:
+  [jmespath](https://github.com/jmespath/jmespath.py), [mypy](https://github.com/python/mypy) and
+  [pyproject-fmt](https://github.com/tox-dev/toml-fmt).
+  ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#147](https://github.com/kellerza/pysma/pull/147),
+  [`a760854`](https://github.com/kellerza/pysma/commit/a7608548d35e21cec9c18e956ba3a08cd008c0ed))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- Updates `mypy` from 1.19.0 to 1.19.1 ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+- Updates `pyproject-fmt` from 2.11.1 to 2.12.1 ([#149](https://github.com/kellerza/pysma/pull/149),
+  [`fab73ef`](https://github.com/kellerza/pysma/commit/fab73ef81a33fd5da897b8233a53d4b9e6cc8c23))
+
+
 ## v1.1.0 (2026-01-06)
 
 ### 
