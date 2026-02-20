@@ -2,6 +2,29 @@
 
 <!-- version list -->
 
+## v1.1.2 (2026-02-20)
+
+### 
+
+- --- ([#150](https://github.com/kellerza/pysma/pull/150),
+  [`0d724d2`](https://github.com/kellerza/pysma/commit/0d724d2820985f81ff5d6a2f62c6f3c4641b83a8))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#150](https://github.com/kellerza/pysma/pull/150),
+  [`0d724d2`](https://github.com/kellerza/pysma/commit/0d724d2820985f81ff5d6a2f62c6f3c4641b83a8))
+
+- Update uv-build requirement in the dev-deps group
+  ([#150](https://github.com/kellerza/pysma/pull/150),
+  [`0d724d2`](https://github.com/kellerza/pysma/commit/0d724d2820985f81ff5d6a2f62c6f3c4641b83a8))
+
+- Updates `uv-build` to 0.10.0 ([#150](https://github.com/kellerza/pysma/pull/150),
+  [`0d724d2`](https://github.com/kellerza/pysma/commit/0d724d2820985f81ff5d6a2f62c6f3c4641b83a8))
+
+- Updates the requirements on [uv-build](https://github.com/astral-sh/uv) to permit the latest
+  version. ([#150](https://github.com/kellerza/pysma/pull/150),
+  [`0d724d2`](https://github.com/kellerza/pysma/commit/0d724d2820985f81ff5d6a2f62c6f3c4641b83a8))
+
+
 ## v1.1.1 (2026-02-03)
 
 ### 
