@@ -1,8 +1,8 @@
 """Test pysma helpers file."""
 
-import attrs
+from dataclasses import asdict
 
-from pysma.helpers import DeviceInfo, version_int_to_string
+from pysma.helpers import DeviceInfo, ensure_string, version_int_to_string
 
 
 def test_version_int_to_string() -> None:
@@ -19,11 +19,11 @@ def test_devtype() -> None:
     res = DeviceInfo(
         serial="123456789",
         name="SMA Device",
-        type=None,
+        type=ensure_string(None),
         manufacturer="SMA",
         sw_version="1.0.0",
     )
-    assert attrs.asdict(res) == {
+    assert asdict(res) == {
         "serial": "123456789",
         "name": "SMA Device",
         "type": "",
@@ -31,12 +31,12 @@ def test_devtype() -> None:
         "sw_version": "1.0.0",
     }
 
-    res = DeviceInfo(sw_version=1)
+    res = DeviceInfo(sw_version="1")
 
-    assert attrs.asdict(res) == {
+    assert asdict(res) == {
         "serial": "9999999999",
         "name": "SMA Device",
         "type": "",
         "manufacturer": "SMA",
-        "sw_version": "0.0.0.E",
+        "sw_version": "1",
     }

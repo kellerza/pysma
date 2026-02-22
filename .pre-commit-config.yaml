@@ -1,11 +1,12 @@
 repos:
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.9.22
-    hooks:
-      - id: uv-lock
-
   - repo: local
     hooks:
+      - id: uv lock
+        name: uv sync --upgrade --all-extras
+        entry: uv lock
+        language: system
+        pass_filenames: false
+
       - id: pyproject-fmt
         name: pyproject-fmt
         entry: uv run pyproject-fmt pyproject.toml
@@ -30,11 +31,10 @@ repos:
         language: system
         pass_filenames: false
 
-      - id: mypy
-        name: mypy
-        entry: uv run mypy --config-file pyproject.toml .
+      - id: zuban
+        name: zuban
+        entry: uv run zuban check
         language: system
-        types: [python]
         pass_filenames: false
 
       - id: pytest

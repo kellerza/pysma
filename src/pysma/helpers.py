@@ -1,8 +1,7 @@
 """Helper functions for the pysma library."""
 
+from dataclasses import dataclass
 from typing import Any
-
-import attrs
 
 
 def version_int_to_string(version_integer: Any) -> str:
@@ -33,18 +32,20 @@ def ensure_string(value: Any) -> str:
     return str(value) if value is not None else ""
 
 
-@attrs.define(slots=True)
+@dataclass(slots=True)
 class DeviceInfo:
     """Device information."""
 
-    serial: str = attrs.field(converter=ensure_string, default="")
-    name: str = attrs.field(converter=ensure_string, default="")
-    type: str = attrs.field(converter=ensure_string, default="")
-    manufacturer: str = attrs.field(converter=ensure_string, default="")
-    sw_version: str = attrs.field(converter=version_int_to_string, default="")
+    serial: str = ""
+    name: str = ""
+    type: str = ""
+    manufacturer: str = ""
+    sw_version: str = ""
 
-    def __attrs_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         """Fallback values."""
-        self.manufacturer = self.manufacturer or "SMA"
-        self.name = self.name or "SMA Device"
-        self.serial = self.serial or "9999999999"
+        self.manufacturer = ensure_string(self.manufacturer) or "SMA"
+        self.name = ensure_string(self.name) or "SMA Device"
+        self.serial = ensure_string(self.serial) or "9999999999"
+        self.sw_version = ensure_string(self.sw_version) or "0.0.0.E"
+        self.type = ensure_string(self.type)

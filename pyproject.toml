@@ -19,23 +19,21 @@ classifiers = [
 ]
 dependencies = [
   "aiohttp>=3,<4",
-  "attrs",
   "jmespath",
 ]
-
 urls.Source = "https://github.com/kellerza/pysma"
 
 [dependency-groups]
 dev = [
   "aioresponses",
   "codespell",
-  "jmespath",
-  "mypy",
   "pyproject-fmt",
   "pytest",
   "pytest-aiohttp",
   "pytest-cov",
   "pytest-github-actions-annotate-failures",
+  "types-jmespath",
+  "zuban>=0.6",
 ]
 
 [tool.ruff]
@@ -70,27 +68,25 @@ lint.pylint.max-args = 7
 ignore-words-list = "hass"
 skip = "**/l10n/*.json"
 
-[tool.pytest.ini_options]
-pythonpath = [ ".", "src" ]
-testpaths = "src/tests"
-filterwarnings = "ignore:.+@coroutine.+deprecated.+"
-norecursedirs = [ ".git", "modules" ]
-log_cli = true
-log_cli_level = "DEBUG"
-asyncio_mode = "auto"
-addopts = "--cov=src --cov-report xml:cov.xml"
-asyncio_default_fixture_loop_scope = "function"
+[tool.pytest]
+ini_options.pythonpath = [ ".", "src" ]
+ini_options.testpaths = "src/tests"
+ini_options.filterwarnings = "ignore:.+@coroutine.+deprecated.+"
+ini_options.norecursedirs = [ ".git", "modules" ]
+ini_options.log_cli = true
+ini_options.log_cli_level = "DEBUG"
+ini_options.asyncio_mode = "auto"
+ini_options.addopts = "--cov=src --cov-report xml:cov.xml"
+ini_options.asyncio_default_fixture_loop_scope = "function"
 
-[tool.mypy]
-disallow_untyped_defs = true
-ignore_missing_imports = true
-warn_unused_configs = true
-exclude = [ "build" ]
-enable_error_code = [ "ignore-without-code" ]
-
-# [[tool.mypy.overrides]]
-# module = "tests.*"
+[tool.zuban]
 # disallow_untyped_defs = true
+# ignore_missing_imports = true
+# warn_unused_configs = true
+warn_unreachable = false
+
+# exclude = [ "build" ]
+# enable_error_code = [ "ignore-without-code" ]
 
 [tool.semantic_release]
 commit = true
@@ -101,11 +97,7 @@ commit_parser = "emoji"
 version_toml = [ "pyproject.toml:project.version" ]
 build_command = "pip install uv && uv build"
 commit_version_number = true
-
-[tool.semantic_release.branches.main]
-match = "main"
-
-[tool.semantic_release.commit_parser_options]
-major_tags = [ ":boom:" ]
-minor_tags = [ ":rocket:" ]
-patch_tags = [ "" ]
+branches.main.match = "main"
+commit_parser_options.major_tags = [ ":boom:" ]
+commit_parser_options.minor_tags = [ ":rocket:" ]
+commit_parser_options.patch_tags = [ "" ]

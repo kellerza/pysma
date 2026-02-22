@@ -6,10 +6,10 @@ import asyncio
 import logging
 import signal
 import sys
+from dataclasses import asdict
 from typing import Any
 
 import aiohttp
-import attrs
 
 from pysma import exceptions, sma_webconnect
 
@@ -54,7 +54,7 @@ async def main_loop(password: str, user: str, url: str) -> None:
             sensors = await VAR["sma"].get_sensors()
             device_info = await VAR["sma"].device_info()
 
-            for name, value in attrs.asdict(device_info).items():
+            for name, value in asdict(device_info).items():
                 print(f"{name:>15}{value:>25}")
 
             # enable all sensors

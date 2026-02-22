@@ -3,8 +3,8 @@
 import copy
 import logging
 from collections.abc import Iterator
+from dataclasses import dataclass, field
 
-import attrs
 import jmespath
 
 from pysma.const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
@@ -12,7 +12,7 @@ from pysma.const import JMESPATH_VAL, JMESPATH_VAL_IDX, JMESPATH_VAL_STR
 _LOG = logging.getLogger(__name__)
 
 
-@attrs.define(slots=True)
+@dataclass(slots=True)
 class Sensor:
     """pysma sensor."""
 
@@ -23,11 +23,13 @@ class Sensor:
     path: list | tuple | str | None = None
     enabled: bool = True
     l10n_translate: bool = False
-    value: str | int | float | None = attrs.field(default=None, init=False)
-    key_idx: int = attrs.field(default=0, repr=False, init=False)
+    value: str | int | float | None = field(init=False)
+    key_idx: int = field(repr=False, init=False)
 
-    def __attrs_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         """Post init Sensor."""
+        self.value = None
+        self.key_idx = 0
         key = str(self.key)
         skey = key.split("_")
         if len(skey) > 2 and skey[2].isdigit():

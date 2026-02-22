@@ -10,6 +10,7 @@ import copy
 import json
 import logging
 import pkgutil
+from dataclasses import InitVar, dataclass, field
 from typing import Any
 
 import jmespath
@@ -38,63 +39,58 @@ from .exceptions import (
     SmaConnectionException,
     SmaReadException,
 )
-from .helpers import DeviceInfo
+from .helpers import DeviceInfo, ensure_string
 from .sensor import Sensors
 
 _LOG = logging.getLogger(__name__)
 
 
+@dataclass
 class SMAWebConnect:
     """Class to connect to the SMA webconnect module and read parameters."""
 
-    _aio_session: ClientSession
-    _new_session_data: dict | None
-    _url: str
-    _sid: str | None
-    _uid: str | None
-    _lang: str
-    _l10n: dict | None
-    _devclass: str | None
-    _device_info_sensors: Sensors
+    session: ClientSession
+    """aiohttp client session"""
+    url: str
+    """Url or IP address of device"""
+    password: InitVar[str | None] = None
+    """Password to use during login."""
+    group: InitVar[str] = "user"
+    """Username to use during login."""
+    uid: str | None = None
+    """UID used for data extraction."""
+    lang: str = DEFAULT_LANG
+    """Language code of file to retrieve."""
 
-    def __init__(
+    _new_session_data: dict | None = field(init=False, repr=False)
+    _sid: str | None = field(init=False, repr=False)
+    _l10n: dict | None = field(init=False, repr=False)
+    _devclass: str | None = field(init=False, repr=False)
+    _device_info_sensors: Sensors = field(init=False, repr=False)
+
+    def __post_init__(
         self,
-        session: ClientSession,
-        url: str,
-        password: str | None = None,
-        group: str = "user",
-        uid: str | None = None,
-        lang: str = DEFAULT_LANG,
+        password: str | None,
+        group: str,
     ):
         """Init SMA connection.
-
-        Args:
-            session (ClientSession): aiohttp client session
-            url (str): Url or IP address of device
-            password (str, optional): Password to use during login. Defaults to None.
-            group (str, optional): Username to use during login. Defaults to "user".
-            uid (str, optional): uid used for data extraction. Defaults to None.
-            lang (str, optional): Language code of file to retrieve. Defaults to "en-US".
 
         Raises:
             KeyError: User was not in USERS
 
         """
         if group not in USERS:
-            raise KeyError(f"Invalid user type: {group}")
+            raise KeyError(f"Invalid user type: {group}, expected one of {list(USERS)}")
         if password is not None and len(password) > 12:
             _LOG.warning("Password should not exceed 12 characters")
-        if password is None:
-            self._new_session_data = None
-        else:
-            self._new_session_data = {"right": USERS[group], "pass": password}
-        self._url = url.rstrip("/")
-        if not url.startswith("http"):
-            self._url = "http://" + self._url
-        self._aio_session = session
+        self._new_session_data = (
+            None if password is None else {"right": USERS[group], "pass": password}
+        )
+        self.url = self.url.rstrip("/")
+        if not self.url.startswith("http"):
+            self.url = "http://" + self.url
+
         self._sid = None
-        self._uid = uid
-        self._lang = lang
         self._l10n = None
         self._devclass = None
         self._device_info_sensors = Sensors(webconnect.sensor_map[DEVICE_INFO])
@@ -125,9 +121,9 @@ class SMAWebConnect:
         max_retries = 2
         for retry in range(max_retries):
             try:
-                async with self._aio_session.request(
+                async with self.session.request(
                     method,
-                    self._url + url,
+                    self.url + url,
                     timeout=ClientTimeout(total=DEFAULT_TIMEOUT),
                     **kwargs,  # type:ignore[arg-type]
                 ) as res:
@@ -146,14 +142,14 @@ class SMAWebConnect:
                     continue
 
                 raise SmaConnectionException(
-                    f"Server at {self._url} disconnected {max_retries + 1} times."
+                    f"Server at {self.url} disconnected {max_retries + 1} times."
                 ) from exc
             except (
                 client_exceptions.ClientError,
                 asyncio.exceptions.TimeoutError,
             ) as exc:
                 raise SmaConnectionException(
-                    f"Could not connect to SMA at {self._url}: {exc}"
+                    f"Could not connect to SMA at {self.url}: {exc}"
                 ) from exc
 
         return {}
@@ -170,7 +166,9 @@ class SMAWebConnect:
         """
         return await self._request_json(hdrs.METH_GET, url)
 
-    async def _post_json(self, url: str, payload: dict | None = None) -> dict:
+    async def _post_json(
+        self, url: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Post json data for requests.
 
         Args:
@@ -202,13 +200,13 @@ class SMAWebConnect:
             return self._l10n
 
         # Try to load the requested language from package
-        self._l10n = await asyncio.to_thread(self._load_l10n_from_package, self._lang)
+        self._l10n = await asyncio.to_thread(self._load_l10n_from_package, self.lang)
 
         # Fallback to default language if requested not found or empty
-        if not self._l10n and self._lang != DEFAULT_LANG:
+        if not self._l10n and self.lang != DEFAULT_LANG:
             _LOG.warning(
                 "Language '%s' not found in package, falling back to '%s'",
-                self._lang,
+                self.lang,
                 DEFAULT_LANG,
             )
             self._l10n = await asyncio.to_thread(
@@ -233,7 +231,7 @@ class SMAWebConnect:
             return {}
         return json.loads(data)
 
-    async def _read_body(self, url: str, payload: dict) -> dict:
+    async def _read_body(self, url: str, payload: dict) -> dict[str, Any]:
         """Parse the json returned by the device and extract result.
 
         Args:
@@ -256,7 +254,7 @@ class SMAWebConnect:
         if err is not None:
             _LOG.warning(
                 "%s: error detected, closing session to force another login attempt, got: %s",
-                self._url,
+                self.url,
                 body,
             )
             await self.close_session()
@@ -266,11 +264,11 @@ class SMAWebConnect:
             _LOG.warning("No 'result' in reply from SMA, got: %s", body)
             raise SmaReadException("No 'result' in reply from SMA")
 
-        if self._uid is None:
+        if self.uid is None:
             # Get the unique ID
-            self._uid = next(iter(body["result"].keys()), None)
+            self.uid = next(iter(body["result"].keys()), None)
 
-        result_body = body["result"].pop(self._uid, None)
+        result_body = body["result"].pop(self.uid, None)
         if body != {"result": {}}:
             _LOG.warning(
                 "Unexpected body %s, extracted %s",
@@ -303,7 +301,7 @@ class SMAWebConnect:
             if err == 503:
                 _LOG.error(msg, "Max amount of sessions reached")
             elif err == 404:
-                if not self._url.startswith("https"):
+                if not self.url.startswith("https"):
                     _LOG.error(msg, "Login URL not found, try using HTTPS")
                 else:
                     _LOG.error(msg, "Login URL not found")
@@ -392,7 +390,7 @@ class SMAWebConnect:
             list: The log entries returned by the device
 
         """
-        payload = {
+        payload: dict[str, Any] = {
             "destDev": [],
             "key": log_id,
             "tStart": start,
@@ -414,11 +412,15 @@ class SMAWebConnect:
         await self.read(self._device_info_sensors)
 
         return DeviceInfo(
-            serial=self._device_info_sensors["serial_number"].value,
-            name=self._device_info_sensors["device_name"].value,
-            type=self._device_info_sensors["device_type"].value,
-            manufacturer=self._device_info_sensors["device_manufacturer"].value,
-            sw_version=self._device_info_sensors["device_sw_version"].value,
+            serial=ensure_string(self._device_info_sensors["serial_number"].value),
+            name=ensure_string(self._device_info_sensors["device_name"].value),
+            type=ensure_string(self._device_info_sensors["device_type"].value),
+            manufacturer=ensure_string(
+                self._device_info_sensors["device_manufacturer"].value
+            ),
+            sw_version=ensure_string(
+                self._device_info_sensors["device_sw_version"].value
+            ),
         )
 
     async def _read_all_sensors(self) -> dict:
