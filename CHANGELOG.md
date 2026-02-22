@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.3 (2026-02-22)
+
+### 
+
+- Dataclass & zuban type check
+  ([`3e808b8`](https://github.com/kellerza/pysma/commit/3e808b883badb87f477089f1f20265fe835d86bc))
+
+
 ## v1.1.2 (2026-02-20)
 
 ### 
