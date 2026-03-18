@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.4 (2026-03-18)
+
+### 
+
+- Deps
+  ([`63058ff`](https://github.com/kellerza/pysma/commit/63058ffe9c146051c803bbc78128d74ba0848adb))
+
+
 ## v1.1.3 (2026-02-22)
 
 ### 
