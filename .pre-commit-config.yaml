@@ -1,9 +1,9 @@
 repos:
   - repo: local
     hooks:
-      - id: uv lock
-        name: uv sync --upgrade --all-extras
-        entry: uv lock
+      - id: uv sync
+        name: uv sync
+        entry: uv sync --upgrade --all-extras
         language: system
         pass_filenames: false
 
