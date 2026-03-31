@@ -63,7 +63,7 @@ jobs:
       - name: Run tests and generate coverage report
         run: uv run pytest
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           fail_ci_if_error: true
           files: ./cov.xml
