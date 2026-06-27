@@ -11,7 +11,8 @@ URL_DASH_VALUES = "/dyn/getDashValues.json"
 
 USERS = {"user": "usr", "installer": "istl"}
 
-DEFAULT_TIMEOUT = 15
+DEFAULT_TIMEOUT = 5  # seconds, per attempt
+DEFAULT_REQUEST_RETRIES = 3  # attempts per request
 DEFAULT_LANG = "en-US"
 
 JMESPATH_VAL = "val"

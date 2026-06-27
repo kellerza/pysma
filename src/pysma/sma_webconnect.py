@@ -18,6 +18,7 @@ from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
 from .const import (
     DEFAULT_LANG,
+    DEFAULT_REQUEST_RETRIES,
     DEFAULT_TIMEOUT,
     DEVICE_INFO,
     ENERGY_METER_VIA_INVERTER,
@@ -118,7 +119,7 @@ class SMAWebConnect:
 
         _LOG.debug("Sending %s request to %s: %s", method, url, kwargs)
 
-        max_retries = 2
+        max_retries = DEFAULT_REQUEST_RETRIES
         for retry in range(max_retries):
             try:
                 async with self.session.request(
@@ -133,21 +134,15 @@ class SMAWebConnect:
             except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
                 _LOG.warning("Request to %s did not return a valid json.", url)
                 break
-            except client_exceptions.ServerDisconnectedError as exc:
-                if (retry + 1) < max_retries:
-                    # For some reason the SMA device sometimes raises a server disconnected error
-                    # If this happens we will retry up to `max_retries` times
-                    # This prevents errors in Home Assistant
-                    _LOG.debug("ServerDisconnectedError, will retry connection.")
-                    continue
-
-                raise SmaConnectionException(
-                    f"Server at {self.url} disconnected {max_retries + 1} times."
-                ) from exc
             except (
+                client_exceptions.ServerDisconnectedError,
                 client_exceptions.ClientError,
                 asyncio.exceptions.TimeoutError,
             ) as exc:
+                if (retry + 1) < max_retries:
+                    _LOG.debug("Retrying %s (%d/%d)", url, retry + 1, max_retries)
+                    continue
+
                 raise SmaConnectionException(
                     f"Could not connect to SMA at {self.url}: {exc}"
                 ) from exc
