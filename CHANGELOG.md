@@ -2,6 +2,27 @@
 
 <!-- version list -->
 
+## v1.1.6 (2026-06-30)
+
+### 
+
+- _request_json retried only ServerDisconnectedError; asyncio.TimeoutError
+  ([#164](https://github.com/kellerza/pysma/pull/164),
+  [`be86cb3`](https://github.com/kellerza/pysma/commit/be86cb36f07ad53cad66e7ed6d8937c534556b6b))
+
+- Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>
+  ([#164](https://github.com/kellerza/pysma/pull/164),
+  [`be86cb3`](https://github.com/kellerza/pysma/commit/be86cb36f07ad53cad66e7ed6d8937c534556b6b))
+
+- Measured on a real inverter on a 64-86% packet-loss link, per-poll success
+  ([#164](https://github.com/kellerza/pysma/pull/164),
+  [`be86cb3`](https://github.com/kellerza/pysma/commit/be86cb36f07ad53cad66e7ed6d8937c534556b6b))
+
+- Retry transient request failures with a short per-attempt timeout
+  ([#164](https://github.com/kellerza/pysma/pull/164),
+  [`be86cb3`](https://github.com/kellerza/pysma/commit/be86cb36f07ad53cad66e7ed6d8937c534556b6b))
+
+
 ## v1.1.5 (2026-06-30)
 
 ### 
