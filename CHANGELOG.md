@@ -2,6 +2,34 @@
 
 <!-- version list -->
 
+## v1.1.5 (2026-06-30)
+
+### 
+
+- ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+- --- ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+- Bump the actions-deps group across 1 directory with 2 updates
+  ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+- Bumps the actions-deps group with 2 updates in the / directory:
+  [actions/checkout](https://github.com/actions/checkout) and
+  [codecov/codecov-action](https://github.com/codecov/codecov-action).
+  ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+- Updates `codecov/codecov-action` from 5 to 7 ([#162](https://github.com/kellerza/pysma/pull/162),
+  [`b9ec903`](https://github.com/kellerza/pysma/commit/b9ec903d6a7a13a60848c8da099ca1eeaa31e074))
+
+
 ## v1.1.4 (2026-03-18)
 
 ### 
