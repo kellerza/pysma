@@ -14,7 +14,7 @@ from pysma.const import (
     JMESPATH_VAL_STR,
 )
 from pysma.definitions.webconnect import sensor_map
-from pysma.sensor import Sensor, Sensors
+from pysma.sensor import Sensor, Sensor_Range, Sensors
 
 _LOG = logging.getLogger(__name__)
 
@@ -104,6 +104,79 @@ class Test_sensor_class:
         assert sens.extract_value({"6100_40263F00": None}) is True
         sens = Sensor("6100_40263F00", "s_null", "kWh")
         assert sens.extract_value({"6100_40263F00": None}) is False
+
+
+class Test_sensor_range:
+    """Test Sensor.range detection, using shapes seen from a real STP5.0-3SE device."""
+
+    def test_min_max(self) -> None:
+        """A low != high pair is a genuine adjustable numeric range."""
+        sens = Sensor("6802_00874100", "s_range")
+        sens.extract_value(
+            {"6802_00874100": {"9": [{"low": 10, "high": 1000000, "val": 100}]}}
+        )
+        assert sens.range == Sensor_Range("min/max", [10, 1000000])
+        assert sens.range.contains(500)
+        assert not sens.range.contains(5)
+
+    def test_min_max_locked(self) -> None:
+        """A low == high pair is still a range, just currently fixed to one value."""
+        sens = Sensor("6800_00832A00", "inverter_power_limit")
+        sens.extract_value(
+            {"6800_00832A00": {"9": [{"low": 5000, "high": 5000, "val": 5000}]}}
+        )
+        assert sens.range == Sensor_Range("min/max", [5000, 5000])
+        assert sens.range.contains(5000)
+        assert not sens.range.contains(4999)
+
+    def test_selection(self) -> None:
+        """ValidVals with fewer selected tags than valid ones is a real selection."""
+        sens = Sensor("6800_08822800", "s_selection")
+        sens.extract_value(
+            {
+                "6800_08822800": {
+                    "9": [{"validVals": [302, 1129, 1130], "val": [{"tag": 302}]}]
+                }
+            }
+        )
+        assert sens.range == Sensor_Range("selection", [302, 1129, 1130])
+        assert sens.range.contains(1129)
+        assert not sens.range.contains(9999)
+
+    def test_capability_list_is_not_writable(self) -> None:
+        """All validVals already present in val is a capability list, not a setting."""
+        sens = Sensor("6800_08822100", "s_capabilities")
+        sens.extract_value(
+            {
+                "6800_08822100": {
+                    "9": [
+                        {
+                            "validVals": [601, 605, 606],
+                            "val": [{"tag": 601}, {"tag": 605}, {"tag": 606}],
+                        }
+                    ]
+                }
+            }
+        )
+        assert sens.range is None
+
+    def test_plain_string_is_not_writable(self) -> None:
+        """A plain val with no low/high/validVals is read-only."""
+        sens = Sensor("6800_10821E00", "device_name")
+        sens.extract_value({"6800_10821E00": {"9": [{"val": "STP5.0-3SE-40 141"}]}})
+        assert sens.range is None
+
+    def test_writable_filter(self) -> None:
+        """Sensors.writable() returns only sensors with a known range."""
+        writable = Sensor("6802_00874100", "s_range")
+        writable.extract_value(
+            {"6802_00874100": {"9": [{"low": 10, "high": 1000000, "val": 100}]}}
+        )
+        readonly = Sensor("6800_10821E00", "device_name")
+        readonly.extract_value({"6800_10821E00": {"9": [{"val": "some name"}]}})
+
+        sens = Sensors([writable, readonly])
+        assert sens.writable() == [writable]
 
 
 class Test_sensors_class:

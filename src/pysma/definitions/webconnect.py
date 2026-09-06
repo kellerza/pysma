@@ -45,6 +45,13 @@ inverter_system_init = Sensor(
     l10n_translate=True,
     enabled=False,
 )
+#: General operating mode: Stop/Start. Writable, backs Control.INVERTER_ENABLED.
+operating_mode = Sensor(
+    "6800_08831E00",
+    "operating_mode",
+    path=JMESPATHS_TAG,
+    l10n_translate=True,
+)
 #: Grid connection status
 grid_connection_status = Sensor(
     "6180_0846A700",
@@ -483,6 +490,13 @@ device_sw_version = Sensor("6800_00823400", "device_sw_version")
 # Device - Inverter
 #: Power limit of the Inverter
 inverter_power_limit = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
+#: Active power limitation. Writable, backs Control.ACTIVE_POWER_LIMITATION.
+active_power_limitation = Sensor("6802_00832B00", "active_power_limitation", unit="W")
+#: Active power limitation set at the grid connection point. Writable, backs
+#: Control.ACTIVE_POWER_LIMITATION_GCP.
+active_power_limitation_gcp = Sensor(
+    "6800_0092D700", "active_power_limitation_gcp", unit="W"
+)
 
 # System communication - Meter on Speedwire
 #: Serial number of energy meter
@@ -496,6 +510,8 @@ transformer_temp = Sensor("6102_40633400", "transformer_temp", unit="°C", facto
 
 sensor_map = {
     GENERIC_SENSORS: [
+        active_power_limitation,
+        active_power_limitation_gcp,
         battery_capacity_a,
         battery_capacity_b,
         battery_capacity_c,
@@ -556,6 +572,7 @@ sensor_map = {
         inverter_condition,
         inverter_power_limit,
         inverter_system_init,
+        operating_mode,
         operating_status_general,
         operating_status,
         power_l1,

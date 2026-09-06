@@ -11,13 +11,15 @@ import pytest
 from aioresponses import aioresponses
 
 from pysma import (
+    Control,
     SmaAuthenticationException,
     SmaConnectionException,
     SmaReadException,
     SMAWebConnect,
+    SmaWriteException,
 )
 from pysma.definitions.webconnect import device_type as device_type_sensor
-from pysma.sensor import Sensors
+from pysma.sensor import Sensor, Sensor_Range, Sensors
 
 from .conftest import (
     MOCK_DEVICE,
@@ -264,6 +266,111 @@ class Test_SMA_class:
         with pytest.raises(SmaReadException):
             await sma.read_logger(28704, 1622592000, 1622491200)
 
+    async def test_set_parameter(self, mock_aioresponse: aioresponses) -> None:
+        """Test set_parameter."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/setParamValues.json?sid=ABCD", payload={}
+        )
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        sma._sid = "ABCD"
+        sensor = Sensor("1234_00000000", "test_sensor")
+        sensor.webconnect_device_id = "1"
+
+        await sma.set_parameter(sensor, 1)
+
+    async def test_set_parameter_out_of_range(
+        self, mock_aioresponse: aioresponses
+    ) -> None:
+        """Test set_parameter with SmaWriteException when value is out of range."""
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        sensor = Sensor("1234_00000000", "test_sensor")
+        sensor.webconnect_device_id = "1"
+        sensor.range = Sensor_Range("min/max", [0, 100])
+
+        with pytest.raises(SmaWriteException):
+            await sma.set_parameter(sensor, 500)
+
+    async def test_set_parameter_no_device_id(
+        self, mock_aioresponse: aioresponses
+    ) -> None:
+        """Test set_parameter with SmaWriteException when device id is unknown."""
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        sensor = Sensor("1234_00000000", "test_sensor")
+
+        with pytest.raises(SmaWriteException):
+            await sma.set_parameter(sensor, 1)
+
+    async def test_set_parameter_error(self, mock_aioresponse: aioresponses) -> None:
+        """Test set_parameter with SmaWriteException from device error."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/setParamValues.json?sid=ABCD", payload={"err": 401}
+        )
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        sma._sid = "ABCD"
+        sensor = Sensor("1234_00000000", "test_sensor")
+        sensor.webconnect_device_id = "1"
+
+        with pytest.raises(SmaWriteException):
+            await sma.set_parameter(sensor, 1)
+
+    async def test_get_control_schema(self, mock_aioresponse: aioresponses) -> None:
+        """Test get_control_schema reflects only writable, present sensors."""
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+
+        power_limit = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
+        power_limit.range = Sensor_Range("min/max", [0, 5000])
+        sensors = Sensors([power_limit])
+        assert sma.get_control_schema(sensors, Control.POWER_LIMIT) == Sensor_Range(
+            "min/max", [0, 5000]
+        )
+        assert sma.get_control_schema(sensors, Control.INVERTER_ENABLED) is None
+        assert sma.get_control_schema(sensors, Control.ACTIVE_POWER_LIMITATION) is None
+        assert (
+            sma.get_control_schema(sensors, Control.ACTIVE_POWER_LIMITATION_GCP) is None
+        )
+
+    async def test_get_control(self, mock_aioresponse: aioresponses) -> None:
+        """Test get_control returns raw_value, not the l10n-translated value."""
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+
+        sensor = Sensor("6800_08831E00", "operating_mode", l10n_translate=True)
+        sensor.raw_value = 1467
+        sensor.value = "Start"
+        sensors = Sensors([sensor])
+
+        assert sma.get_control(sensors, Control.INVERTER_ENABLED) == 1467
+        assert sma.get_control(sensors, Control.POWER_LIMIT) is None
+
+    async def test_set_control(self, mock_aioresponse: aioresponses) -> None:
+        """Test set_control."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/setParamValues.json?sid=ABCD", payload={}
+        )
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        sma._sid = "ABCD"
+        sensor = Sensor("6800_00832A00", "inverter_power_limit", unit="W")
+        sensor.webconnect_device_id = "9"
+        sensor.range = Sensor_Range("min/max", [0, 5000])
+
+        await sma.set_control(Sensors([sensor]), Control.POWER_LIMIT, 3000)
+
+    async def test_set_control_unsupported(
+        self, mock_aioresponse: aioresponses
+    ) -> None:
+        """Test set_control with SmaWriteException when unsupported."""
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+
+        with pytest.raises(SmaWriteException):
+            await sma.set_control(Sensors(), Control.POWER_LIMIT, 3000)
+
     @patch("pysma.sma_webconnect._LOG.warning")
     async def test_new_session(
         self, mock_warn: MagicMock, mock_aioresponse: aioresponses
@@ -467,6 +574,46 @@ class Test_SMA_class:
         session = aiohttp.ClientSession()
         sma = SMAWebConnect(session, self.host, "pass")
         assert len(await sma.get_sensors()) == number_of_sensors
+
+    async def test_get_capabilities(self, mock_aioresponse: aioresponses) -> None:
+        """Test get_capabilities returns only writable, present sensors."""
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/login.json", payload={"result": {"sid": "ABCD"}}
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getAllOnlValues.json?sid=ABCD",
+            payload={"result": {"0199-xxxxx385": {}}},
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getAllParamValues.json?sid=ABCD",
+            payload={
+                "result": {
+                    "0199-xxxxx385": {
+                        "6800_00832A00": {"9": [{"low": 0, "high": 5000, "val": 3000}]}
+                    }
+                }
+            },
+        )
+        mock_aioresponse.post(
+            f"{self.base_url}/dyn/getValues.json?sid=ABCD",
+            payload={
+                "result": {
+                    "0199-xxxxx385": {
+                        "6800_00832A00": {"9": [{"low": 0, "high": 5000, "val": 3000}]}
+                    }
+                }
+            },
+        )
+
+        session = aiohttp.ClientSession()
+        sma = SMAWebConnect(session, self.host, "pass")
+        capabilities = await sma.get_capabilities()
+
+        assert [sen.name for sen in capabilities] == ["inverter_power_limit"]
+        assert sma.get_control_schema(
+            capabilities, Control.POWER_LIMIT
+        ) == Sensor_Range("min/max", [0, 5000])
+        assert sma.get_control(capabilities, Control.POWER_LIMIT) == 3000
 
     async def test_post_json(self) -> None:
         """Test _post_json method."""

@@ -97,3 +97,6 @@ ENV/
 # IDEs and OSs
 .vscode
 .DS_Store
+
+# Examples
+examples/example_dev.py

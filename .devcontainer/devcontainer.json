@@ -1,0 +1,45 @@
+{
+  "name": "${containerWorkspaceFolderBasename}",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
+  "customizations": {
+    "codespaces": {
+      "openFiles": [
+        "README.md"
+      ]
+    },
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "redhat.vscode-yaml",
+        "ryanluker.vscode-coverage-gutters"
+      ],
+      "settings": {
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        "coverage-gutters.showLineCoverage": true,
+        "coverage-gutters.xmlname": "cov.xml",
+        "python.analysis.extraPaths": [
+          "${workspaceFolder}/src"
+        ],
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "python.testing.cwd": "${workspaceFolder}",
+        "python.testing.pytestEnabled": true,
+        "ruff.importStrategy": "fromEnvironment",
+        "ruff.interpreter": [
+          ".venv/bin/python"
+        ]
+      }
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers-extra/features/uv:1": {}
+  },
+  "postCreateCommand": "uv sync --all-groups && uv run pre-commit install"
+}
