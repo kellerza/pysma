@@ -27,7 +27,7 @@ urls.Source = "https://github.com/kellerza/pysma"
 dev = [
   "aioresponses",
   "codespell",
-  "pre-commit",
+  "prek",
   "pyproject-fmt",
   "pytest",
   "pytest-aiohttp",
