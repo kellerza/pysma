@@ -266,14 +266,19 @@ class Test_SMAModbus_controls:
         assert await sma.get_control(ModbusControl.POWER_LIMIT) == 55
         assert len(writes) == 1  # NOT re-armed the second time - already enabled
 
-    async def test_reactive_power_mode_switch(
+    async def test_reactive_power_wmax_pct_lazy_enable(
         self, mock_modbus_connection, mock_modbus_unit
     ) -> None:
-        """Setting a VAr-percent control switches VArPct_Mod to match it."""
+        """set_control(REACTIVE_POWER_WMAX_PCT, ...) arms VArPct_Ena, only if needed.
+
+        VArPct_Mod is read-only and fixed at WMAX on SMA devices - no mode
+        gate to arm, unlike the earlier (incorrect) assumption that it could
+        be switched. See VArPctMod's docstring.
+        """
         (header,) = _seed_sunspec_header(
             mock_modbus_unit, [(MODEL_ID_IMMEDIATE_CONTROLS, 26)]
         )
-        mock_modbus_unit.holding[header + 21] = VArPctMod.NONE
+        mock_modbus_unit.holding[header + 21] = VArPctMod.WMAX  # fixed on real hardware
         mock_modbus_unit.holding[header + 22] = VArPctEna.DISABLED
 
         sma = SMAModbus(connection=mock_modbus_connection, sunspec_unit_id=1)
@@ -281,13 +286,30 @@ class Test_SMAModbus_controls:
         await sma.discover()
 
         await sma.set_control(ModbusControl.REACTIVE_POWER_WMAX_PCT, 30)
-        assert mock_modbus_unit.holding[header + 21] == VArPctMod.WMAX
         assert mock_modbus_unit.holding[header + 22] == VArPctEna.ENABLED
         assert await sma.get_control(ModbusControl.REACTIVE_POWER_WMAX_PCT) == 30
 
-        await sma.set_control(ModbusControl.REACTIVE_POWER_VARMAX_PCT, -20)
-        assert mock_modbus_unit.holding[header + 21] == VArPctMod.VAR_MAX
-        assert await sma.get_control(ModbusControl.REACTIVE_POWER_VARMAX_PCT) == -20
+    async def test_reactive_power_varmax_and_varaval_are_read_only(
+        self, mock_modbus_connection, mock_modbus_unit
+    ) -> None:
+        """VArMaxPct/VArAvalPct are read-only on SMA devices - get works, set doesn't."""
+        (header,) = _seed_sunspec_header(
+            mock_modbus_unit, [(MODEL_ID_IMMEDIATE_CONTROLS, 26)]
+        )
+        mock_modbus_unit.holding[header + 16] = 42  # v_ar_max_pct
+        mock_modbus_unit.holding[header + 17] = -7  # v_ar_aval_pct
+
+        sma = SMAModbus(connection=mock_modbus_connection, sunspec_unit_id=1)
+        await sma.connect()
+        await sma.discover()
+
+        assert await sma.get_control(ModbusControl.REACTIVE_POWER_VARMAX_PCT) == 42
+        assert await sma.get_control(ModbusControl.REACTIVE_POWER_VARAVAL_PCT) == -7
+
+        with pytest.raises(SmaWriteException):
+            await sma.set_control(ModbusControl.REACTIVE_POWER_VARMAX_PCT, 10)
+        with pytest.raises(SmaWriteException):
+            await sma.set_control(ModbusControl.REACTIVE_POWER_VARAVAL_PCT, 10)
 
     async def test_power_factor_scale_round_trip(
         self, mock_modbus_connection, mock_modbus_unit

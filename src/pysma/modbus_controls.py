@@ -32,15 +32,18 @@ class ModbusControl(StrEnum):
     # equivalent. Requires OutPFSet_Ena, gated lazily like POWER_LIMIT above.
 
     REACTIVE_POWER_WMAX_PCT = "reactive_power_wmax_pct"
+    # SunSpec Model 123's VArWMaxPct (% of WMax, -100 to 100; sign = the two
+    # directions of reactive power exchange). Requires VArPct_Ena, gated
+    # lazily like POWER_LIMIT/POWER_FACTOR above. No WebConnect equivalent.
+
     REACTIVE_POWER_VARMAX_PCT = "reactive_power_varmax_pct"
     REACTIVE_POWER_VARAVAL_PCT = "reactive_power_varaval_pct"
-    # SunSpec Model 123's VArWMaxPct/VArMaxPct/VArAvalPct (-100 to 100) -
-    # three different bases for the SAME underlying reactive-power setpoint;
-    # only the one currently selected by VArPct_Mod has any effect on the
-    # device. Setting any one of these three lazily switches VArPct_Mod to
-    # match it and enables VArPct_Ena (same lazy-gate pattern as above) - so
-    # setting a different one of the three later switches the mode again.
-    # No WebConnect equivalent.
+    # SunSpec Model 123's VArMaxPct/VArAvalPct - READ-ONLY on SMA devices
+    # (confirmed via SMA's own SunSpec Modbus Technical Information: the mode
+    # selector VArPct_Mod is fixed at "% of WMax" and can't be switched, so
+    # these two never actually take effect as controls). get_control() still
+    # works; set_control() cleanly raises SmaWriteException. No WebConnect
+    # equivalent.
 
     # ACTIVE_POWER_LIMITATION_GCP: intentionally not implemented. Likely
     # plant-level (Sunny Home Manager), not per-inverter Modbus. Revisit only

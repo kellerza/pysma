@@ -96,7 +96,14 @@ class OutPFSetEna(IntEnum):
 
 
 class VArPctMod(IntEnum):
-    """SunSpec Model 123 `VArPct_Mod` - selects which VAr-percent point is live."""
+    """SunSpec Model 123 `VArPct_Mod` - which VAr-percent basis is live.
+
+    Read-only on SMA devices, per SMA's own SunSpec Modbus Technical
+    Information (Table IC 123): fixed at WMAX. SMA does not let this be
+    switched to VAR_MAX/VAR_AVAL, so v_ar_max_pct/v_ar_aval_pct are read-only
+    telemetry on SMA hardware, not settable controls - only v_ar_w_max_pct
+    is ever actually live.
+    """
 
     NONE = 0
     WMAX = 1
@@ -105,14 +112,21 @@ class VArPctMod(IntEnum):
 
 
 class VArPctEna(IntEnum):
-    """SunSpec Model 123 `VArPct_Ena` point values - gates the VAr-percent points."""
+    """SunSpec Model 123 `VArPct_Ena` point values - gates `v_ar_w_max_pct`."""
 
     DISABLED = 0
     ENABLED = 1
 
 
 class _ImmediateControls(SunSpecComponent):
-    """SunSpec Model 123 - subset of fields pysma uses."""
+    """SunSpec Model 123 - subset of fields pysma uses.
+
+    Read/write access per SMA's own SunSpec Modbus Technical Information
+    (Table IC 123), not just the generic SunSpec spec: `v_ar_max_pct`,
+    `v_ar_aval_pct`, and `v_ar_pct_mod` are documented RO on SMA devices
+    (VArPct_Mod is fixed at "1 = % of WMax") - only `v_ar_w_max_pct` among
+    the three VAr-percent points is actually writable.
+    """
 
     conn = enum16(4, InverterConnAction, writable=True)
     w_max_lim_pct = uint16(5, scale_register=23, writable=True, unit="% WMax")
@@ -120,9 +134,9 @@ class _ImmediateControls(SunSpecComponent):
     out_pf_set = int16(10, scale_register=24, writable=True, unit="cos()")
     out_pf_set_ena = enum16(14, OutPFSetEna, writable=True)
     v_ar_w_max_pct = int16(15, scale_register=25, writable=True, unit="% WMax")
-    v_ar_max_pct = int16(16, scale_register=25, writable=True, unit="% VArMax")
-    v_ar_aval_pct = int16(17, scale_register=25, writable=True, unit="% VArAval")
-    v_ar_pct_mod = enum16(21, VArPctMod, writable=True)
+    v_ar_max_pct = int16(16, scale_register=25, unit="% VArMax")  # RO on SMA devices
+    v_ar_aval_pct = int16(17, scale_register=25, unit="% VArAval")  # RO on SMA devices
+    v_ar_pct_mod = enum16(21, VArPctMod)  # RO on SMA devices, fixed at WMAX
     v_ar_pct_ena = enum16(22, VArPctEna, writable=True)
     _w_max_lim_pct_sf = sunssf(23)
     _out_pf_set_sf = sunssf(24)
@@ -190,28 +204,20 @@ _CONTROL_SPECS: dict[ModbusControl, _ControlSpec] = {
         _ImmediateControls,
         "v_ar_w_max_pct",
         (-100, 100),
-        gates=(
-            ("v_ar_pct_mod", VArPctMod.WMAX),
-            ("v_ar_pct_ena", VArPctEna.ENABLED),
-        ),
+        # No v_ar_pct_mod gate: it's read-only and fixed at WMAX on SMA
+        # devices (see VArPctMod's docstring) - there is nothing to arm.
+        gates=(("v_ar_pct_ena", VArPctEna.ENABLED),),
     ),
+    # REACTIVE_POWER_VARMAX_PCT/VARAVAL_PCT: read-only telemetry on SMA
+    # devices (see _ImmediateControls' docstring) - no gates, since there is
+    # nothing to arm for a control that can never be written. get_control()
+    # still works; set_control() cleanly raises SmaWriteException because
+    # the underlying field itself is not writable.
     ModbusControl.REACTIVE_POWER_VARMAX_PCT: _ControlSpec(
-        _ImmediateControls,
-        "v_ar_max_pct",
-        (-100, 100),
-        gates=(
-            ("v_ar_pct_mod", VArPctMod.VAR_MAX),
-            ("v_ar_pct_ena", VArPctEna.ENABLED),
-        ),
+        _ImmediateControls, "v_ar_max_pct", (-100, 100)
     ),
     ModbusControl.REACTIVE_POWER_VARAVAL_PCT: _ControlSpec(
-        _ImmediateControls,
-        "v_ar_aval_pct",
-        (-100, 100),
-        gates=(
-            ("v_ar_pct_mod", VArPctMod.VAR_AVAL),
-            ("v_ar_pct_ena", VArPctEna.ENABLED),
-        ),
+        _ImmediateControls, "v_ar_aval_pct", (-100, 100)
     ),
     ModbusControl.STORAGE_CHARGE_RATE: _ControlSpec(
         _StorageControls, "in_w_rte", (0, 100)
