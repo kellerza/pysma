@@ -6,13 +6,19 @@ from pysma.exceptions import (
     SmaConnectionException,
     SmaException,
     SmaReadException,
+    SmaSunSpecException,
+    SmaTimeoutException,
     SmaWriteException,
 )
+from pysma.modbus_controls import ModbusControl
 from pysma.sensor import Sensor, Sensors
+from pysma.sma_modbus import SMAModbus
 from pysma.sma_webconnect import SMAWebConnect
 
 __all__ = [
     "Control",
+    "ModbusControl",
+    "SMAModbus",
     "SMAWebConnect",
     "Sensor",
     "Sensors",
@@ -20,5 +26,7 @@ __all__ = [
     "SmaConnectionException",
     "SmaException",
     "SmaReadException",
+    "SmaSunSpecException",
+    "SmaTimeoutException",
     "SmaWriteException",
 ]

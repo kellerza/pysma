@@ -19,3 +19,11 @@ class SmaWriteException(SmaException):
 
 class SmaConnectionException(SmaException):
     """An error occurred in the connection with the device."""
+
+
+class SmaTimeoutException(SmaException):
+    """A timeout occurred while communicating with the device."""
+
+
+class SmaSunSpecException(SmaException):
+    """An error occurred while communicating with the SunSpec model."""

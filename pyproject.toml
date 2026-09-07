@@ -20,6 +20,7 @@ classifiers = [
 dependencies = [
   "aiohttp>=3,<4",
   "jmespath",
+  "modbus-connection[tmodbus]",
 ]
 urls.Source = "https://github.com/kellerza/pysma"
 
