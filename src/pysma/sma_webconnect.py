@@ -31,17 +31,20 @@ from .const import (
     URL_LOGGER,
     URL_LOGIN,
     URL_LOGOUT,
+    URL_SETPARAMETER,
     URL_VALUES,
     USERS,
 )
+from .controls import Control
 from .definitions import webconnect
 from .exceptions import (
     SmaAuthenticationException,
     SmaConnectionException,
     SmaReadException,
+    SmaWriteException,
 )
 from .helpers import DeviceInfo, ensure_string
-from .sensor import Sensors
+from .sensor import Sensor, Sensor_Range, Sensors
 
 _LOG = logging.getLogger(__name__)
 
@@ -396,6 +399,127 @@ class SMAWebConnect:
             raise SmaReadException("List of log entries expected.")
 
         return result_body
+
+    async def set_parameter(self, sensor: Sensor, value: int) -> None:
+        """Set a writable parameter on the device.
+
+        The sensor must have been populated by a prior read()/get_sensors() call so
+        its webconnect_device_id is known.
+
+        Args:
+            sensor (Sensor): Sensor identifying the parameter to write.
+            value (int): New value to write.
+
+        Raises:
+            SmaWriteException: The device id for this sensor is unknown, the value
+                is outside the sensor's valid range, or the device rejected the write.
+
+        """
+        if sensor.webconnect_device_id is None:
+            raise SmaWriteException(
+                f"Cannot set {sensor.name} ({sensor.key}): device id is unknown, "
+                "read the sensor at least once before writing to it"
+            )
+
+        if sensor.range is not None and not sensor.range.contains(value):
+            raise SmaWriteException(
+                f"Cannot set {sensor.name} ({sensor.key}): {value} is not a valid "
+                f"value ({sensor.range.typ}: {sensor.range.values})"
+            )
+
+        payload = {
+            "destDev": [],
+            "values": [{sensor.key: {sensor.webconnect_device_id: [value]}}],
+        }
+        body = await self._post_json(URL_SETPARAMETER, payload)
+
+        err = body.get("err")
+        if err is not None:
+            raise SmaWriteException(
+                f"Could not set {sensor.name} ({sensor.key}): {err}"
+            )
+
+    async def get_capabilities(self) -> Sensors:
+        """Discover and read the sensors that are writable on this device.
+
+        Combines get_sensors() and read() so each sensor's range is populated,
+        then filters down to the writable ones. Callers (e.g. Home Assistant) can
+        use this at setup time to know which Controls are available, without
+        needing to know anything about the underlying WebConnect parameters.
+
+        Returns:
+            Sensors: The sensors present on this device that can be set_parameter()'d.
+
+        """
+        sensors = await self.get_sensors()
+        await self.read(sensors)
+        return Sensors(sensors.writable())
+
+    def get_control_schema(
+        self, sensors: Sensors, control: Control
+    ) -> Sensor_Range | None:
+        """Return what values are allowed for control on this device.
+
+        Args:
+            sensors (Sensors): A Sensors collection that has been read, e.g. from
+                get_capabilities().
+            control (Control): The control to look up.
+
+        Returns:
+            Sensor_Range | None: The valid range/values for control, or None if
+                this device does not support it (sensor missing or not writable).
+
+        """
+        try:
+            sensor = sensors[control.value]
+        except KeyError:
+            return None
+        return sensor.range
+
+    def get_control(
+        self, sensors: Sensors, control: Control
+    ) -> str | int | float | None:
+        """Return the current value of control, or None if unsupported.
+
+        This is control's raw_value, not its (possibly l10n-translated) value -
+        it is always a valid input to set_control() for the same control.
+
+        Args:
+            sensors (Sensors): A Sensors collection that has been read, e.g. from
+                get_capabilities().
+            control (Control): The control to look up.
+
+        Returns:
+            str | int | float | None: The current raw value, or None if this
+                device does not support control.
+
+        """
+        try:
+            sensor = sensors[control.value]
+        except KeyError:
+            return None
+        return sensor.raw_value
+
+    async def set_control(self, sensors: Sensors, control: Control, value: int) -> None:
+        """Set control to value.
+
+        Args:
+            sensors (Sensors): A Sensors collection that has been read, containing
+                the sensor backing control.
+            control (Control): The control to set.
+            value (int): New value. Must be within get_control_schema()'s range.
+
+        Raises:
+            SmaWriteException: This device does not support control, or value is
+                outside its supported range.
+
+        """
+        try:
+            sensor = sensors[control.value]
+        except KeyError as exc:
+            raise SmaWriteException(f"This device does not support {control}") from exc
+
+        await self.set_parameter(sensor, value)
 
     async def device_info(self) -> DeviceInfo:
         """Read device info and return the results.

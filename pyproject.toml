@@ -20,6 +20,7 @@ classifiers = [
 dependencies = [
   "aiohttp>=3,<4",
   "jmespath",
+  "modbus-connection[tmodbus]",
 ]
 urls.Source = "https://github.com/kellerza/pysma"
 
@@ -27,11 +28,13 @@ urls.Source = "https://github.com/kellerza/pysma"
 dev = [
   "aioresponses",
   "codespell",
+  "prek",
   "pyproject-fmt",
   "pytest",
   "pytest-aiohttp",
   "pytest-cov",
   "pytest-github-actions-annotate-failures",
+  "ruff",
   "types-jmespath",
   "zuban",
 ]
@@ -68,15 +71,29 @@ ignore-words-list = "hass"
 skip = "**/l10n/*.json"
 
 [tool.pytest]
-ini_options.pythonpath = [ ".", "src" ]
 ini_options.testpaths = "src/tests"
-ini_options.filterwarnings = "ignore:.+@coroutine.+deprecated.+"
+ini_options.pythonpath = [ ".", "src" ]
 ini_options.norecursedirs = [ ".git", "modules" ]
+ini_options.addopts = "--cov=src --cov-report xml:cov.xml"
+ini_options.filterwarnings = "ignore:.+@coroutine.+deprecated.+"
 ini_options.log_cli = true
 ini_options.log_cli_level = "DEBUG"
-ini_options.asyncio_mode = "auto"
-ini_options.addopts = "--cov=src --cov-report xml:cov.xml"
 ini_options.asyncio_default_fixture_loop_scope = "function"
+ini_options.asyncio_mode = "auto"
+
+[tool.semantic_release]
+# https://python-semantic-release.readthedocs.io/en/latest/configuration.html#version-toml
+version_toml = [ "pyproject.toml:project.version" ]
+build_command = "pip install uv && uv build"
+commit_parser = "emoji"
+commit_parser_options.major_tags = [ ":boom:" ]
+commit_parser_options.minor_tags = [ ":rocket:" ]
+commit_parser_options.patch_tags = [ "" ]
+branches.main.match = "main"
+commit = true
+commit_version_number = true
+tag = true
+vcs_release = true
 
 [tool.zuban]
 # disallow_untyped_defs = true
@@ -86,16 +103,3 @@ warn_unreachable = false
 
 # exclude = [ "build" ]
 # enable_error_code = [ "ignore-without-code" ]
-[tool.semantic_release]
-commit = true
-tag = true
-vcs_release = true
-commit_parser = "emoji"
-# https://python-semantic-release.readthedocs.io/en/latest/configuration.html#version-toml
-version_toml = [ "pyproject.toml:project.version" ]
-build_command = "pip install uv && uv build"
-commit_version_number = true
-branches.main.match = "main"
-commit_parser_options.major_tags = [ ":boom:" ]
-commit_parser_options.minor_tags = [ ":rocket:" ]
-commit_parser_options.patch_tags = [ "" ]

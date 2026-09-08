@@ -13,5 +13,17 @@ class SmaReadException(SmaException):
     """Reading the data did not return an expected result."""
 
 
+class SmaWriteException(SmaException):
+    """Writing the data did not return an expected result."""
+
+
 class SmaConnectionException(SmaException):
     """An error occurred in the connection with the device."""
+
+
+class SmaTimeoutException(SmaException):
+    """A timeout occurred while communicating with the device."""
+
+
+class SmaSunSpecException(SmaException):
+    """An error occurred while communicating with the SunSpec model."""

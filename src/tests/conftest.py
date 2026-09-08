@@ -1,8 +1,39 @@
 """Tests for pysma."""
 
+import inspect
+from typing import Any
+from unittest.mock import Mock
+
 import pytest
+from aiohttp.client_reqrep import ClientResponse
 
 from pysma.helpers import DeviceInfo
+
+
+def _patch_aioresponses_stream_writer() -> None:
+    """Work around aioresponses not passing aiohttp>=3.14's required stream_writer.
+
+    aiohttp 3.14 added a required keyword-only `stream_writer` argument to
+    ClientResponse.__init__, which aioresponses (as of 0.7.9) does not pass,
+    breaking every mocked response with:
+        TypeError: ClientResponse.__init__() missing 1 required keyword-only
+        argument: 'stream_writer'
+    aiohttp only reads `stream_writer.output_size`, so a stub with that
+    attribute is sufficient. See https://github.com/pnuckowski/aioresponses/pull/288
+    (not yet released). Remove this once aioresponses ships a fix.
+    """
+    original_init = ClientResponse.__init__
+    if "stream_writer" not in inspect.signature(original_init).parameters:
+        return  # older aiohttp without this requirement, nothing to patch
+
+    def patched_init(self: ClientResponse, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("stream_writer", Mock(output_size=0))
+        original_init(self, *args, **kwargs)
+
+    ClientResponse.__init__ = patched_init  # type: ignore[method-assign]
+
+
+_patch_aioresponses_stream_writer()
 
 MOCK_DEVICE = DeviceInfo(
     manufacturer="SMA",
@@ -2041,7 +2072,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        37,
+        39,
         id="SB 3.6, no energy meter, no optimizers",
     ),
     pytest.param(
@@ -4070,7 +4101,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        68,
+        70,
         id="STP 3.0, no energy meter, with 8 optimizers",
     ),
     pytest.param(
@@ -4593,7 +4624,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        48,
+        50,
         id="STP 10.0 SE, no energy meter, no optimizers",
     ),
     pytest.param(
@@ -5626,7 +5657,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        69,
+        72,
         id="STP 6.0 SE, with energy meter, no optimizers",
     ),
     pytest.param(
@@ -6151,7 +6182,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        67,
+        69,
         id="STP 10.0 SE, with energy meter, no optimizers",
     ),
     pytest.param(
@@ -6737,7 +6768,7 @@ SMA_TESTDATA = [
                 }
             }
         },
-        32,
+        35,
         id="Sunny Boy 1.5, no energy meter, no optimizers",
     ),
 ]

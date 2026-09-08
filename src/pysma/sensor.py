@@ -13,6 +13,20 @@ _LOG = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
+class Sensor_Range:
+    """Valid range or set of values for a writable Sensor parameter."""
+
+    typ: str
+    values: list[int]
+
+    def contains(self, value: int) -> bool:
+        """Check whether value is a valid value for this range."""
+        if self.typ == "min/max":
+            return self.values[0] <= value <= self.values[1]
+        return value in self.values
+
+
+@dataclass(slots=True)
 class Sensor:
     """pysma sensor."""
 
@@ -25,6 +39,10 @@ class Sensor:
     l10n_translate: bool = False
     value: str | int | float | None = field(init=False)
     key_idx: int = field(repr=False, init=False)
+    webconnect_device_id: str | None = field(default=None, init=False, repr=False)
+    range: Sensor_Range | None = field(default=None, init=False, repr=False)
+    raw_value: str | int | float | None = field(default=None, init=False, repr=False)
+    """value before l10n translation - always a valid input to set_parameter()."""
 
     def __post_init__(self) -> None:
         """Post init Sensor."""
@@ -53,7 +71,13 @@ class Sensor:
             _LOG.warning("Sensor %s: Not found in %s", self.key, result_body)
             res = self.value
             self.value = None
+            self.raw_value = None
             return self.value != res
+
+        raw = res
+        if isinstance(raw, dict) and len(raw) == 1:
+            self.webconnect_device_id = next(iter(raw))
+        self.range = self._extract_range(raw)
 
         if not isinstance(self.path, str):
             # Try different methods until we can decode...
@@ -95,6 +119,8 @@ class Sensor:
         if isinstance(res, (int, float)) and self.factor:
             res /= self.factor
 
+        self.raw_value = res
+
         if self.l10n_translate and isinstance(l10n, dict):
             res = l10n.get(
                 str(res),
@@ -105,6 +131,29 @@ class Sensor:
             return res != self.value
         finally:
             self.value = res
+
+    @staticmethod
+    def _extract_range(raw: object) -> "Sensor_Range | None":
+        """Determine the valid range/values for a parameter from its raw response."""
+        if not isinstance(raw, dict):
+            return None
+
+        low = jmespath.search("* | [0][0].low", raw)
+        high = jmespath.search("* | [0][0].high", raw)
+        if low is not None and high is not None:
+            return Sensor_Range("min/max", [low, high])
+
+        valid_vals = jmespath.search("* | [0][0].validVals", raw)
+        if valid_vals is None:
+            return None
+
+        # If every valid value is already present in val, this is a capability
+        # list (e.g. all supported grid-guard codes), not a live selection.
+        val = jmespath.search("* | [0][0].val", raw)
+        if isinstance(val, list) and len(val) >= len(valid_vals):
+            return None
+
+        return Sensor_Range("selection", valid_vals)
 
 
 class Sensors:
@@ -178,6 +227,10 @@ class Sensors:
 
         """
         return self.__s.__iter__()
+
+    def writable(self) -> list[Sensor]:
+        """Return the sensors that carry a valid range, i.e. can be set_parameter()'d."""
+        return [sen for sen in self.__s if sen.range is not None]
 
     def add(self, sensor: Sensor | list[Sensor]) -> None:
         """Add a sensor, logs warning if it exists.
