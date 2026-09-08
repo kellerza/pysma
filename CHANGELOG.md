@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.8 (2026-09-08)
+
+### 
+
+- Generic sensors #170
+  ([`5fbca10`](https://github.com/kellerza/pysma/commit/5fbca10e8de03b4b3632d9652752c1410641ab97))
+
+
 ## v1.1.7 (2026-09-08)
 
 ### 
