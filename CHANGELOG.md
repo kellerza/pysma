@@ -2,6 +2,106 @@
 
 <!-- version list -->
 
+## v1.1.7 (2026-09-08)
+
+### 
+
+- ([#171](https://github.com/kellerza/pysma/pull/171),
+  [`9e3dbc5`](https://github.com/kellerza/pysma/commit/9e3dbc58e2e0ede8aef666c9dc4d7ed81572cab7))
+
+- ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+- --- ([#171](https://github.com/kellerza/pysma/pull/171),
+  [`9e3dbc5`](https://github.com/kellerza/pysma/commit/9e3dbc58e2e0ede8aef666c9dc4d7ed81572cab7))
+
+- --- ([#155](https://github.com/kellerza/pysma/pull/155),
+  [`f019588`](https://github.com/kellerza/pysma/commit/f019588cc5096bd4185a14f032c472bfa6c0c288))
+
+- --- ([#159](https://github.com/kellerza/pysma/pull/159),
+  [`fcee0a7`](https://github.com/kellerza/pysma/commit/fcee0a737dd00527e6ed5d289213244570fb7679))
+
+- --- ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+- --- ([#168](https://github.com/kellerza/pysma/pull/168),
+  [`4f58d12`](https://github.com/kellerza/pysma/commit/4f58d12e14d79e51d745002f5bbcaacca50834ed))
+
+- Bump aiohttp from 3.13.3 to 3.14.3 ([#168](https://github.com/kellerza/pysma/pull/168),
+  [`4f58d12`](https://github.com/kellerza/pysma/commit/4f58d12e14d79e51d745002f5bbcaacca50834ed))
+
+- Bump idna from 3.11 to 3.15 ([#159](https://github.com/kellerza/pysma/pull/159),
+  [`fcee0a7`](https://github.com/kellerza/pysma/commit/fcee0a737dd00527e6ed5d289213244570fb7679))
+
+- Bump pygments from 2.19.2 to 2.20.0 ([#155](https://github.com/kellerza/pysma/pull/155),
+  [`f019588`](https://github.com/kellerza/pysma/commit/f019588cc5096bd4185a14f032c472bfa6c0c288))
+
+- Bump python-semantic-release/python-semantic-release
+  ([#171](https://github.com/kellerza/pysma/pull/171),
+  [`9e3dbc5`](https://github.com/kellerza/pysma/commit/9e3dbc58e2e0ede8aef666c9dc4d7ed81572cab7))
+
+- Bump the actions-deps group across 1 directory with 2 updates
+  ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+- Bumps [aiohttp](https://github.com/aio-libs/aiohttp) from 3.13.3 to 3.14.3.
+  ([#168](https://github.com/kellerza/pysma/pull/168),
+  [`4f58d12`](https://github.com/kellerza/pysma/commit/4f58d12e14d79e51d745002f5bbcaacca50834ed))
+
+- Bumps [idna](https://github.com/kjd/idna) from 3.11 to 3.15.
+  ([#159](https://github.com/kellerza/pysma/pull/159),
+  [`fcee0a7`](https://github.com/kellerza/pysma/commit/fcee0a737dd00527e6ed5d289213244570fb7679))
+
+- Bumps [pygments](https://github.com/pygments/pygments) from 2.19.2 to 2.20.0.
+  ([#155](https://github.com/kellerza/pysma/pull/155),
+  [`f019588`](https://github.com/kellerza/pysma/commit/f019588cc5096bd4185a14f032c472bfa6c0c288))
+
+- Bumps the actions-deps group with 1 update:
+  [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release).
+  ([#171](https://github.com/kellerza/pysma/pull/171),
+  [`9e3dbc5`](https://github.com/kellerza/pysma/commit/9e3dbc58e2e0ede8aef666c9dc4d7ed81572cab7))
+
+- Bumps the actions-deps group with 2 updates in the / directory:
+  [actions/setup-python](https://github.com/actions/setup-python) and
+  [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release).
+  ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+- Co-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>
+  ([#169](https://github.com/kellerza/pysma/pull/169),
+  [`4eb7a6e`](https://github.com/kellerza/pysma/commit/4eb7a6e465c22ea5a36e5cbd40796ecf816790c3))
+
+- Expand WebConnect/Modbus ([#173](https://github.com/kellerza/pysma/pull/173),
+  [`71214c9`](https://github.com/kellerza/pysma/commit/71214c910a80c06f2bd843ae362a97c9adb64797))
+
+- Limit Codecov upload to main ([#169](https://github.com/kellerza/pysma/pull/169),
+  [`4eb7a6e`](https://github.com/kellerza/pysma/commit/4eb7a6e465c22ea5a36e5cbd40796ecf816790c3))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#171](https://github.com/kellerza/pysma/pull/171),
+  [`9e3dbc5`](https://github.com/kellerza/pysma/commit/9e3dbc58e2e0ede8aef666c9dc4d7ed81572cab7))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#155](https://github.com/kellerza/pysma/pull/155),
+  [`f019588`](https://github.com/kellerza/pysma/commit/f019588cc5096bd4185a14f032c472bfa6c0c288))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#159](https://github.com/kellerza/pysma/pull/159),
+  [`fcee0a7`](https://github.com/kellerza/pysma/commit/fcee0a737dd00527e6ed5d289213244570fb7679))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+- Signed-off-by: dependabot[bot] <support@github.com>
+  ([#168](https://github.com/kellerza/pysma/pull/168),
+  [`4f58d12`](https://github.com/kellerza/pysma/commit/4f58d12e14d79e51d745002f5bbcaacca50834ed))
+
+- Updates `python-semantic-release/python-semantic-release` from 10.5.3 to 10.6.1
+  ([#166](https://github.com/kellerza/pysma/pull/166),
+  [`7336b17`](https://github.com/kellerza/pysma/commit/7336b1748e15827afdf759168e1999379fc09b8d))
+
+
 ## v1.1.6 (2026-06-30)
 
 ### 
