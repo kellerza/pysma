@@ -642,7 +642,7 @@ class Test_SMA_class:
                 headers={"content-type": "application/json"},
             )
 
-    @patch("pysma.sma_webconnect._LOG.warning")
+    @patch("pysma.helpers._LOG.warning")
     @patch("pkgutil.get_data")
     async def test_unsupported_lang(
         self,

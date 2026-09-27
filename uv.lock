@@ -662,7 +662,7 @@ wheels = [
 
 [[package]]
 name = "pysma"
-version = "1.1.6"
+version = "1.1.8"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

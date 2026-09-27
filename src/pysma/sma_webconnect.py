@@ -9,7 +9,6 @@ import asyncio
 import copy
 import json
 import logging
-import pkgutil
 from dataclasses import InitVar, dataclass, field
 from typing import Any
 
@@ -43,7 +42,7 @@ from .exceptions import (
     SmaReadException,
     SmaWriteException,
 )
-from .helpers import DeviceInfo, ensure_string
+from .helpers import DeviceInfo, ensure_string, load_l10n
 from .sensor import Sensor, Sensor_Range, Sensors
 
 _LOG = logging.getLogger(__name__)
@@ -194,40 +193,9 @@ class SMAWebConnect:
             dict: Dictionary containing translation keys and their localized strings.
 
         """
-        if self._l10n is not None:
-            return self._l10n
-
-        # Try to load the requested language from package
-        self._l10n = await asyncio.to_thread(self._load_l10n_from_package, self.lang)
-
-        # Fallback to default language if requested not found or empty
-        if not self._l10n and self.lang != DEFAULT_LANG:
-            _LOG.warning(
-                "Language '%s' not found in package, falling back to '%s'",
-                self.lang,
-                DEFAULT_LANG,
-            )
-            self._l10n = await asyncio.to_thread(
-                self._load_l10n_from_package, DEFAULT_LANG
-            )
-
+        if self._l10n is None:
+            self._l10n = await asyncio.to_thread(load_l10n, self.lang)
         return self._l10n
-
-    def _load_l10n_from_package(self, locale: str) -> dict:
-        """Load JSON translation file from package resources.
-
-        Args:
-            locale (str): Locale code, e.g., "en-US" or "de-DE".
-
-        Returns:
-            dict: Dictionary containing translation keys and localized strings. Empty dict if file
-            not found or cannot be loaded.
-
-        """
-        data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
-        if data is None:
-            return {}
-        return json.loads(data)
 
     async def _read_body(self, url: str, payload: dict) -> dict[str, Any]:
         """Parse the json returned by the device and extract result.
