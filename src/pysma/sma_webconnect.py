@@ -43,7 +43,7 @@ from .exceptions import (
     SmaReadException,
     SmaWriteException,
 )
-from .helpers import DeviceInfo, ensure_string
+from .helpers import DeviceInfo, ensure_string, version_int_to_string
 from .sensor import Sensor, Sensor_Range, Sensors
 
 _LOG = logging.getLogger(__name__)
@@ -537,7 +537,7 @@ class SMAWebConnect:
             manufacturer=ensure_string(
                 self._device_info_sensors["device_manufacturer"].value
             ),
-            sw_version=ensure_string(
+            sw_version=version_int_to_string(
                 self._device_info_sensors["device_sw_version"].value
             ),
         )

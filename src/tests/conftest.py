@@ -40,7 +40,7 @@ MOCK_DEVICE = DeviceInfo(
     name="SMA Device Name",
     type="Sunny Boy 3.6",
     serial="123456789",
-    sw_version="",
+    sw_version="4.8.39.R",
 )
 MOCK_L10N = {"461": "SMA", "9402": "Sunny Boy 3.6"}
 
