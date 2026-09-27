@@ -111,6 +111,19 @@ class Sensor:
             _LOG.debug("Sensor %s: No successful value decoded yet: %s", self.name, res)
             res = None
 
+        return self.set_raw_value(res, l10n)
+
+    def set_raw_value(self, res: str | float | None, l10n: dict | None = None) -> bool:
+        """Scale and translate a raw device value, then store it.
+
+        Args:
+            res: raw value as sent by the device, before factor and l10n
+            l10n (dict, optional): Dictionary to translate tags to strings. Defaults to None.
+
+        Returns:
+            bool: The value changed
+
+        """
         # SMA will return None instead of 0 if if no power is generated
         # For "W" sensors we will set it to 0 by default.
         if res is None and self.unit == "W":

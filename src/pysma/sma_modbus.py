@@ -43,12 +43,13 @@ from enum import IntEnum, IntFlag
 from typing import Any, Self
 
 from modbus_connection import (
+    IllegalDataAddressError,
     ModbusError,
     ModbusExceptionError,
     ModbusTcpParams,
     ModbusTimeoutError,
 )
-from modbus_connection.model import Component, uint32
+from modbus_connection.model import Component, ManualComponent, uint32
 from modbus_connection.model.sunspec import (
     SunSpecComponent,
     bitfield16,
@@ -62,6 +63,8 @@ from modbus_connection.model.sunspec.errors import SunSpecError
 from modbus_connection.tmodbus import ModbusConnection
 
 from .const import DEFAULT_LANG
+from .definitions import modbus as modbus_defs
+from .definitions.modbus import NAN_TAG, NAN_U32
 from .exceptions import (
     SmaConnectionException,
     SmaReadException,
@@ -71,6 +74,7 @@ from .exceptions import (
 )
 from .helpers import DeviceInfo, load_l10n, version_int_to_string
 from .modbus_controls import ModbusControl
+from .sensor import Sensors
 
 MODEL_ID_IMMEDIATE_CONTROLS = 123
 MODEL_ID_STORAGE_CONTROLS = 124
@@ -81,9 +85,6 @@ SUNSPEC_UNIT_ID_OFFSET = 123
 #: SMA's own default unit ID for the proprietary profile (and thus, + 123,
 #: for SunSpec) - see module docstring.
 DEFAULT_SMA_UNIT_ID = 3
-
-NAN_U32 = 0xFFFFFFFF
-NAN_TAG = 0xFFFFFD
 
 
 class InverterConnAction(IntEnum):
@@ -292,6 +293,7 @@ class SMAModbus:
     _close_connection: bool = field(default=False, init=False, repr=False)
     _unit: Any = field(default=None, init=False, repr=False)
     _sma_unit: Any = field(default=None, init=False, repr=False)
+    _l10n: dict | None = field(default=None, init=False, repr=False)
     _immediate: _ImmediateControls | None = field(default=None, init=False, repr=False)
     _storage: _StorageControls | None = field(default=None, init=False, repr=False)
 
@@ -354,13 +356,87 @@ class SMAModbus:
         if label.serial is None:
             raise SmaReadException(f"No device info on unit ID {self.sma_unit_id}")
 
-        l10n = await asyncio.to_thread(load_l10n, self.lang)
+        l10n = await self._read_l10n()
         return DeviceInfo(
             serial=str(label.serial),
             type=l10n.get(str(label.model), ""),
             manufacturer=l10n.get(str(label.vendor), ""),
             sw_version=version_int_to_string(label.sw_version),
         )
+
+    async def get_sensors(self) -> Sensors:
+        """Get the sensors whose register exists on this device.
+
+        Like SMAWebConnect.get_sensors(), a sensor is included when the device
+        knows it, even if it has no value right now (NaN). A register outside
+        the device's profile is answered with ILLEGAL_DATA_ADDRESS and skipped.
+        Reads each register on its own, so call it once at setup.
+
+        Raises:
+            SmaReadException: the device rejected a read for another reason,
+                e.g. it was busy.
+            SmaTimeoutException: the device did not answer in time.
+            SmaConnectionException: the device could not be reached.
+
+        """
+        device_sensors = Sensors()
+        for sensor, register in modbus_defs.sensor_map:
+            try:
+                await self._sma_unit.read_input_registers(
+                    register.address, register.count
+                )
+            except IllegalDataAddressError:
+                continue
+            except ModbusExceptionError as exc:
+                raise SmaReadException(str(exc)) from exc
+            except ModbusTimeoutError as exc:
+                raise SmaTimeoutException(str(exc)) from exc
+            except ModbusError as exc:
+                raise SmaConnectionException(str(exc)) from exc
+            device_sensors.add(sensor)
+        return device_sensors
+
+    async def read(self, sensors: Sensors) -> bool:
+        """Read the enabled sensors that have a Modbus register.
+
+        Sensors without a register are left untouched, so another transport
+        can fill them.
+
+        Raises:
+            SmaReadException: the device rejected a read.
+            SmaTimeoutException: the device did not answer in time.
+            SmaConnectionException: the device could not be reached.
+
+        Returns:
+            bool: reading was successful
+
+        """
+        component = ManualComponent(self._sma_unit)
+        targets = []
+        for sensor in sensors:
+            if sensor.enabled and (register := modbus_defs.registers.get(sensor.name)):
+                component.add(sensor.name, register.field(), space="input")
+                targets.append(sensor)
+        if not targets:
+            return True
+
+        try:
+            await component.async_update()
+        except ModbusExceptionError as exc:
+            raise SmaReadException(str(exc)) from exc
+        except ModbusTimeoutError as exc:
+            raise SmaTimeoutException(str(exc)) from exc
+        except ModbusError as exc:
+            raise SmaConnectionException(str(exc)) from exc
+        l10n = await self._read_l10n()
+        for sensor in targets:
+            sensor.set_raw_value(component.get(sensor.name), l10n)
+        return True
+
+    async def _read_l10n(self) -> dict:
+        if self._l10n is None:
+            self._l10n = await asyncio.to_thread(load_l10n, self.lang)
+        return self._l10n
 
     async def discover(self, base_address: int = 40000) -> None:
         """Probe for supported SunSpec models. Idempotent; safe to re-call.

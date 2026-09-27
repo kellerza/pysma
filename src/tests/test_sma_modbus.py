@@ -6,6 +6,7 @@ from modbus_connection import (
     ModbusConnectionError,
     ModbusError,
     ModbusTimeoutError,
+    ServerDeviceBusyError,
 )
 
 from pysma import (
@@ -16,13 +17,15 @@ from pysma import (
     SmaTimeoutException,
     SmaWriteException,
 )
+from pysma.definitions import modbus as modbus_defs
+from pysma.definitions import webconnect as wc
+from pysma.definitions.modbus import NAN_S32, NAN_TAG, NAN_U32
 from pysma.helpers import DeviceInfo
 from pysma.modbus_controls import ModbusControl
+from pysma.sensor import Sensors
 from pysma.sma_modbus import (
     MODEL_ID_IMMEDIATE_CONTROLS,
     MODEL_ID_STORAGE_CONTROLS,
-    NAN_TAG,
-    NAN_U32,
     InverterConnAction,
     OutPFSetEna,
     SMAModbus,
@@ -142,6 +145,102 @@ async def test_device_info_errors(
 
     with pytest.raises(expected):
         await sma.device_info()
+
+
+async def test_get_sensors(mock_modbus_connection) -> None:
+    """get_sensors() skips sensors whose register the device rejects."""
+    unit = mock_modbus_connection.for_unit(3)
+    unit.fail_read(30961, IllegalDataAddressError(), register_type="input")
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    sensors = await sma.get_sensors()
+
+    assert len(sensors) == len(modbus_defs.sensor_map) - 1
+    assert wc.pv_power_b.name not in sensors
+    assert sensors[wc.grid_power.name].key == wc.grid_power.key
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        pytest.param(ServerDeviceBusyError(), SmaReadException, id="busy"),
+        pytest.param(ModbusTimeoutError("timeout"), SmaTimeoutException, id="timeout"),
+        pytest.param(
+            ModbusConnectionError("lost"), SmaConnectionException, id="connection"
+        ),
+    ],
+)
+async def test_get_sensors_errors(
+    mock_modbus_connection, error: ModbusError, expected: type[SmaException]
+) -> None:
+    """Only ILLEGAL_DATA_ADDRESS skips a sensor; other errors raise."""
+    mock_modbus_connection.for_unit(3).fail_requests(error)
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    with pytest.raises(expected):
+        await sma.get_sensors()
+
+
+async def test_read(mock_modbus_connection) -> None:
+    """read() decodes, scales and translates like WebConnect, and handles NaN."""
+    unit = mock_modbus_connection.for_unit(3)
+    unit.input[30201] = [0, 307]  # status: Ok
+    unit.input[30775] = [0xFFFF, 0xFFFB]  # grid_power: -5 W
+    unit.input[30803] = [0, 5001]  # frequency: 50.01 Hz
+    unit.input[30513] = [0, 0, 205, 2694]  # total_yield: 13437574 Wh
+    unit.input[30773] = [NAN_S32 >> 16, 0]  # pv_power_a: NaN
+    unit.input[30783] = [NAN_U32 >> 16, NAN_U32 & 0xFFFF]  # voltage_l1: NaN
+    sensors = Sensors(
+        [
+            wc.status,
+            wc.grid_power,
+            wc.frequency,
+            wc.total_yield,
+            wc.pv_power_a,
+            wc.voltage_l1,
+            wc.pv_gen_meter,
+        ]
+    )
+    sensors[wc.frequency.name].enabled = True
+    sensors[wc.voltage_l1.name].enabled = True
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    assert await sma.read(sensors)
+
+    assert sensors[wc.status.name].value == "Ok"
+    assert sensors[wc.status.name].raw_value == 307
+    assert sensors[wc.grid_power.name].value == -5
+    assert sensors[wc.frequency.name].value == 50.01
+    assert sensors[wc.total_yield.name].value == 13437.574
+    assert sensors[wc.pv_power_a.name].value == 0  # NaN W reads as 0, as on WebConnect
+    assert sensors[wc.voltage_l1.name].value is None
+    assert sensors[wc.pv_gen_meter.name].value is None  # no Modbus register
+
+
+async def test_read_skips_disabled_and_unmapped(mock_modbus_connection) -> None:
+    """read() sends no request when no enabled sensor has a register."""
+    unit = mock_modbus_connection.for_unit(3)
+    sensors = Sensors([wc.frequency, wc.pv_gen_meter])  # frequency is disabled
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    assert await sma.read(sensors)
+
+    assert unit.read_events == []
+    assert sensors[wc.frequency.name].value is None
+
+
+async def test_read_error(mock_modbus_connection) -> None:
+    """A rejected read raises SmaReadException."""
+    mock_modbus_connection.for_unit(3).fail_requests(IllegalDataAddressError())
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    with pytest.raises(SmaReadException):
+        await sma.read(Sensors([wc.grid_power]))
 
 
 async def test_requires_host_or_connection() -> None:
