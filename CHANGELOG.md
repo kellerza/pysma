@@ -2,6 +2,17 @@
 
 <!-- version list -->
 
+## v1.1.9 (2026-09-30)
+
+### 
+
+- Add SMAModbus.device_info() from the SMA profile type label
+  ([`5530181`](https://github.com/kellerza/pysma/commit/55301819ba0ba86b5c8442696e937c60d2eff475))
+
+- Reads Nameplate.Model/Vendor/SerNum/PkgRev from the SMA unit ID (default 3),
+  ([`5530181`](https://github.com/kellerza/pysma/commit/55301819ba0ba86b5c8442696e937c60d2eff475))
+
+
 ## v1.1.8 (2026-09-08)
 
 ### 
