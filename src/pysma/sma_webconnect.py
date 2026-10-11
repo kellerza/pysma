@@ -553,21 +553,22 @@ class SMAWebConnect:
 
         _LOG.debug("Checking if Energy Meter is present...")
         # Detect and add Energy Meter sensors
-        em_sensor = copy.copy(webconnect.energy_meter)
-        em_sensor.extract_value(all_sensors)
+        if webconnect.energy_meter.key in sensor_keys:
+            em_sensor = copy.copy(webconnect.energy_meter)
+            em_sensor.extract_value(all_sensors)
 
-        if em_sensor.value:
-            _LOG.debug(
-                "Energy Meter with serial %s detected. Adding extra sensors.",
-                em_sensor.value,
-            )
-            device_sensors.add(
-                [
-                    sensor
-                    for sensor in webconnect.sensor_map[ENERGY_METER_VIA_INVERTER]
-                    if sensor not in device_sensors
-                ]
-            )
+            if em_sensor.value:
+                _LOG.debug(
+                    "Energy Meter with serial %s detected. Adding extra sensors.",
+                    em_sensor.value,
+                )
+                device_sensors.add(
+                    [
+                        sensor
+                        for sensor in webconnect.sensor_map[ENERGY_METER_VIA_INVERTER]
+                        if sensor not in device_sensors
+                    ]
+                )
 
         _LOG.debug("Finding connected optimizers...")
         # Detect and add Optimizer Sensors
