@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v1.1.10 (2026-10-20)
+
+### 
+
+- Bump aiohttp from 3.14.3 to 3.14.5 ([#180](https://github.com/kellerza/pysma/pull/180),
+  [`8dd4d44`](https://github.com/kellerza/pysma/commit/8dd4d44f05ca097afa8c3e7c0f6436a761f2c1f4))
+
+- Bump multidict from 6.7.1 to 6.9.1 ([#181](https://github.com/kellerza/pysma/pull/181),
+  [`424ded7`](https://github.com/kellerza/pysma/commit/424ded75c50cc1ec08db9384284a1be8f021563f))
+
+- Bump python-semantic-release/python-semantic-release
+  ([#177](https://github.com/kellerza/pysma/pull/177),
+  [`db38c47`](https://github.com/kellerza/pysma/commit/db38c47de4b6a639e8c9afdcf8b37c68ed8b8fab))
+
+
 ## v1.1.9 (2026-09-30)
 
 ### 
