@@ -1,13 +1,28 @@
 """Test sma_modbus."""
 
 import pytest
-from modbus_connection import ModbusTimeoutError
+from modbus_connection import (
+    IllegalDataAddressError,
+    ModbusConnectionError,
+    ModbusError,
+    ModbusTimeoutError,
+)
 
-from pysma import SmaReadException, SmaSunSpecException, SmaWriteException
+from pysma import (
+    SmaConnectionException,
+    SmaException,
+    SmaReadException,
+    SmaSunSpecException,
+    SmaTimeoutException,
+    SmaWriteException,
+)
+from pysma.helpers import DeviceInfo
 from pysma.modbus_controls import ModbusControl
 from pysma.sma_modbus import (
     MODEL_ID_IMMEDIATE_CONTROLS,
     MODEL_ID_STORAGE_CONTROLS,
+    NAN_TAG,
+    NAN_U32,
     InverterConnAction,
     OutPFSetEna,
     SMAModbus,
@@ -60,6 +75,73 @@ async def test_sunspec_unit_id_defaults_to_sma_unit_id_plus_123(
     sma_override = SMAModbus(connection=mock_modbus_connection, sunspec_unit_id=1)
     await sma_override.connect()
     assert sma_override._unit._unit_id == 1
+
+
+def _seed_type_label(unit, serial: int = 1900123456) -> None:
+    """Seed the type label of an STP5.0-3SE-40 (synthetic serial)."""
+    unit.input[30053] = [0, 19048]  # Nameplate.Model
+    unit.input[30055] = [0, 461]  # Nameplate.Vendor
+    unit.input[30057] = [serial >> 16, serial & 0xFFFF]  # Nameplate.SerNum
+    unit.input[30059] = [0x0408, 0x2704]  # Nameplate.PkgRev
+
+
+async def test_device_info(mock_modbus_connection) -> None:
+    """device_info() reads the type label from the SMA unit ID (default 3)."""
+    _seed_type_label(mock_modbus_connection.for_unit(3))
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    assert await sma.device_info() == DeviceInfo(
+        serial="1900123456",
+        type="SUNNY TRIPOWER 5.0 SE",
+        manufacturer="SMA",
+        sw_version="4.8.39.R",
+    )
+
+
+async def test_device_info_custom_unit_id(mock_modbus_connection) -> None:
+    """device_info() follows sma_unit_id, not the SunSpec unit ID."""
+    _seed_type_label(mock_modbus_connection.for_unit(5), serial=123456789)
+    sma = SMAModbus(connection=mock_modbus_connection, sma_unit_id=5)
+    await sma.connect()
+
+    assert (await sma.device_info()).serial == "123456789"
+
+
+async def test_device_info_nan(mock_modbus_connection) -> None:
+    """A unit that answers with NaN only, like unit 1 on an inverter, has no device info."""
+    unit = mock_modbus_connection.for_unit(3)
+    unit.input[30053] = [NAN_TAG >> 16, NAN_TAG & 0xFFFF]
+    unit.input[30055] = [NAN_TAG >> 16, NAN_TAG & 0xFFFF]
+    unit.input[30057] = [NAN_U32 >> 16, NAN_U32 & 0xFFFF]
+    unit.input[30059] = [NAN_U32 >> 16, NAN_U32 & 0xFFFF]
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    with pytest.raises(SmaReadException, match="unit ID 3"):
+        await sma.device_info()
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        pytest.param(IllegalDataAddressError(), SmaReadException, id="exception"),
+        pytest.param(ModbusTimeoutError("timeout"), SmaTimeoutException, id="timeout"),
+        pytest.param(
+            ModbusConnectionError("lost"), SmaConnectionException, id="connection"
+        ),
+    ],
+)
+async def test_device_info_errors(
+    mock_modbus_connection, error: ModbusError, expected: type[SmaException]
+) -> None:
+    """Modbus errors while reading the type label map to pysma exceptions."""
+    mock_modbus_connection.for_unit(3).fail_requests(error)
+    sma = SMAModbus(connection=mock_modbus_connection)
+    await sma.connect()
+
+    with pytest.raises(expected):
+        await sma.device_info()
 
 
 async def test_requires_host_or_connection() -> None:

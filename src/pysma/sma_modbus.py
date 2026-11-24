@@ -30,8 +30,14 @@ Peak1/Tripower Storage 60 + Inverter Manager line):
   get_control_schema/get_control/set_control already return None/raise for a
   model that discover() didn't find, so this degrades gracefully - but do not
   expect Model 124 support on a current-firmware, modern-dataset install.
+
+Device info is read from SMA's own profile instead (input registers on
+sma_unit_id), per SMA's Modbus Technical Information: a U32 NaN is
+0xFFFFFFFF, and status/tag values use only the lower 24 bits, with NaN
+0xFFFFFD.
 """
 
+import asyncio
 from dataclasses import dataclass, field
 from enum import IntEnum, IntFlag
 from typing import Any, Self
@@ -42,6 +48,7 @@ from modbus_connection import (
     ModbusTcpParams,
     ModbusTimeoutError,
 )
+from modbus_connection.model import Component, uint32
 from modbus_connection.model.sunspec import (
     SunSpecComponent,
     bitfield16,
@@ -54,6 +61,7 @@ from modbus_connection.model.sunspec import (
 from modbus_connection.model.sunspec.errors import SunSpecError
 from modbus_connection.tmodbus import ModbusConnection
 
+from .const import DEFAULT_LANG
 from .exceptions import (
     SmaConnectionException,
     SmaReadException,
@@ -61,6 +69,7 @@ from .exceptions import (
     SmaTimeoutException,
     SmaWriteException,
 )
+from .helpers import DeviceInfo, load_l10n, version_int_to_string
 from .modbus_controls import ModbusControl
 
 MODEL_ID_IMMEDIATE_CONTROLS = 123
@@ -72,6 +81,9 @@ SUNSPEC_UNIT_ID_OFFSET = 123
 #: SMA's own default unit ID for the proprietary profile (and thus, + 123,
 #: for SunSpec) - see module docstring.
 DEFAULT_SMA_UNIT_ID = 3
+
+NAN_U32 = 0xFFFFFFFF
+NAN_TAG = 0xFFFFFD
 
 
 class InverterConnAction(IntEnum):
@@ -171,6 +183,17 @@ class _StorageControls(SunSpecComponent):
     _rte_sf = sunssf(25)
 
 
+class _TypeLabel(Component):
+    """SMA profile type label (Nameplate.*), read from the SMA unit ID."""
+
+    register_space = "input"
+
+    model = uint32(30053, nan=NAN_TAG)  # Nameplate.Model, TAGLIST
+    vendor = uint32(30055, nan=NAN_TAG)  # Nameplate.Vendor, TAGLIST
+    serial = uint32(30057, nan=NAN_U32)  # Nameplate.SerNum, RAW
+    sw_version = uint32(30059, nan=NAN_U32)  # Nameplate.PkgRev, FW
+
+
 @dataclass(frozen=True)
 class _ControlSpec:
     """Where a control lives, its valid range, and any one-time gates to arm first."""
@@ -263,9 +286,12 @@ class SMAModbus:
     sma_unit_id: int = DEFAULT_SMA_UNIT_ID
     sunspec_unit_id: int | None = None
     connection: ModbusConnection | None = field(default=None, repr=False)
+    lang: str = DEFAULT_LANG
+    """Language used to translate the device type and manufacturer."""
 
     _close_connection: bool = field(default=False, init=False, repr=False)
     _unit: Any = field(default=None, init=False, repr=False)
+    _sma_unit: Any = field(default=None, init=False, repr=False)
     _immediate: _ImmediateControls | None = field(default=None, init=False, repr=False)
     _storage: _StorageControls | None = field(default=None, init=False, repr=False)
 
@@ -294,12 +320,47 @@ class SMAModbus:
             else self.sma_unit_id + SUNSPEC_UNIT_ID_OFFSET
         )
         self._unit = self.connection.for_unit(uid)
+        self._sma_unit = self.connection.for_unit(self.sma_unit_id)
         try:
             await self.connection.connect()
         except ModbusTimeoutError as exc:
             raise SmaTimeoutException(str(exc)) from exc
         except ModbusError as exc:
             raise SmaConnectionException(str(exc)) from exc
+
+    async def device_info(self) -> DeviceInfo:
+        """Read the device's type label from the SMA profile.
+
+        The serial matches SMAWebConnect.device_info()'s, so it identifies the
+        same device across both transports. The device name is not available
+        over Modbus, so DeviceInfo's fallback name is used.
+
+        Raises:
+            SmaReadException: the unit rejected the read or has no serial, e.g.
+                sma_unit_id points at a unit without device data.
+            SmaTimeoutException: the device did not answer in time.
+            SmaConnectionException: the device could not be reached.
+
+        """
+        label = _TypeLabel(self._sma_unit)
+        try:
+            await label.async_update()
+        except ModbusExceptionError as exc:
+            raise SmaReadException(str(exc)) from exc
+        except ModbusTimeoutError as exc:
+            raise SmaTimeoutException(str(exc)) from exc
+        except ModbusError as exc:
+            raise SmaConnectionException(str(exc)) from exc
+        if label.serial is None:
+            raise SmaReadException(f"No device info on unit ID {self.sma_unit_id}")
+
+        l10n = await asyncio.to_thread(load_l10n, self.lang)
+        return DeviceInfo(
+            serial=str(label.serial),
+            type=l10n.get(str(label.model), ""),
+            manufacturer=l10n.get(str(label.vendor), ""),
+            sw_version=version_int_to_string(label.sw_version),
+        )
 
     async def discover(self, base_address: int = 40000) -> None:
         """Probe for supported SunSpec models. Idempotent; safe to re-call.

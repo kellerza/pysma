@@ -1,7 +1,14 @@
 """Helper functions for the pysma library."""
 
+import json
+import logging
+import pkgutil
 from dataclasses import dataclass
 from typing import Any
+
+from .const import DEFAULT_LANG
+
+_LOG = logging.getLogger(__name__)
 
 
 def version_int_to_string(version_integer: Any) -> str:
@@ -25,6 +32,36 @@ def version_int_to_string(version_integer: Any) -> str:
         appendixes[version_bytes[3]] if 0 <= version_bytes[3] < len(appendixes) else ""
     )
     return f"{version_bytes[0]:x}.{version_bytes[1]:x}.{version_bytes[2]}.{version_appendix}"
+
+
+def load_l10n(lang: str) -> dict:
+    """Load the packaged translations for lang, falling back to DEFAULT_LANG.
+
+    Blocking: run it in an executor from async code.
+
+    Args:
+        lang (str): Locale code, e.g., "en-US" or "de-DE".
+
+    Returns:
+        dict: Dictionary containing translation keys and their localized strings.
+
+    """
+    l10n = _load_l10n_from_package(lang)
+    if not l10n and lang != DEFAULT_LANG:
+        _LOG.warning(
+            "Language '%s' not found in package, falling back to '%s'",
+            lang,
+            DEFAULT_LANG,
+        )
+        l10n = _load_l10n_from_package(DEFAULT_LANG)
+    return l10n
+
+
+def _load_l10n_from_package(locale: str) -> dict:
+    data = pkgutil.get_data("pysma", f"l10n/{locale}.json")
+    if data is None:
+        return {}
+    return json.loads(data)
 
 
 def ensure_string(value: Any) -> str:
